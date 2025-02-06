@@ -9,8 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/app/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Input } from "@/app/components/ui/input"
+import { Label } from "@/app/components/ui/label"
 import { Plus } from 'lucide-react'
 
 interface NewSupplierDialogProps {

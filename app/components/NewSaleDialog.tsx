@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Calendar } from "@/components/ui/calendar"
+import { Calendar } from "@/app/components/ui/calendar"
 import { Button } from "@/app/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
+import { Input } from "@/app/components/ui/input"
+import { Label } from "@/app/components/ui/label"
 import { ShoppingCart, DollarSign } from "lucide-react"
 
 export function NewSaleDialog() {
