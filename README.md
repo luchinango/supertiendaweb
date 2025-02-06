@@ -1,0 +1,2 @@
+# supertiendaweb
+Sistema Web POS
