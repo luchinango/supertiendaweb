@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/app/components/ui/button"
+import { Input } from "@/app/components/ui/input"
 import {
   Table,
   TableBody,
@@ -10,22 +10,25 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/app/components/ui/table"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/app/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
 import { Search, Plus, Pencil } from 'lucide-react'
 import { NewCreditDialog } from '../components/NewCreditDialog'
 import { EditCreditDialog } from '../components/EditCreditDialog'
+import { Credit as CreditType } from "@/app/types/credit"
+
+import { Credit } from "@/app/types/credit";
 
 // This is sample data. In a real application, this would come from an API or database.
-const sampleCredits = [
+const sampleCredits: Credit[] = [
   { id: 1, supplier: 'Proveedor A', amount: 1000, status: 'comision', dueDate: '2023-12-31' },
   { id: 2, supplier: 'Proveedor B', amount: 1500, status: 'concesion', dueDate: '2023-11-30' },
   { id: 3, supplier: 'Proveedor C', amount: 2000, status: 'pagado', paidDate: '2023-10-15' },
@@ -38,8 +41,7 @@ export default function Creditos() {
   const [editingCredit, setEditingCredit] = useState<typeof sampleCredits[0] | null>(null)
 
   const filteredCredits = credits.filter(credit =>
-    (credit.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    credit.amount.toString().includes(searchTerm)) &&
+    credit.supplier.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (statusFilter === 'todos' || credit.status === statusFilter)
   )
 
@@ -48,10 +50,25 @@ export default function Creditos() {
   const totalPaid = credits.filter(c => c.status === 'pagado').reduce((sum, c) => sum + c.amount, 0)
 
   const handleAddCredit = (newCredit: Omit<typeof sampleCredits[0], 'id'>) => {
-    setCredits([...credits, { ...newCredit, id: credits.length + 1 }])
+    const creditWithId: Credit = newCredit.status === 'pagado'
+      ? {
+          id: credits.length + 1,
+          supplier: newCredit.supplier,
+          amount: newCredit.amount,
+          status: 'pagado',
+          paidDate: newCredit.paidDate as string
+        }
+      : {
+          id: credits.length + 1,
+          supplier: newCredit.supplier,
+          amount: newCredit.amount,
+          status: newCredit.status as 'comision' | 'concesion',
+          dueDate: newCredit.dueDate as string
+        }
+    setCredits([...credits, creditWithId])
   }
 
-  const handleEditCredit = (updatedCredit: typeof sampleCredits[0]) => {
+  const handleEditCredit = (updatedCredit: Credit) => {
     setCredits(credits.map(credit => 
       credit.id === updatedCredit.id ? updatedCredit : credit
     ))
@@ -170,4 +187,3 @@ export default function Creditos() {
     </div>
   )
 }
-

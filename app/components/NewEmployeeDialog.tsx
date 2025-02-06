@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@/components/ui/button"
+import { Button } from "@/app/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/app/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus } from 'lucide-react'

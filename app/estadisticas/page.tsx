@@ -1,24 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/app/components/ui/button"
+import { Card, CardContent } from "@/app/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
+import { Calendar } from "@/app/components/ui/calendar"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/app/components/ui/select"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/app/components/ui/dialog"
 import { BarChart, TrendingDown, TrendingUp, Info, Star } from 'lucide-react'
 import {
   Table,
@@ -27,8 +27,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Avatar } from "@/components/ui/avatar"
+} from "@/app/components/ui/table"
+import { Avatar } from "@/app/components/ui/avatar"
 import {
   BarChart as RechartsBarChart,
   Bar,

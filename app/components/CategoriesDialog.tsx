@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/app/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/app/components/ui/dialog"
+import { Input } from '@/app/components/ui/input'; // changed from '@/components/ui/input'
+import { Label } from '@/app/components/ui/label'; // changed from '@/components/ui/label'
 import { Pencil, Plus, ChevronRight } from "lucide-react"
 
 interface Category {
@@ -48,7 +48,7 @@ export function CategoriesDialog({ open, onOpenChange }: CategoriesDialogProps) 
               <Input
                 id="category-name"
                 value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCategoryName(e.target.value)}
                 placeholder="Escribe el nombre de la categoría"
               />
               <div className="flex justify-end gap-2">

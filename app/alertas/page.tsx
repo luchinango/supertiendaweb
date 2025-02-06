@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/app/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/app/components/ui/table"
 import { AlertTriangle, CheckCircle, Package } from 'lucide-react'
 import Link from 'next/link'
 

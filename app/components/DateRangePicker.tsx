@@ -1,15 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { format } from "date-fns"
+import { format, Locale } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { es } from "date-fns/locale"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button } from "@/app/components/ui/button"
+import { Calendar } from "@/app/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover"
 
 interface DateRangePickerProps {
   className?: string
@@ -48,7 +48,7 @@ export function DateRangePicker({ className, date, onDateChange, locale = es }: 
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={onDateChange}
+            onSelect={(range: DateRange | undefined) => range && onDateChange(range)}
             numberOfMonths={1}
             locale={locale}
           />

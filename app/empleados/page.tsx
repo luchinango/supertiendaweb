@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/app/components/ui/button"
+import { Input } from "@/app/components/ui/input"
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/app/components/ui/table"
 import { Search, Plus, Pencil } from 'lucide-react'
 import { NewEmployeeDialog } from '../components/NewEmployeeDialog'
 import { EditEmployeeDialog } from '../components/EditEmployeeDialog'

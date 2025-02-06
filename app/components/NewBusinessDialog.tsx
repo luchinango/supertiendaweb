@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/app/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
