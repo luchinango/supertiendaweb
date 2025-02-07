@@ -2,15 +2,16 @@
 
 import { useState } from "react"
 import { Button } from "@/app/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/app/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
+import { Input } from "@/app/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
+import { Badge } from "@/app/components/ui/badge"
 import { Search, Filter, Download, CalendarIcon } from "lucide-react"
 import { NewSaleDialog } from "../components/NewSaleDialog"
 import { NewExpenseDialog } from "../components/NewExpenseDialog"
 import { DateRangePicker } from "../components/DateRangePicker"
+import type { DateRange } from "react-day-picker"
 import { addDays } from "date-fns"
 import { es } from "date-fns/locale"
 
@@ -51,7 +52,7 @@ export default function Movimientos() {
   const [searchTerm, setSearchTerm] = useState("")
   const [periodFilter, setPeriodFilter] = useState("semanal")
   const [date, setDate] = useState<{
-    from: Date
+    from: Date | undefined
     to: Date | undefined
   }>({
     from: new Date(2025, 0, 20),
@@ -63,6 +64,13 @@ export default function Movimientos() {
   const totalExpenses = sampleTransactions.filter((t) => t.type === "egreso").reduce((sum, t) => sum + t.value, 0)
 
   const balance = totalSales - totalExpenses
+
+  function handleDateChange(date: DateRange): void {
+    setDate({
+      from: date.from,
+      to: date.to
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -132,7 +140,7 @@ export default function Movimientos() {
               </SelectContent>
             </Select>
 
-            <DateRangePicker date={date} onDateChange={setDate} locale={es} />
+            <DateRangePicker date={date} onDateChange={handleDateChange} locale={es} />
 
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -215,7 +223,7 @@ export default function Movimientos() {
               </SelectContent>
             </Select>
 
-            <DateRangePicker date={date} onDateChange={setDate} locale={es} />
+            <DateRangePicker date={date} onDateChange={handleDateChange} locale={es} />
 
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

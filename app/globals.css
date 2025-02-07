@@ -82,11 +82,12 @@
 }
 
 @layer base {
+  /* Si realmente quieres aplicar un borde a todos los elementos, 
+     añade la clase 'border' también para indicar el grosor: */
   * {
-    @apply border-border;
+    @apply border border-border;
   }
   body {
     @apply bg-background text-foreground;
   }
 }
-

@@ -6,7 +6,7 @@ import Header from './components/Header'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'eGrocery System',
+  title: 'SuperTienda eGrocery System',
   description: 'Online grocery store management system',
 }
 
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={inter.className}>
         <div className="flex h-screen bg-gray-100">
           <Sidebar />

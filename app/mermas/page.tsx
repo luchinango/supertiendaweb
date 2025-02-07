@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { Button } from "@/app/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Input } from "@/app/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table"
 import { Search, Download, Plus, AlertTriangle, Ban, PackageX } from "lucide-react"
 import { RegisterLossDialog } from "../components/RegisterLossDialog"
 
