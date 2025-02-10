@@ -85,9 +85,10 @@
   /* Si realmente quieres aplicar un borde a todos los elementos, 
      añade la clase 'border' también para indicar el grosor: */
   * {
-    @apply border border-border;
+    border: 1px solid var(--border);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }

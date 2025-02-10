@@ -1,13 +1,14 @@
-import './globals.css'
+import "./globals.css"
 import { Inter } from 'next/font/google'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
+import type { Metadata } from "next"
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: 'SuperTienda eGrocery System',
-  description: 'Online grocery store management system',
+export const metadata: Metadata = {
+  title: "Super Tienda Web",
+  description: "Aplicación de movimientos",
 }
 
 export default function RootLayout({
