@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/app/components/ui/button"
-import { Input } from "@/app/components/ui/input"
+import { Button } from "app/components/ui/button"
+import { Input } from "app/components/ui/input"
 import { Search, MoreVertical } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/app/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/app/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "app/components/ui/avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "app/components/ui/dropdown-menu"
 import { NewClientDialog } from "../components/NewClientDialog"
 import { EditClientDialog } from "../components/EditClientDialog"
 

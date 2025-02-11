@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from "@/app/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card"
+import { Button, type ButtonProps } from "app/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "app/components/ui/card"
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/app/components/ui/table"
+} from "app/components/ui/table"
 import { AlertTriangle, CheckCircle, Package } from 'lucide-react'
 import Link from 'next/link'
 
@@ -129,7 +129,7 @@ export default function Alertas() {
                 <TableCell>{product.categoria}</TableCell>
                 <TableCell>{product.fechaVencimiento}</TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm">Marcar como revisado</Button>
+                  <Button variant="secondary" size="sm" asChild>Marcar como revisado</Button>
                 </TableCell>
               </TableRow>
             ))}

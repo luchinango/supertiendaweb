@@ -9,3 +9,6 @@ declare module './ui/label' {
   export interface LabelProps extends DetailedHTMLProps<LabelHTMLAttributes<HTMLLabelElement>, HTMLLabelElement> {}
   export const Label: React.FC<LabelProps>;
 }
+
+declare module "@radix-ui/react-slot";
+declare module "class-variance-authority";

@@ -5,7 +5,7 @@ import { Button } from "app/components/ui/button"
 import { Input } from "app/components/ui/input"
 import { Card, CardContent } from "app/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
-import { Search, Download, Grid2X2, Plus } from "lucide-react"
+import { Search, Download, LayoutGrid, Plus } from "lucide-react"
 import { CategoriesDialog } from "../components/CategoriesDialog"
 import { AddProductDialog } from "../components/AddProductDialog"
 
@@ -68,8 +68,8 @@ export default function Inventario() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-medium text-[#1e1e1e]">Inventario</h1>
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setShowCategories(true)} className="gap-2">
-            <Grid2X2 className="h-4 w-4" />
+          <Button variant={'outline'} onClick={() => setShowCategories(true)} className="gap-2">
+            <LayoutGrid className="h-4 w-4" />
             Categorías
           </Button>
           <Button
@@ -105,7 +105,7 @@ export default function Inventario() {
           </SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button variant="outline" className="gap-2">
+        <Button variant={'outline'} className="gap-2">
           <Download className="h-4 w-4" />
           Descargar reporte
         </Button>

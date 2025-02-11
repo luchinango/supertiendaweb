@@ -91,19 +91,19 @@ function NuevaOrdenCompraContent() {
         <div className="flex gap-4">
           <div className="flex-1">
             <Label htmlFor="producto">Producto</Label>
-            <Select
+            <Select<string>
               value={selectedProduct?.toString()}
-              onValueChange={(value) => setSelectedProduct(Number.parseInt(value))}
+              onValueChange={(value: string) => setSelectedProduct(Number.parseInt(value))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar producto" />
+              <SelectValue placeholder="Seleccionar producto" />
               </SelectTrigger>
               <SelectContent>
-                {sampleProducts.map((product) => (
-                  <SelectItem key={product.id} value={product.id.toString()}>
-                    {product.nombre}
-                  </SelectItem>
-                ))}
+              {sampleProducts.map((product: Product) => (
+                <SelectItem key={product.id} value={product.id.toString()}>
+                {product.nombre}
+                </SelectItem>
+              ))}
               </SelectContent>
             </Select>
           </div>
