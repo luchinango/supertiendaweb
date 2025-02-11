@@ -28,9 +28,7 @@
       "@/*": [
         "app/*"
       ],
-      "@lib/*": [
-        "lib/*"
-      ] // Alias agregado para la carpeta lib
+      "@lib/*": ["lib/*"]
     }
   },
   "include": [
