@@ -7,6 +7,7 @@ interface Usuario {
 }
 
 const App: React.FC = () => {
+  // const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [usuarios, setUsuarios] = useState([]);
 
   useEffect(() => {
