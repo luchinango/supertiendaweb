@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "a
 import { Search, Download, LayoutGrid, Plus } from "lucide-react"
 import { CategoriesDialog } from "../components/CategoriesDialog"
 import { AddProductDialog } from "../components/AddProductDialog"
+import useSWR from "swr"
 
 interface Product {
   id: number
@@ -54,14 +55,25 @@ const productosFicticios: Product[] = [
   // Add more sample products as needed
 ]
 
+function useProductos() {
+  const fetcher = (url: string) => fetch(url).then((res) => res.json())
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/productos"
+  const { data, error, isLoading } = useSWR(apiUrl, fetcher)
+  return { productos: data, error, isLoading }
+}
+
 export default function Inventario() {
+  const { productos, error, isLoading } = useProductos()
   const [searchTerm, setSearchTerm] = useState("")
   const [showCategories, setShowCategories] = useState(false)
   const [showAddProduct, setShowAddProduct] = useState(false)
 
-  const filteredProducts = productosFicticios.filter((product) =>
-    product.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredProducts = (productos || []).filter((product: Product) =>
+    product.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  if (isLoading) return <div>Cargando...</div>
+  if (error) return <div>Error al cargar productos</div>
 
   return (
     <div className="space-y-6">
