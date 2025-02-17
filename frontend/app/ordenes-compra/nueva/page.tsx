@@ -91,7 +91,7 @@ function NuevaOrdenCompraContent() {
         <div className="flex gap-4">
           <div className="flex-1">
             <Label htmlFor="producto">Producto</Label>
-            <Select<string>
+            <Select
               value={selectedProduct?.toString()}
               onValueChange={(value: string) => setSelectedProduct(Number.parseInt(value))}
             >
