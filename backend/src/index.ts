@@ -2,6 +2,9 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import productRoutes from './routes/productRoutes';
+import userRoutes from './routes/userRoutes';
+import proveedorRoutes from './routes/proveedorRoutes';
+import clienteRoutes from './routes/clienteRoutes';
 // import { errorHandler } from './middleware/errorHandler';
 import dotenv from 'dotenv';
 
@@ -34,49 +37,19 @@ app.get('/test-cors', (req, res) => {
 });
 
 // Rutas
-app.use('/', productRoutes);
-
-// Ruta para obtener usuarios
-app.get('/api/usuarios', async (req, res) => {
-  try {
-    const usuarios = await prisma.user.findMany();
-    res.json(usuarios);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error al obtener los usuarios activos');
-  }
-});
+app.use('/api', productRoutes);
+app.use('/api', userRoutes);
+app.use('/api', proveedorRoutes);
+app.use('/api', clienteRoutes);
 
 app.get('/test', (req, res) => {
   res.send('¡Ruta de prueba funciona!');
 });
 
-// Ruta para obtener productos
-/* app.get('/api/productos', async (req, res) => {
-  try {
-    const products = await prisma.producto.findMany();
-    res.json(products);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error al obtener los productos');
-  }
-}); */
-
-// Routes
-// app.use('/api', productRoutes);
-
-// Error Handling
-// app.use(errorHandler);
-
 // Iniciar servidor
 app.listen(PORT, HOST, () => {
   console.log(`Servidor corriendo en http://${HOST}:${PORT}`);
   prisma.$connect()
-    .then(() => console.log('Conectado a PostgreSQL'))
-    .catch((err) => console.error('Error de conexión:', err));
+    .then((): void => console.log('Conectado a PostgreSQL'))
+    .catch((err: Error): void => console.error('Error de conexión:', err));
 });
-
-/* // Iniciar el servidor
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://${HOST}:${PORT}`);
-}); */

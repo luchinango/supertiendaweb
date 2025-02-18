@@ -12,11 +12,11 @@ const authenticate = (req: any, res: any, next: any) => {
 };
 
 // CRUD Productos
-router.post('/api/productos', validateProduct, productController.createProduct);
-router.get('/api/productos', productController.getAllProducts.bind(productController));
-router.get('/api/productos/:id', productController.getProductById);
-router.put('/api/productos/:id', authenticate, validateProduct, productController.updateProduct);
-router.delete('/api/productos/:id', authenticate, productController.deleteProduct);
+router.post('/productos', validateProduct, productController.createProduct);
+router.get('/productos', productController.getAllProducts.bind(productController));
+router.get('/productos/:id', productController.getProductById);
+router.put('/productos/:id', authenticate, validateProduct, productController.updateProduct);
+router.delete('/productos/:id', authenticate, productController.deleteProduct);
 
 export default router;
 

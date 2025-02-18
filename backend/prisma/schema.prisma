@@ -34,6 +34,63 @@ model Producto {
   actualStock     Int
   fechaExpiracion DateTime
   imagen          String
+  proveedorId     Int?
+  proveedor       Proveedor? @relation(fields: [proveedorId], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Proveedor {
+  id            Int      @id @default(autoincrement())
+  razonSocial   String   @unique
+  nit           String   @unique
+  direccion     String
+  telefono      String
+  email         String
+  contacto      String   
+  tipoProveedor String   
+  estado        String   
+  productos     Producto[] 
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Cliente {
+  id          Int      @id @default(autoincrement()) @map("cliente_id")
+  nombre      String
+  razonSocial String?  @map("razon_social")
+  direccion   String
+  telefono    String
+  email       String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("clientes")
+}
+
+model Carrito {
+  id        Int      @id @default(autoincrement())
+  clienteId Int
+  cliente   Cliente  @relation(fields: [clienteId], references: [id])
+  items     CarritoItem[]
+  estado    String   @default("activo") // activo, completado, cancelado
+  total     Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("carritos")
+}
+
+model CarritoItem {
+  id         Int      @id @default(autoincrement())
+  carritoId  Int
+  productoId Int
+  cantidad   Int
+  precio     Float
+  carrito    Carrito  @relation(fields: [carritoId], references: [id])
+  producto   Producto @relation(fields: [productoId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("carrito_items")
 }

@@ -16,7 +16,8 @@
     "build": "webpack --mode production",
     "serve": "node dist/index.js",
     "webpack-dev": "webpack serve --mode development --open",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "prisma:seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@types/axios": "^0.9.36",
