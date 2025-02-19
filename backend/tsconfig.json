@@ -8,7 +8,9 @@
       "esModuleInterop": true,
       "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,
-      "jsx": "react"
+      "jsx": "react",
+      "noImplicitAny": true,
+      "strictNullChecks": true
     },
     "include": ["src/**/*", "routes/productRoutes.ts", "models/product.ts"],
     "exclude": ["node_modules"]

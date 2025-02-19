@@ -34,8 +34,9 @@ model Producto {
   actualStock     Int
   fechaExpiracion DateTime
   imagen          String
-  proveedorId     Int?
-  proveedor       Proveedor? @relation(fields: [proveedorId], references: [id])
+  proveedorId     Int       // Ahora sí podemos hacerlo requerido
+  proveedor       Proveedor @relation(fields: [proveedorId], references: [id])
+  carritoItems    CarritoItem[] // Relación inversa añadida
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -62,35 +63,32 @@ model Cliente {
   direccion   String
   telefono    String
   email       String   @unique
+  carritos    Carrito[] // Relación inversa añadida
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
 
   @@map("clientes")
 }
 
 model Carrito {
-  id        Int      @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   clienteId Int
-  cliente   Cliente  @relation(fields: [clienteId], references: [id])
+  estado    String         @default('activo')
+  total     Float          @default(0)
   items     CarritoItem[]
-  estado    String   @default("activo") // activo, completado, cancelado
-  total     Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("carritos")
+  cliente   Cliente        @relation(fields: [clienteId], references: [id])
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
 
 model CarritoItem {
   id         Int      @id @default(autoincrement())
-  carritoId  Int
-  productoId Int
   cantidad   Int
   precio     Float
+  carritoId  Int
+  productoId Int
   carrito    Carrito  @relation(fields: [carritoId], references: [id])
   producto   Producto @relation(fields: [productoId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  @@map("carrito_items")
 }

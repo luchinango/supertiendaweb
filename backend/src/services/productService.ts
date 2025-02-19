@@ -47,17 +47,7 @@ export class ProductService {
                 throw new Error('El stock mínimo no puede ser mayor al máximo');
             }
 
-            return await this.prisma.producto.create({
-                data: {
-                    ...productData,
-                    fechaExpiracion: fechaExpiracion.toISOString(),
-                    precio_compra: Number(productData.precio_compra),
-                    precio_venta: Number(productData.precio_venta),
-                    minStock: Number(productData.minStock),
-                    maxStock: Number(productData.maxStock),
-                    actualStock: Number(productData.actualStock)
-                }
-            });
+            ;
         } catch (error) {
             console.error('Error en createProduct:', error);
             throw new Error(`Error al crear producto: ${error instanceof Error ? error.message : 'Error desconocido'}`);

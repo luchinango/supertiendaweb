@@ -5,6 +5,7 @@ import productRoutes from './routes/productRoutes';
 import userRoutes from './routes/userRoutes';
 import proveedorRoutes from './routes/proveedorRoutes';
 import clienteRoutes from './routes/clienteRoutes';
+import carritoRoutes from './routes/carritoRoutes';
 // import { errorHandler } from './middleware/errorHandler';
 import dotenv from 'dotenv';
 
@@ -41,6 +42,7 @@ app.use('/api', productRoutes);
 app.use('/api', userRoutes);
 app.use('/api', proveedorRoutes);
 app.use('/api', clienteRoutes);
+app.use('/api', carritoRoutes);
 
 app.get('/test', (req, res) => {
   res.send('¡Ruta de prueba funciona!');

@@ -11,77 +11,95 @@ export class CarritoService {
         return await this.prisma.carrito.create({
             data: {
                 clienteId,
-                estado: 'activo'
+                estado: 'activo',
+                total: 0
             }
         });
     }
 
     async agregarItem(carritoId: number, productoId: number, cantidad: number) {
-        // Primero verificamos el producto
-        const producto = await this.prisma.producto.findUnique({
-            where: { id: productoId }
-        });
+        return await this.prisma.$transaction(async (tx) => {
+            const producto = await tx.producto.findUnique({
+                where: { id: productoId }
+            });
 
-        if (!producto) throw new Error('Producto no encontrado');
-        if (producto.actualStock < cantidad) throw new Error('Stock insuficiente');
+            if (!producto) throw new Error('Producto no encontrado');
+            if (producto.actualStock < cantidad) throw new Error('Stock insuficiente');
+            if (cantidad <= 0) throw new Error('Cantidad inválida');
 
-        // Agregamos el item al carrito
-        const item = await this.prisma.carritoItem.create({
-            data: {
-                carritoId,
-                productoId,
-                cantidad,
-                precio: producto.precio_venta
+            const itemExistente = await tx.carritoItem.findFirst({
+                where: { carritoId, productoId }
+            });
+
+            if (itemExistente) {
+                return await tx.carritoItem.update({
+                    where: { id: itemExistente.id },
+                    data: { cantidad: itemExistente.cantidad + cantidad }
+                });
             }
+
+            const item = await tx.carritoItem.create({
+                data: {
+                    carritoId,
+                    productoId,
+                    cantidad,
+                    precio: producto.precio_venta
+                }
+            });
+
+            await this.actualizarTotalCarrito(carritoId, tx);
+            return item;
         });
-
-        // Actualizamos el total del carrito
-        await this.actualizarTotalCarrito(carritoId);
-
-        return item;
     }
 
     async actualizarCantidadItem(itemId: number, cantidad: number) {
-        const item = await this.prisma.carritoItem.findUnique({
-            where: { id: itemId },
-            include: { producto: true }
+        return await this.prisma.$transaction(async (tx) => {
+            const item = await tx.carritoItem.findUnique({
+                where: { id: itemId },
+                include: { producto: true }
+            });
+
+            if (!item) throw new Error('Item no encontrado');
+            if (cantidad <= 0) throw new Error('Cantidad inválida');
+            if (item.producto.actualStock < cantidad) throw new Error('Stock insuficiente');
+
+            const itemActualizado = await tx.carritoItem.update({
+                where: { id: itemId },
+                data: { cantidad }
+            });
+
+            await this.actualizarTotalCarrito(item.carritoId, tx);
+            return itemActualizado;
         });
-
-        if (!item) throw new Error('Item no encontrado');
-        if (item.producto.actualStock < cantidad) throw new Error('Stock insuficiente');
-
-        const itemActualizado = await this.prisma.carritoItem.update({
-            where: { id: itemId },
-            data: { cantidad }
-        });
-
-        await this.actualizarTotalCarrito(item.carritoId);
-
-        return itemActualizado;
     }
 
     async eliminarItem(itemId: number) {
-        const item = await this.prisma.carritoItem.findUnique({
-            where: { id: itemId }
+        await this.prisma.$transaction(async (tx) => {
+            const item = await tx.carritoItem.findUnique({
+                where: { id: itemId }
+            });
+
+            if (!item) throw new Error('Item no encontrado');
+
+            await tx.carritoItem.delete({
+                where: { id: itemId }
+            });
+
+            await this.actualizarTotalCarrito(item.carritoId, tx);
         });
-
-        if (!item) throw new Error('Item no encontrado');
-
-        await this.prisma.carritoItem.delete({
-            where: { id: itemId }
-        });
-
-        await this.actualizarTotalCarrito(item.carritoId);
     }
 
-    private async actualizarTotalCarrito(carritoId: number) {
-        const items = await this.prisma.carritoItem.findMany({
+    private async actualizarTotalCarrito(
+        carritoId: number, 
+        tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">
+    ) {
+        const items = await tx.carritoItem.findMany({
             where: { carritoId }
         });
-
-        const total: number = items.reduce((sum: number, item: { precio: number; cantidad: number }) => sum + (item.precio * item.cantidad), 0);
-
-        await this.prisma.carrito.update({
+    
+        const total = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    
+        await tx.carrito.update({
             where: { id: carritoId },
             data: { total }
         });
@@ -102,33 +120,49 @@ export class CarritoService {
     }
 
     async completarCarrito(carritoId: number) {
-        // Verificar stock antes de completar
-        const carrito = await this.obtenerCarrito(carritoId);
-        if (!carrito) throw new Error('Carrito no encontrado');
-
-        for (const item of carrito.items) {
-            if (item.producto.actualStock < item.cantidad) {
-                throw new Error(`Stock insuficiente para ${item.producto.nombre}`);
-            }
-        }
-
-        // Actualizar stock y estado del carrito
-        await this.prisma.$transaction(async (prisma: PrismaClient) => {
-            for (const item of carrito.items) {
-            await prisma.producto.update({
-                where: { id: item.productoId },
-                data: {
-                actualStock: { decrement: item.cantidad }
+        return await this.prisma.$transaction(async (tx) => {
+            const carrito = await tx.carrito.findUnique({
+                where: { id: carritoId },
+                include: {
+                    items: {
+                        include: {
+                            producto: true
+                        }
+                    }
                 }
             });
+
+            if (!carrito) throw new Error('Carrito no encontrado');
+            if (carrito.estado === 'completado') throw new Error('Carrito ya completado');
+
+            for (const item of carrito.items) {
+                if (item.producto.actualStock < item.cantidad) {
+                    throw new Error(`Stock insuficiente para ${item.producto.nombre}`);
+                }
             }
 
-            await prisma.carrito.update({
-            where: { id: carritoId },
-            data: { estado: 'completado' }
-            });
-        });
+            for (const item of carrito.items) {
+                await tx.producto.update({
+                    where: { id: item.productoId },
+                    data: {
+                        actualStock: { decrement: item.cantidad }
+                    }
+                });
+            }
 
-        return await this.obtenerCarrito(carritoId);
+            const carritoActualizado = await tx.carrito.update({
+                where: { id: carritoId },
+                data: { estado: 'completado' },
+                include: {
+                    items: {
+                        include: {
+                            producto: true
+                        }
+                    }
+                }
+            });
+
+            return carritoActualizado;
+        });
     }
 }
