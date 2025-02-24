@@ -168,7 +168,7 @@ export default function Inventario() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-        {filteredProducts.map((product) => (
+        {filteredProducts.map((product: Product): JSX.Element => (
           <Card key={product.id} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="aspect-square relative bg-gray-50">
