@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true  // Evita que `tsc` genere archivos .js
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}
