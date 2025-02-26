@@ -101,4 +101,36 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// PATCH - Actualizar parcialmente un cliente
+router.patch('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updates: Partial<Customer> = req.body;
+
+    // Obtener el cliente existente para mantener los valores no proporcionados
+    const existingCustomer = await pool.query('SELECT * FROM customers WHERE id = $1', [id]);
+    if (existingCustomer.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    // Construir la consulta dinámica con solo los campos proporcionados
+    const fields = Object.keys(updates).filter(key => key !== 'id');
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'No updates provided' });
+    }
+
+    const setClause = fields.map((field, index) => `${field} = $${index + 1}`).join(', ');
+    const values = fields.map(field => updates[field as keyof Partial<Customer>]);
+
+    const result = await pool.query(
+      `UPDATE customers SET ${setClause} WHERE id = $${fields.length + 1} RETURNING *`,
+      [...values, id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
 export default router;

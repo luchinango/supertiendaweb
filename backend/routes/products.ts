@@ -113,75 +113,111 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// UPDATE - Actualizar un producto
+// PUT - Actualizar un producto
 router.put('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const {
-      supplier_id,
-      category_id,
-      name,
-      price,
-      stock,
-      description,
-      purchase_price,
-      sale_price,
-      sku,
-      barcode,
-      brand,
-      unit,
-      min_stock,
-      max_stock,
-      actual_stock,
-      expiration_date,
-      image,
-    }: Partial<Product> = req.body;
+  const productId = parseInt(req.params.id, 10);
+  const {
+    supplier_id, name, price, stock, description, purchase_price, sale_price,
+    sku, barcode, brand, unit, min_stock, max_stock, actual_stock,
+    expiration_date, image, category_id
+  } = req.body;
 
+  if (isNaN(productId)) {
+    return res.status(400).json({ error: 'El ID del producto debe ser un número válido' });
+  }
+
+  try {
     const result = await pool.query(
-      `UPDATE products
-       SET supplier_id = $1, category_id = $2, name = $3, price = $4, stock = $5, description = $6, purchase_price = $7, sale_price = $8, sku = $9, barcode = $10, brand = $11, unit = $12, min_stock = $13, max_stock = $14, actual_stock = $15, expiration_date = $16, image = $17
-       WHERE id = $18 RETURNING *`,
+      `UPDATE products 
+       SET supplier_id = $1, name = $2, price = $3, stock = $4, description = $5,
+           purchase_price = $6, sale_price = $7, sku = $8, barcode = $9, brand = $10,
+           unit = $11, min_stock = $12, max_stock = $13, actual_stock = $14,
+           expiration_date = $15, image = $16, category_id = $17
+       WHERE id = $18
+       RETURNING *`,
       [
-        supplier_id,
-        category_id,
-        name,
-        price,
-        stock,
-        description,
-        purchase_price,
-        sale_price,
-        sku,
-        barcode,
-        brand,
-        unit,
-        min_stock,
-        max_stock,
-        actual_stock,
-        expiration_date,
-        image,
-        id,
+        supplier_id, name, price, stock, description || null, purchase_price || 0,
+        sale_price || 0, sku || null, barcode || null, brand || null, unit || null,
+        min_stock || 0, max_stock || 0, actual_stock || 0, expiration_date || null,
+        image || null, category_id, productId
       ]
     );
-    if (result.rows.length === 0) {
-      res.status(404).json({ error: 'Product not found' });
-    } else {
-      res.json(result.rows[0]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: `No se encontró un producto con ID ${productId}` });
     }
+
+    res.status(200).json({ message: `Producto con ID ${productId} actualizado correctamente`, data: result.rows[0] });
   } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+    console.error('Error al actualizar producto:', error);
+    res.status(500).json({ error: 'Error al intentar actualizar el producto', details: (error as Error).message });
   }
 });
 
-// DELETE - Eliminar un producto
-router.delete('/:id', async (req: Request, res: Response) => {
+// DELETE - Inactivar un producto (genérico)
+router.post('/delete/:id', async (req: Request, res: Response) => {
+  const productId = parseInt(req.params.id, 10);
+
+  // Validar que el ID sea un número válido
+  if (isNaN(productId)) {
+    return res.status(400).json({ error: 'El ID del producto debe ser un número válido' });
+  }
+
+  try {
+    // Actualizar el status a 'inactive' directamente
+    const result = await pool.query(
+      `UPDATE products 
+       SET status = 'inactive' 
+       WHERE id = $1 
+       RETURNING id, name, status`,
+      [productId]
+    );
+
+    // Verificar si se actualizó algún registro
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: `No se encontró un producto con ID ${productId}` });
+    }
+
+    res.status(200).json({ 
+      message: `Producto con ID ${productId} desactivado correctamente`, 
+      data: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Error al desactivar producto:', error);
+    res.status(500).json({ 
+      error: 'Error al intentar desactivar el producto', 
+      details: (error as Error).message 
+    });
+  }
+});
+
+// PATCH - Actualizar parcialmente un producto
+router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      res.status(404).json({ error: 'Product not found' });
-    } else {
-      res.json({ message: 'Product deleted', product: result.rows[0] });
+    const updates: Partial<Product> = req.body;
+
+    // Obtener el producto existente para mantener los valores no proporcionados
+    const existingProduct = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+    if (existingProduct.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
     }
+
+    // Construir la consulta dinámica con solo los campos proporcionados
+    const fields = Object.keys(updates).filter(key => key !== 'id');
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'No updates provided' });
+    }
+
+    const setClause = fields.map((field, index) => `${field} = $${index + 1}`).join(', ');
+    const values = fields.map(field => updates[field as keyof Partial<Product>]);
+
+    const result = await pool.query(
+      `UPDATE products SET ${setClause} WHERE id = $${fields.length + 1} RETURNING *`,
+      [...values, id]
+    );
+
+    res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
