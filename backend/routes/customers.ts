@@ -1,4 +1,5 @@
-import express, { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
+import express from 'express';
 import pool from '../config/db';
 
 const router: Router = express.Router();
@@ -13,6 +14,15 @@ interface Customer {
   address?: string;
   phone?: string;
   email?: string;
+  status?: string;
+}
+
+interface Credit {
+  id?: number;
+  customer_id: number;
+  balance: number;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 // CREATE - Crear un cliente
@@ -24,6 +34,13 @@ router.post('/', async (req: Request, res: Response) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [user_id, first_name, last_name, company_name, tax_id, address, phone, email]
     );
+
+    // Crear un registro de créditos inicial para el nuevo cliente
+    await pool.query(
+      `INSERT INTO credits (customer_id, balance) VALUES ($1, $2)`,
+      [result.rows[0].id, 0.00]
+    );
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
@@ -44,14 +61,15 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// READ - Obtener un cliente por ID
+// READ - Obtener un cliente por ID con su saldo
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params as { id: string };
     const result = await pool.query(
-      `SELECT c.*, u.username AS user_username
+      `SELECT c.*, u.username AS user_username, cr.balance
        FROM customers c
        JOIN users u ON c.user_id = u.id
+       LEFT JOIN credits cr ON c.id = cr.customer_id
        WHERE c.id = $1`,
       [id]
     );
@@ -65,7 +83,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// UPDATE - Actualizar un cliente
+// UPDATE - Actualizar un cliente (PUT - reemplaza todos los campos)
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -86,34 +104,17 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE - Eliminar un cliente
-router.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('DELETE FROM customers WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      res.status(404).json({ error: 'Customer not found' });
-    } else {
-      res.json({ message: 'Customer deleted', customer: result.rows[0] });
-    }
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
 // PATCH - Actualizar parcialmente un cliente
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updates: Partial<Customer> = req.body;
 
-    // Obtener el cliente existente para mantener los valores no proporcionados
     const existingCustomer = await pool.query('SELECT * FROM customers WHERE id = $1', [id]);
     if (existingCustomer.rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
 
-    // Construir la consulta dinámica con solo los campos proporcionados
     const fields = Object.keys(updates).filter(key => key !== 'id');
     if (fields.length === 0) {
       return res.status(400).json({ error: 'No updates provided' });
@@ -128,6 +129,90 @@ router.patch('/:id', async (req: Request, res: Response) => {
     );
 
     res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// DELETE - Inactivar un cliente (genérico)
+router.post('/delete/:id', async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.id, 10); // Obtener el ID de la URL
+
+  // Validar que el ID sea un número válido
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: 'El ID del cliente debe ser un número válido' });
+  }
+
+  try {
+    // Actualizar el status a 'inactive' directamente
+    const result = await pool.query(
+      `UPDATE customers 
+       SET status = 'inactive' 
+       WHERE id = $1 
+       RETURNING id, first_name, status`,
+      [userId]
+    );
+
+    // Verificar si se actualizó algún registro
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: `No se encontró un cliente con ID ${userId}` });
+    }
+
+    res.status(200).json({ 
+      message: `Cliente con ID ${userId} desactivado correctamente`, 
+      data: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Error al desactivar cliente:', error);
+    res.status(500).json({ 
+      error: 'Error al intentar desactivar el cliente', 
+      details: (error as Error).message 
+    });
+  }
+});
+
+// POST - Depositar créditos (aumentar saldo)
+router.post('/:id/credits', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params as { id: string };
+    const { amount }: { amount: number } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Amount must be a positive number' });
+    }
+
+    // Verificar si el cliente existe
+    const customer = await pool.query('SELECT * FROM customers WHERE id = $1', [id]);
+    if (customer.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    // Actualizar o insertar saldo en credits
+    const creditResult = await pool.query(
+      `INSERT INTO credits (customer_id, balance) VALUES ($1, $2)
+       ON CONFLICT (customer_id) DO UPDATE SET balance = credits.balance + $2
+       RETURNING *`,
+      [id, amount]
+    );
+
+    res.json({ message: 'Credits deposited successfully', balance: creditResult.rows[0].balance });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// GET - Consultar saldo de créditos
+router.get('/:id/credits', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params as { id: string };
+    const result = await pool.query(
+      `SELECT balance FROM credits WHERE customer_id = $1`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Customer has no credits record' });
+    }
+    res.json({ balance: result.rows[0].balance });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }

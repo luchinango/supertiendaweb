@@ -20,7 +20,6 @@ interface User {
 
 interface Credit {
   id?: number;
-  user_id: number;
   amount: number;
   created_at?: Date;
   updated_at?: Date;
@@ -224,53 +223,6 @@ router.post('/delete/:id', async (req: Request, res: Response) => {
       error: 'Error al intentar desactivar el usuario', 
       details: (error as Error).message 
     });
-  }
-});
-
-// POST - Depositar créditos (aumentar saldo)
-router.post('/:id/credits', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params as { id: string };
-    const { amount }: { amount: number } = req.body;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ error: 'Amount must be a positive number' });
-    }
-
-    // Verificar si el usuario existe
-    const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    if (user.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Actualizar o insertar saldo en credits
-    const creditResult = await pool.query(
-      `INSERT INTO credits (user_id, amount) VALUES ($1, $2)
-       ON CONFLICT (user_id) DO UPDATE SET amount = credits.amount + $2
-       RETURNING *`,
-      [id, amount]
-    );
-
-    res.json({ message: 'Credits deposited successfully', amount: creditResult.rows[0].amount });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// GET - Consultar saldo de créditos
-router.get('/:id/credits', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params as { id: string };
-    const result = await pool.query(
-      `SELECT amount FROM credits WHERE user_id = $1`,
-      [id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User has no credits record' });
-    }
-    res.json({ amount: result.rows[0].amount });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
   }
 });
 

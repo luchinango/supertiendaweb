@@ -1,5 +1,7 @@
-import express, { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
+import express from 'express';
 import pool from '../config/db';
+import { CreditService } from '../services/creditService';
 
 const router: Router = express.Router();
 
@@ -56,7 +58,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// UPDATE - Actualizar un proveedor
+// UPDATE - Actualizar un proveedor (PUT - reemplaza todos los campos)
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -83,13 +85,11 @@ router.patch('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const updates: Partial<Supplier> = req.body;
 
-    // Obtener el proveedor existente para mantener los valores no proporcionados
     const existingSupplier = await pool.query('SELECT * FROM suppliers WHERE id = $1', [id]);
     if (existingSupplier.rows.length === 0) {
       return res.status(404).json({ error: 'Supplier not found' });
     }
 
-    // Construir la consulta dinámica con solo los campos proporcionados
     const fields = Object.keys(updates).filter(key => key !== 'id');
     if (fields.length === 0) {
       return res.status(400).json({ error: 'No updates provided' });
@@ -147,4 +147,123 @@ router.post('/delete/:id', async (req: Request, res: Response) => {
   }
 });
 
+// POST - Crear una deuda con el supplier (simula una compra a crédito)
+router.post('/:id/debts', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params as { id: string };
+    const { total_amount }: { total_amount: number } = req.body;
+
+    if (!total_amount || total_amount <= 0) {
+      return res.status(400).json({ error: 'Total amount must be a positive number' });
+    }
+
+    const supplier = await pool.query('SELECT * FROM suppliers WHERE id = $1', [id]);
+    if (supplier.rows.length === 0) {
+      return res.status(404).json({ error: 'Supplier not found' });
+    }
+
+    const debt = await CreditService.createSupplierDebt(parseInt(id), total_amount);
+    res.status(201).json({ message: 'Debt created successfully', debt });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// POST - Realizar un pago parcial de una deuda
+router.post('/:id/debts/:debtId/pay', async (req: Request, res: Response) => {
+  try {
+    const { id, debtId } = req.params as { id: string; debtId: string };
+    const { amount }: { amount: number } = req.body;
+
+    if (!amount || amount < 10 || amount > 50) {
+      return res.status(400).json({ error: 'Amount must be between 10 and 50' });
+    }
+
+    const supplier = await pool.query('SELECT * FROM suppliers WHERE id = $1', [id]);
+    if (supplier.rows.length === 0) {
+      return res.status(404).json({ error: 'Supplier not found' });
+    }
+
+    const payment = await CreditService.makeDebtPayment(parseInt(debtId), amount);
+    res.json({ message: 'Payment made successfully', payment });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// GET - Obtener todas las deudas de un supplier
+router.get('/:id/debts', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params as { id: string };
+    const result = await pool.query(
+      `SELECT sd.*, (SELECT json_agg(dp.*)
+                     FROM debt_payments dp
+                     WHERE dp.debt_id = sd.id) as payments
+       FROM supplier_debts sd
+       WHERE sd.supplier_id = $1`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// POST - Crear una consignación
+router.post('/:id/consignments', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params as { id: string };
+    const { start_date, end_date, items }: { start_date: string; end_date: string; items: { product_id: number; quantity: number; price_at_time: number }[] } = req.body;
+
+    if (!start_date || !end_date || !items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Start date, end date, and items are required' });
+    }
+
+    const supplier = await pool.query('SELECT * FROM suppliers WHERE id = $1', [id]);
+    if (supplier.rows.length === 0) {
+      return res.status(404).json({ error: 'Supplier not found' });
+    }
+
+    const consignment = await CreditService.createConsignment(parseInt(id), start_date, end_date, items);
+    res.status(201).json({ message: 'Consignment created successfully', consignment });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// GET - Obtener todas las consignaciones de un supplier
+router.get('/:id/consignments', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params as { id: string };
+    const result = await pool.query(
+      `SELECT c.*, (SELECT json_agg(ci.*)
+                    FROM consignment_items ci
+                    WHERE ci.consignment_id = c.id) as items
+       FROM consignments c
+       WHERE c.supplier_id = $1`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// POST - Finalizar una consignación
+router.post('/:id/consignments/:consignmentId/finalize', async (req: Request, res: Response) => {
+  try {
+    const { id, consignmentId } = req.params as { id: string; consignmentId: string };
+    const supplier = await pool.query('SELECT * FROM suppliers WHERE id = $1', [id]);
+    if (supplier.rows.length === 0) {
+      return res.status(404).json({ error: 'Supplier not found' });
+    }
+
+    const consignment = await CreditService.finalizeConsignment(parseInt(consignmentId));
+    res.json({ message: 'Consignment finalized successfully', consignment });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
 export default router;
+
