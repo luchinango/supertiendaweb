@@ -9,9 +9,8 @@ import productRoutes from './routes/products';
 import cartRoutes from './routes/cart';
 import purchaseOrderRoutes from './routes/purchaseOrders';
 import mermaRoutes from './routes/mermas';  
-
-
-
+import creditRoutes from './services/creditService';
+//import consignmentRoutes from './routes/consignments';
 
 const app = express();
 app.use(express.json());
@@ -26,6 +25,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/purchase_orders', purchaseOrderRoutes);
 app.use('/api/mermas', mermaRoutes);  
+app.use('/api/credits', creditRoutes);
 
 const PORT: number = parseInt(process.env.PORT || '5000', 10);
 app.listen(PORT, () => {

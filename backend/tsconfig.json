@@ -6,7 +6,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true  // Evita que `tsc` genere archivos .js
+    "noEmit": true,  // Evita que `tsc` genere archivos .js
+    "outDir": "./dist",
+    "rootDir": "./", // Define la raíz del proyecto
+    "moduleResolution": "node", // Necesario para resolver módulos
+    "types": ["express", "jsonwebtoken"]
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules"]

@@ -18,6 +18,12 @@ interface Supplier {
   status: string;
 }
 
+router.post('/debts', (req, res) => {
+  CreditService.createSupplierDebt(req.body.supplierId, req.body.totalAmount)
+    .then(debt => res.status(201).json(debt))
+    .catch(err => res.status(400).json({ error: err.message }));
+});
+
 // CREATE - Crear un proveedor
 router.post('/', async (req: Request, res: Response) => {
   try {

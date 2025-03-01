@@ -1,4 +1,6 @@
 import pool from '../config/db';
+import { Router } from 'express';
+// import { CreditService } from '../services/creditService';
 
 interface Credit {
   id?: number;
@@ -46,7 +48,22 @@ interface ConsignmentItem {
   created_at?: Date;
 }
 
+const router = Router();
+
+router.get('/customers/:customerId', (req, res) => {
+  CreditService.getCustomerBalance(parseInt(req.params.customerId))
+    .then(balance => res.json({ balance }))
+    .catch(err => res.status(400).json({ error: err.message }));
+});
+
+router.post('/deduct', (req, res) => {
+  CreditService.deductCustomerBalance(req.body.customerId, req.body.amount)
+    .then(() => res.sendStatus(204))
+    .catch(err => res.status(400).json({ error: err.message }));
+});
+
 export class CreditService {
+  
   // Obtener saldo de un cliente
   static async getCustomerBalance(customerId: number): Promise<number> {
     const result = await pool.query('SELECT balance FROM credits WHERE customer_id = $1', [customerId]);
@@ -171,3 +188,5 @@ export class CreditService {
     return result.rows[0];
   }
 }
+
+export default router;
