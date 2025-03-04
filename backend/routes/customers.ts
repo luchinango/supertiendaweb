@@ -1,7 +1,10 @@
-import { Router, Request, Response } from 'express';
-import express from 'express';
-import pool from '../config/db';
-import { authenticate, authorize } from '../middleware/auth'; // Asume middleware de autenticación
+import { Router, Request, Response } from "express";
+import express from "express";
+import pool from "../config/db";
+import { authenticate } from "../middleware/auth";
+import bcrypt from "bcrypt";
+import { getUserByEmail } from "../models/user";
+import { generateToken } from "../middleware/auth";
 
 const router: Router = express.Router();
 
@@ -17,24 +20,40 @@ interface Customer {
   status?: string;
 }
 
-// Middleware de autenticación para todas las rutas
-router.use(authenticate);
-
-// CREATE - Crear cliente (solo administradores)
-router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
+// Login
+router.post("/login", async (req: Request, res: Response) => {
   try {
-    const { 
-      first_name, 
-      last_name, 
-      company_name, 
-      tax_id, 
-      address, 
-      phone, 
-      email 
+    const { email, password } = req.body;
+    const user = await getUserByEmail(email);
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: "Credenciales inválidas" });
+    }
+
+    const token = generateToken(user);
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// CREATE - Crear cliente
+router.post("/", authenticate, async (req: Request, res: Response) => {
+  try {
+    const {
+      first_name,
+      last_name,
+      company_name,
+      tax_id,
+      address,
+      phone,
+      email,
     }: Customer = req.body;
 
     if (!first_name || !last_name) {
-      return res.status(400).json({ error: 'Nombre y apellido son requeridos' });
+      return res
+        .status(400)
+        .json({ error: "Nombre y apellido son requeridos" });
     }
 
     const result = await pool.query(
@@ -45,11 +64,13 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
       [first_name, last_name, company_name, tax_id, address, phone, email]
     );
 
+    const customerId = result.rows[0].id;
+
     // Crear crédito inicial con saldo cero
     await pool.query(
-      `INSERT INTO credits (customer_id, balance, credit_limit)
-       VALUES ($1, $2, $3)`,
-      [result.rows[0].id, 0.00, 0.00]
+      `INSERT INTO credits (customer_id, balance, credit_limit, status)
+       VALUES ($1, $2, $3, 'active')`,
+      [result.rows[0].id, 0.0, 0.0]
     );
 
     res.status(201).json(result.rows[0]);
@@ -59,7 +80,7 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
 });
 
 // READ - Obtener todos los clientes (solo usuarios autorizados)
-router.get('/', authorize(['admin', 'sales']), async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     const { search } = req.query;
     let query = `SELECT * FROM customers WHERE status = 'active'`;
@@ -78,23 +99,25 @@ router.get('/', authorize(['admin', 'sales']), async (req: Request, res: Respons
 });
 
 // READ - Obtener cliente específico con crédito
-router.get('/:id', authorize(['admin', 'sales']), async (req: Request, res: Response) => {
+router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
       `SELECT 
-        c.*, 
-        cr.balance, 
-        cr.credit_limit,
-        cr.last_topup
-       FROM customers c
-       JOIN credits cr ON c.id = cr.customer_id
-       WHERE c.id = $1 AND c.status = 'active'`,
+  public.credits.balance,
+  public.credits.credit_limit,
+  public.credits.id
+FROM
+  public.credits
+  INNER JOIN public.customers ON (public.credits.customer_id = public.customers.id)
+WHERE
+  public.customers.status = 'active' AND 
+  public.customers.id = $1`,
       [id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Cliente no encontrado' });
+      return res.status(404).json({ error: "Cliente no encontrado" });
     }
 
     res.json(result.rows[0]);
@@ -104,7 +127,7 @@ router.get('/:id', authorize(['admin', 'sales']), async (req: Request, res: Resp
 });
 
 // UPDATE - Actualizar cliente
-router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => {
+router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updates: Customer = req.body;
@@ -128,12 +151,12 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
         updates.address,
         updates.phone,
         updates.email,
-        id
+        id,
       ]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Cliente no encontrado' });
+      return res.status(404).json({ error: "Cliente no encontrado" });
     }
 
     res.json(result.rows[0]);
@@ -143,80 +166,77 @@ router.put('/:id', authorize(['admin']), async (req: Request, res: Response) => 
 });
 
 // DELETE - Desactivar cliente
-router.delete('/:id', authorize(['admin']), async (req: Request, res: Response) => {
+router.delete("/delete/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
-    await pool.query('BEGIN');
-    
+
+    await pool.query("BEGIN");
+
     // Desactivar cliente
-    await pool.query(
-      `UPDATE customers SET status = 'inactive' WHERE id = $1`,
-      [id]
-    );
-    
+    await pool.query(`UPDATE customers SET status = 'inactive' WHERE id = $1`, [
+      id,
+    ]);
+
     // Congelar crédito
     await pool.query(
       `UPDATE credits SET status = 'frozen' WHERE customer_id = $1`,
       [id]
     );
-    
-    await pool.query('COMMIT');
-    
-    res.json({ message: 'Cliente desactivado y crédito congelado' });
+
+    await pool.query("COMMIT");
+
+    res.json({ message: "Cliente desactivado y crédito congelado" });
   } catch (error) {
-    await pool.query('ROLLBACK');
+    await pool.query("ROLLBACK");
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
 // Gestión de Crédito Prepago
-router.post('/:id/credit/topup', authorize(['admin', 'cashier']), async (req: Request, res: Response) => {
+router.post("/:id/credit/topup", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { amount, reference } = req.body;
+    const user_id = req.user?.id; // Obtén el user_id del middleware de autenticación
 
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ error: 'Monto inválido' });
-    }
+    /* if (!user_id) {
+      return res.status(401).json({ error: "Acceso no autorizado" });
+    } */
 
-    // Transacción para actualizar crédito
-    await pool.query('BEGIN');
-    
+    // Resto de validaciones y lógica...
+
+    await pool.query("BEGIN");
+
     const credit = await pool.query(
       `UPDATE credits 
-       SET 
-         balance = balance + $1,
-         last_topup = NOW(),
-         total_topups = total_topups + $1
+       SET balance = balance + $1
        WHERE customer_id = $2
        RETURNING *`,
       [amount, id]
     );
 
-    // Registrar movimiento
+    // Inserción corregida con user_id
     await pool.query(
-      `INSERT INTO credit_transactions 
-       (customer_id, amount, type, reference)
-       VALUES ($1, $2, 'deposit', $3)`,
-      [id, amount, reference]
+      `INSERT INTO transactions 
+       (customer_id, user_id, amount, type, reference)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id, user_id, amount, "deposit", reference]
     );
 
-    await pool.query('COMMIT');
+    await pool.query("COMMIT");
 
     res.json({
-      message: 'Recarga exitosa',
+      message: "Recarga exitosa",
       new_balance: credit.rows[0].balance,
-      transaction_id: credit.rows[0].id
     });
   } catch (error) {
-    await pool.query('ROLLBACK');
+    await pool.query("ROLLBACK");
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
 // Uso de crédito
-router.post('/:id/credit/use', authorize(['admin', 'sales']), async (req: Request, res: Response) => {
+router.post("/:id/credit/use", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { amount, invoice_number } = req.body;
@@ -227,11 +247,11 @@ router.post('/:id/credit/use', authorize(['admin', 'sales']), async (req: Reques
     );
 
     if (credit.rows[0].balance < amount) {
-      return res.status(400).json({ error: 'Saldo insuficiente' });
+      return res.status(400).json({ error: "Saldo insuficiente" });
     }
 
-    await pool.query('BEGIN');
-    
+    await pool.query("BEGIN");
+
     // Descontar saldo
     await pool.query(
       `UPDATE credits SET balance = balance - $1 WHERE customer_id = $2`,
@@ -240,26 +260,26 @@ router.post('/:id/credit/use', authorize(['admin', 'sales']), async (req: Reques
 
     // Registrar transacción
     await pool.query(
-      `INSERT INTO credit_transactions 
+      `INSERT INTO transactions 
        (customer_id, amount, type, reference)
        VALUES ($1, $2, 'payment', $3)`,
       [id, amount, invoice_number]
     );
 
-    await pool.query('COMMIT');
+    await pool.query("COMMIT");
 
-    res.json({ 
-      message: 'Pago realizado con crédito',
-      remaining_balance: credit.rows[0].balance - amount
+    res.json({
+      message: "Pago realizado con crédito",
+      remaining_balance: credit.rows[0].balance - amount,
     });
   } catch (error) {
-    await pool.query('ROLLBACK');
+    await pool.query("ROLLBACK");
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
 // Historial de transacciones
-router.get('/:id/credit/history', authorize(['admin', 'sales']), async (req: Request, res: Response) => {
+router.get("/:id/credit/history", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { limit = 10, offset = 0 } = req.query;

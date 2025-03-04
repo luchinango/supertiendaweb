@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import express from 'express';
 import pool from '../config/db';
 import bcrypt from 'bcrypt'; // Ahora lo usaremos
+import jwt from 'jsonwebtoken';
 
 const router: Router = express.Router();
 
@@ -65,6 +66,28 @@ router.post('/:id/credits', async (req: Request, res: Response): Promise<Respons
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
   }
+});
+
+// En tu archivo de rutas (users.ts o auth.ts)
+router.post("/login", async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  // 1. Verificar usuario en la base de datos
+  const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+  if (!user.rows[0]) return res.status(404).json({ error: "Usuario no existe" });
+
+  // 2. Validar contraseña (usando bcrypt)
+  const isValidPassword = await bcrypt.compare(password, user.rows[0].password);
+  if (!isValidPassword) return res.status(401).json({ error: "Contraseña incorrecta" });
+
+  // 3. Generar token JWT
+  const token = jwt.sign(
+    { userId: user.rows[0].id, role: user.rows[0].role },
+    process.env.JWT_SECRET!,
+    { expiresIn: "1h" }
+  );
+
+  res.json({ token });
 });
 
 // CREATE - Registrar un usuario

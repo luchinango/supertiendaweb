@@ -1,46 +1,45 @@
-// src/middleware/auth.ts
-import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { User } from '../models/user';
+import { getUserById } from '../models/user';
 
-declare module 'express' {
-  interface Request {
-    user?: {
-      userId: number;
-      role: string;
-    };
+declare global {
+  namespace Express {
+      interface Request {
+          user?: User | null; // Añade la propiedad user que puede ser null
+      }
   }
 }
 
-interface JwtPayload {
-  userId: number;
-  role: string;
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_para_desarrollo';
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+// Generar token
+export const generateToken = (user: User): string => {
+  return jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '8h' }
+  );
+};
+
+// Middleware de autenticación
+export const authenticate = async (req: any, res: any, next: any) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
-  
+
   if (!token) {
     return res.status(401).json({ error: 'Acceso no autorizado' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-    req.user = decoded;
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
+    const user = await getUserById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no encontrado' });
+    }
+
+    req.user = user; // Añade el usuario al request
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    res.status(401).json({ error: 'Token inválido o expirado' });
   }
-};
-
-export const authorize = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(403).json({ error: 'Usuario no autenticado' });
-    }
-    
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Permisos insuficientes' });
-    }
-    next();
-  };
 };
