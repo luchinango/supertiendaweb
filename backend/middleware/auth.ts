@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/user';
 import { getUserById } from '../models/user';
 
@@ -42,4 +43,13 @@ export const authenticate = async (req: any, res: any, next: any) => {
   } catch (error) {
     res.status(401).json({ error: 'Token inválido o expirado' });
   }
+};
+
+export const authorize = (allowedRoles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'No tiene permisos para realizar esta acción' });
+    }
+    next();
+  };
 };

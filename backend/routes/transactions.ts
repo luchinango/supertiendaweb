@@ -2,6 +2,18 @@ import { Router, Request, Response } from 'express';
 import pool from '../config/db';
 import { authenticate, authorize } from '../middleware/auth';
 
+interface User {
+  userId: number;
+}
+
+declare global {
+  namespace Express {
+    interface User {
+      userId: number;
+    }
+  }
+}
+
 const router = Router();
 
 // ===============================

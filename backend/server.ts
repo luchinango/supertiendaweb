@@ -23,7 +23,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/purchase_orders', purchaseOrderRoutes);
+app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/mermas', mermaRoutes);  
 app.use('/api/credits', creditRoutes);
 

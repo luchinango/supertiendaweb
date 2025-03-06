@@ -409,7 +409,7 @@ router.post('/users/:userId/suppliers/:supplierId/consignments', async (req: Req
 router.post('/users/:userId/suppliers/:supplierId/consignments/:consignmentId/settle', async (req: Request, res: Response) => {
   try {
     const { userId, supplierId, consignmentId } = req.params;
-    const { items } = req.body; // Array de { product_id, quantity_sold }
+    const { items } = req.body;
 
     const consignmentCheck = await pool.query(
       'SELECT * FROM consignments WHERE id = $1 AND supplier_id = $2 AND user_id = $3 AND status = $4',
@@ -460,7 +460,7 @@ router.post('/users/:userId/suppliers/:supplierId/consignments/:consignmentId/se
 
     await pool.query(
       'UPDATE consignments SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-      ['settled', consignmentId]
+      ['completed', consignmentId] // Cambiado a 'completed'
     );
 
     res.status(200).json({ message: 'Consignment settled', totalAmount });
