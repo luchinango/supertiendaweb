@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import pool from '../config/db';
-import bcrypt from 'bcrypt'; // Ahora lo usaremos
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const router: Router = express.Router();
@@ -15,76 +15,73 @@ interface User {
   last_name: string;
   address?: string;
   mobile_phone?: string;
-  role: string;
+  role_id: number;
   created_at?: Date;
+  status?: string;
 }
 
-interface Credit {
+interface SupplierDebt {
   id?: number;
+  supplier_id: number;
+  user_id: number; // Usuario que realiza la compra
   amount: number;
   created_at?: Date;
   updated_at?: Date;
 }
 
-const SALT_ROUNDS = 10; // Número de rondas para el hash de bcrypt
+interface DebtPayment {
+  id?: number;
+  debt_id: number;
+  amount: number;
+  payment_date?: Date;
+}
 
-// Ruta para agregar o actualizar créditos de un usuario
-router.post('/:id/credits', async (req: Request, res: Response): Promise<Response> => {
-  try {
-    const { id } = req.params;
-    const { amount } = req.body;
+interface Consignment {
+  id?: number;
+  supplier_id: number;
+  user_id: number; // Usuario que registra la consignación
+  created_at?: Date;
+  updated_at?: Date;
+  status?: string;
+}
 
-    // Validar que amount sea un número válido
-    if (!amount || isNaN(amount)) {
-      return res.status(400).json({ error: 'Amount must be a valid number' });
-    }
+interface ConsignmentItem {
+  id?: number;
+  consignment_id: number;
+  product_id: number;
+  quantity_sent: number;
+  quantity_sold: number;
+  quantity_returned: number;
+}
 
-    // Verificar que el usuario existe
-    const userCheck = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    if (userCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+const SALT_ROUNDS = 10;
 
-    // Verificar si ya existe un registro de créditos para este usuario
-    const creditCheck = await pool.query('SELECT * FROM credits WHERE user_id = $1', [id]);
+// Middleware para verificar JWT (opcional)
+const authenticateToken = (req: Request, res: Response, next: Function) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
 
-    if (creditCheck.rows.length === 0) {
-      // Si no existe, insertar un nuevo registro
-      const result = await pool.query(
-        'INSERT INTO credits (user_id, amount, created_at, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *',
-        [id, amount]
-      );
-      return res.status(201).json({ message: 'Credits initialized', credit: result.rows[0] });
-    } else {
-      // Si existe, actualizar el amount sumando el valor recibido
-      const result = await pool.query(
-        'UPDATE credits SET amount = amount + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING *',
-        [amount, id]
-      );
-      return res.status(200).json({ message: 'Credits updated', credit: result.rows[0] });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
-  }
-});
+  jwt.verify(token, process.env.JWT_SECRET!, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    (req as any).user = user;
+    next();
+  });
+};
 
-// En tu archivo de rutas (users.ts o auth.ts)
-router.post("/login", async (req: Request, res: Response) => {
+// LOGIN
+router.post('/login', async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  // 1. Verificar usuario en la base de datos
-  const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-  if (!user.rows[0]) return res.status(404).json({ error: "Usuario no existe" });
+  const user = await pool.query('SELECT * FROM users WHERE email = $1 AND status = $2', [email, 'active']);
+  if (!user.rows[0]) return res.status(404).json({ error: 'Usuario no existe o está inactivo' });
 
-  // 2. Validar contraseña (usando bcrypt)
   const isValidPassword = await bcrypt.compare(password, user.rows[0].password);
-  if (!isValidPassword) return res.status(401).json({ error: "Contraseña incorrecta" });
+  if (!isValidPassword) return res.status(401).json({ error: 'Contraseña incorrecta' });
 
-  // 3. Generar token JWT
   const token = jwt.sign(
-    { userId: user.rows[0].id, role: user.rows[0].role },
+    { userId: user.rows[0].id, roleId: user.rows[0].role_id },
     process.env.JWT_SECRET!,
-    { expiresIn: "1h" }
+    { expiresIn: '1h' }
   );
 
   res.json({ token });
@@ -93,21 +90,18 @@ router.post("/login", async (req: Request, res: Response) => {
 // CREATE - Registrar un usuario
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { username, password, email, first_name, last_name, address, mobile_phone, role }: Partial<User> = req.body;
+    const { username, password, email, first_name, last_name, address, mobile_phone, role_id } = req.body;
 
-    // Cifrar la contraseña antes de guardarla
+    if (!role_id) {
+      return res.status(400).json({ error: 'El campo role_id es obligatorio' });
+    }
+
     const hashedPassword = await bcrypt.hash(password || '', SALT_ROUNDS);
 
     const result = await pool.query(
-      `INSERT INTO users (username, password, email, first_name, last_name, address, mobile_phone, role)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [username, hashedPassword, email, first_name, last_name, address, mobile_phone, role]
-    );
-
-    // Crear un registro de créditos inicial para el nuevo usuario
-    await pool.query(
-      `INSERT INTO credits (user_id, amount) VALUES ($1, $2)`,
-      [result.rows[0].id, 0.00]
+      `INSERT INTO users (username, password, email, first_name, last_name, address, mobile_phone, role_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [username, hashedPassword, email, first_name, last_name, address, mobile_phone, role_id, 'active']
     );
 
     res.status(201).json(result.rows[0]);
@@ -119,56 +113,60 @@ router.post('/register', async (req: Request, res: Response) => {
 // READ - Obtener todos los usuarios
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT * FROM users');
+    const result = await pool.query(
+      `SELECT u.*, r.name as role_name
+       FROM users u
+       LEFT JOIN roles r ON u.role_id = r.id`
+    );
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// READ - Obtener un usuario por ID con su saldo
+// READ - Obtener un usuario por ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params as { id: string };
+    const { id } = req.params;
+
     const result = await pool.query(
-      `SELECT u.*, c.amount
+      `SELECT u.*, r.name as role_name
        FROM users u
-       LEFT JOIN credits c ON u.id = c.user_id
+       LEFT JOIN roles r ON u.role_id = r.id
        WHERE u.id = $1`,
       [id]
     );
+
     if (result.rows.length === 0) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.json(result.rows[0]);
+      return res.status(404).json({ error: 'User not found' });
     }
+    res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// UPDATE - Actualizar un usuario (PUT - reemplaza todos los campos)
+// UPDATE - Actualizar un usuario (PUT)
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { username, password, email, first_name, last_name, address, mobile_phone, role }: Partial<User> = req.body;
+    const { username, password, email, first_name, last_name, address, mobile_phone, role_id }: Partial<User> = req.body;
 
-    // Cifrar la contraseña si se proporciona
     let hashedPassword = password;
     if (password) {
       hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     }
 
     const result = await pool.query(
-      `UPDATE users SET username = $1, password = $2, email = $3, first_name = $4, last_name = $5, address = $6, mobile_phone = $7, role = $8
+      `UPDATE users SET username = $1, password = $2, email = $3, first_name = $4, last_name = $5, address = $6, mobile_phone = $7, role_id = $8
        WHERE id = $9 RETURNING *`,
-      [username, hashedPassword, email, first_name, last_name, address, mobile_phone, role, id]
+      [username, hashedPassword, email, first_name, last_name, address, mobile_phone, role_id, id]
     );
+
     if (result.rows.length === 0) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.json(result.rows[0]);
+      return res.status(404).json({ error: 'User not found' });
     }
+    res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
@@ -180,19 +178,16 @@ router.patch('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const updates: Partial<User> = req.body;
 
-    // Obtener el usuario existente para mantener los valores no proporcionados
     const existingUser = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
     if (existingUser.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Construir la consulta dinámica con solo los campos proporcionados
-    const fields = Object.keys(updates).filter(key => key !== 'id' && key !== 'created_at');
+    const fields = Object.keys(updates).filter(key => key !== 'id' && key !== 'created_at' && key !== 'status');
     if (fields.length === 0) {
       return res.status(400).json({ error: 'No updates provided' });
     }
 
-    // Cifrar la contraseña si se proporciona en la actualización
     if (updates.password) {
       updates.password = await bcrypt.hash(updates.password, SALT_ROUNDS);
     }
@@ -211,41 +206,266 @@ router.patch('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE - Eliminar un usuario (desactivar)
-// DELETE - Inactivar un usuario (genérico)
+// DELETE - Desactivar un usuario
 router.post('/delete/:id', async (req: Request, res: Response) => {
-  const userId = parseInt(req.params.id, 10); // Obtener el ID de la URL
-
-  // Validar que el ID sea un número válido
-  if (isNaN(userId)) {
-    return res.status(400).json({ error: 'El ID del usuario debe ser un número válido' });
-  }
-
   try {
-    // Actualizar el status a 'inactive' directamente
+    const { id } = req.params;
+
     const result = await pool.query(
-      `UPDATE users 
-       SET status = 'inactive' 
-       WHERE id = $1 
-       RETURNING id, username, status`,
+      `UPDATE users SET status = 'inactive' WHERE id = $1 RETURNING id, username, status`,
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.status(200).json({ message: 'Usuario desactivado', data: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// GESTIÓN DE CRÉDITOS ENTRE USER Y SUPPLIER
+// Registrar una compra a crédito con un supplier
+router.post('/users/:userId/suppliers/:supplierId/debts', async (req: Request, res: Response) => {
+  try {
+    const { userId, supplierId } = req.params;
+    const { amount, products } = req.body; // products: [{ product_id, quantity, price }]
+
+    if (!amount || isNaN(amount)) {
+      return res.status(400).json({ error: 'Amount must be a valid number' });
+    }
+
+    const userCheck = await pool.query('SELECT * FROM users WHERE id = $1 AND status = $2', [userId, 'active']);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found or inactive' });
+    }
+
+    const supplierCheck = await pool.query('SELECT * FROM suppliers WHERE id = $1', [supplierId]);
+    if (supplierCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Supplier not found' });
+    }
+
+    // Registrar la deuda
+    const debtResult = await pool.query(
+      'INSERT INTO supplier_debts (supplier_id, user_id, amount, remaining_amount, created_at, updated_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *',
+      [supplierId, userId, amount, amount] // remaining_amount inicialmente igual a amount
+    );
+
+    // Actualizar el stock de productos (si se proporcionan)
+    if (products && Array.isArray(products)) {
+      for (const product of products) {
+        await pool.query(
+          'UPDATE products SET stock = stock + $1 WHERE id = $2',
+          [product.quantity, product.product_id]
+        );
+      }
+    }
+
+    res.status(201).json({ message: 'Debt created', debt: debtResult.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Registrar un pago en cuotas de una deuda
+router.post('/users/:userId/suppliers/:supplierId/debts/:debtId/payments', async (req: Request, res: Response) => {
+  try {
+    const { userId, supplierId, debtId } = req.params;
+    const { amount } = req.body;
+
+    if (!amount || isNaN(amount)) {
+      return res.status(400).json({ error: 'Amount must be a valid number' });
+    }
+
+    const debtCheck = await pool.query(
+      'SELECT * FROM supplier_debts WHERE id = $1 AND supplier_id = $2 AND user_id = $3',
+      [debtId, supplierId, userId]
+    );
+    if (debtCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Debt not found' });
+    }
+
+    const currentDebt = debtCheck.rows[0];
+    if (currentDebt.amount < amount) {
+      return res.status(400).json({ error: 'Payment amount exceeds remaining debt' });
+    }
+
+    // Registrar el pago
+    const paymentResult = await pool.query(
+      'INSERT INTO debt_payments (debt_id, amount, created_at) VALUES ($1, $2, CURRENT_TIMESTAMP) RETURNING *',
+      [debtId, amount]
+    );
+
+    // Actualizar el monto de la deuda
+    await pool.query(
+      'UPDATE supplier_debts SET amount = amount - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [amount, debtId]
+    );
+
+    res.status(201).json({ message: 'Payment recorded', payment: paymentResult.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Obtener todas las deudas de un usuario con suppliers
+router.get('/users/:userId/debts', async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const result = await pool.query(
+      `SELECT sd.*, s.name as supplier_name,
+              (SELECT SUM(amount) FROM debt_payments dp WHERE dp.debt_id = sd.id) as total_paid
+       FROM supplier_debts sd
+       JOIN suppliers s ON sd.supplier_id = s.id
+       WHERE sd.user_id = $1`,
       [userId]
     );
 
-    // Verificar si se actualizó algún registro
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: `No se encontró un proveedor con ID ${userId}` });
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// GESTIÓN DE CONSIGNACIONES (OPCIONAL)
+// Registrar una consignación
+router.post('/users/:userId/suppliers/:supplierId/consignments', async (req: Request, res: Response) => {
+  try {
+    const { userId, supplierId } = req.params;
+    const { items, end_date } = req.body; // items: [{ product_id, quantity_sent }], end_date opcional
+
+    // Validar entrada
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Items must be a non-empty array' });
+    }
+    for (const item of items) {
+      if (!item.product_id || !item.quantity_sent || isNaN(item.quantity_sent)) {
+        return res.status(400).json({ error: 'Each item must have a valid product_id and quantity_sent' });
+      }
     }
 
-    res.status(200).json({ 
-      message: `usuario con ID ${userId} desactivado correctamente`, 
-      data: result.rows[0] 
-    });
+    const userCheck = await pool.query('SELECT * FROM users WHERE id = $1 AND status = $2', [userId, 'active']);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found or inactive' });
+    }
+
+    const supplierCheck = await pool.query('SELECT * FROM suppliers WHERE id = $1', [supplierId]);
+    if (supplierCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Supplier not found' });
+    }
+
+    // Calcular total_value basado en los ítems
+    let totalValue = 0;
+    const productIds = items.map(item => item.product_id);
+    const productsResult = await pool.query(
+      'SELECT id, price FROM products WHERE id = ANY($1)',
+      [productIds]
+    );
+    const products = productsResult.rows.reduce((acc, product) => {
+      acc[product.id] = product.price;
+      return acc;
+    }, {});
+
+    for (const item of items) {
+      const price = products[item.product_id];
+      if (!price) {
+        return res.status(400).json({ error: `Price not found for product_id ${item.product_id}` });
+      }
+      totalValue += price * item.quantity_sent;
+    }
+
+    // Determinar fechas
+    const startDate = new Date().toISOString().split('T')[0]; // Fecha actual
+    const defaultEndDate = new Date();
+    defaultEndDate.setDate(defaultEndDate.getDate() + 30); // 30 días después
+    const endDate = end_date || defaultEndDate.toISOString().split('T')[0];
+
+    // Insertar la consignación
+    const consignmentResult = await pool.query(
+      `INSERT INTO consignments (supplier_id, user_id, start_date, end_date, total_value, sold_value, status, created_at, updated_at) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *`,
+      [supplierId, userId, startDate, endDate, totalValue, 0.00, 'active']
+    );
+
+    const consignmentId = consignmentResult.rows[0].id;
+    for (const item of items) {
+      const price = products[item.product_id]; // Obtener el precio del producto
+      await pool.query(
+        'INSERT INTO consignment_items (consignment_id, product_id, quantity_sent, quantity_sold, quantity_returned, quantity_delivered, price_at_time) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [consignmentId, item.product_id, item.quantity_sent, 0, 0, item.quantity_sent, price]
+      );
+    }
+
+    res.status(201).json({ message: 'Consignment created', consignment: consignmentResult.rows[0] });
   } catch (error) {
-    console.error('Error al desactivar usuario:', error);
-    res.status(500).json({ 
-      error: 'Error al intentar desactivar el usuario', 
-      details: (error as Error).message 
-    });
+    console.error('Error en POST /consignments:', error);
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Liquidar consignación
+router.post('/users/:userId/suppliers/:supplierId/consignments/:consignmentId/settle', async (req: Request, res: Response) => {
+  try {
+    const { userId, supplierId, consignmentId } = req.params;
+    const { items } = req.body; // Array de { product_id, quantity_sold }
+
+    const consignmentCheck = await pool.query(
+      'SELECT * FROM consignments WHERE id = $1 AND supplier_id = $2 AND user_id = $3 AND status = $4',
+      [consignmentId, supplierId, userId, 'active']
+    );
+    if (consignmentCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Active consignment not found' });
+    }
+
+    for (const item of items) {
+      const itemCheck = await pool.query(
+        'SELECT * FROM consignment_items WHERE consignment_id = $1 AND product_id = $2',
+        [consignmentId, item.product_id]
+      );
+      if (itemCheck.rows.length === 0) {
+        return res.status(404).json({ error: `Item ${item.product_id} not found in consignment` });
+      }
+
+      const { quantity_sent } = itemCheck.rows[0];
+      const quantityReturned = quantity_sent - item.quantity_sold;
+
+      await pool.query(
+        'UPDATE consignment_items SET quantity_sold = $1, quantity_returned = $2 WHERE consignment_id = $3 AND product_id = $4',
+        [item.quantity_sold, quantityReturned, consignmentId, item.product_id]
+      );
+
+      await pool.query(
+        'UPDATE products SET stock = stock + $1 WHERE id = $2',
+        [quantityReturned, item.product_id]
+      );
+    }
+
+    const soldItems = await pool.query(
+      `SELECT ci.quantity_sold, p.price
+       FROM consignment_items ci
+       JOIN products p ON ci.product_id = p.id
+       WHERE ci.consignment_id = $1`,
+      [consignmentId]
+    );
+
+    const totalAmount = soldItems.rows.reduce((sum, item) => sum + item.quantity_sold * item.price, 0);
+    if (totalAmount > 0) {
+      await pool.query(
+        'INSERT INTO supplier_debts (supplier_id, user_id, amount, created_at, updated_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+        [supplierId, userId, totalAmount]
+      );
+    }
+
+    await pool.query(
+      'UPDATE consignments SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      ['settled', consignmentId]
+    );
+
+    res.status(200).json({ message: 'Consignment settled', totalAmount });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 
