@@ -1,0 +1,324 @@
+openapi: 3.0.0
+info:
+  title: Kardex API
+  description: API para gestionar movimientos de inventario, kardex y compras.
+  version: 1.0.0
+
+paths:
+  /products/{productId}/movements:
+    post:
+      summary: Registrar un movimiento en el kardex (entrada o salida)
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+          description: ID del producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementRequest'
+            example:
+              movement_type: "entry"
+              quantity: 10
+              unit_price: 25.50
+              reference_id: 1
+              reference_type: "purchase_order"
+      responses:
+        '201':
+          description: Movimiento registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KardexEntry'
+              example:
+                id: 1
+                product_id: 1
+                movement_type: "entry"
+                quantity: 10
+                unit_price: 25.50
+                stock_after: 110
+                movement_date: "2025-03-07T12:00:00Z"
+        '400':
+          description: Error en los datos enviados
+          content:
+            application/json:
+              example:
+                error: "Tipo de movimiento inválido"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              example:
+                error: "Stock no puede ser negativo"
+
+  /products/{productId}/kardex:
+    get:
+      summary: Obtener el kardex de un producto
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+          description: ID del producto
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+          description: Cantidad máxima de registros a devolver
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+          description: Número de registros a omitir
+      responses:
+        '200':
+          description: Lista de movimientos del kardex
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KardexResponse'
+              example:
+                total: 2
+                movements:
+                  - id: 1
+                    product_id: 1
+                    movement_type: "entry"
+                    quantity: 10
+                    stock_after: 110
+                    product_name: "Producto Ejemplo"
+                    movement_date: "2025-03-07T12:00:00Z"
+                  - id: 2
+                    product_id: 1
+                    movement_type: "exit"
+                    quantity: 5
+                    stock_after: 105
+                    product_name: "Producto Ejemplo"
+                    movement_date: "2025-03-07T13:00:00Z"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              example:
+                error: "Database connection failed"
+
+  /products/{productId}/prices:
+    get:
+      summary: Comparar precios de compra de un producto
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+          description: ID del producto
+      responses:
+        '200':
+          description: Historial de precios y comparativas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricesResponse'
+              example:
+                purchase_history:
+                  - unit_price: 25.50
+                    created_at: "2025-03-01T10:00:00Z"
+                    supplier_name: "Proveedor A"
+                  - unit_price: 30.00
+                    created_at: "2025-02-15T09:00:00Z"
+                    supplier_name: "Proveedor B"
+                low_price:
+                  unit_price: 25.50
+                  created_at: "2025-03-01T10:00:00Z"
+                  supplier_name: "Proveedor A"
+                best_price:
+                  unit_price: 30.00
+                  created_at: "2025-02-15T09:00:00Z"
+                  supplier_name: "Proveedor B"
+                lastPrice:
+                  unit_price: 25.50
+                  created_at: "2025-03-01T10:00:00Z"
+                  supplier_name: "Proveedor A"
+        '404':
+          description: No se encontraron compras para el producto
+          content:
+            application/json:
+              example:
+                error: "No se encontraron compras para este producto"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              example:
+                error: "no existe la columna po.created_at"
+
+  /purchase-orders:
+    post:
+      summary: Registrar una compra y actualizar el kardex
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOrderRequest'
+            example:
+              supplier_id: 1
+              items:
+                - product_id: 1
+                  quantity: 20
+                  unit_price: 15.75
+                - product_id: 2
+                  quantity: 10
+                  unit_price: 22.00
+      responses:
+        '201':
+          description: Compra registrada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderResponse'
+              example:
+                message: "Compra registrada y kardex actualizado"
+                purchase_order_id: 1
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              example:
+                error: "Datos inválidos"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              example:
+                error: "Producto no encontrado"
+
+components:
+  schemas:
+    MovementRequest:
+      type: object
+      properties:
+        movement_type:
+          type: string
+          enum: ["entry", "exit"]
+        quantity:
+          type: integer
+          minimum: 1
+        unit_price:
+          type: number
+          format: float
+        reference_id:
+          type: integer
+        reference_type:
+          type: string
+      required:
+        - movement_type
+        - quantity
+
+    KardexEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        product_id:
+          type: integer
+        movement_type:
+          type: string
+        quantity:
+          type: integer
+        unit_price:
+          type: number
+          format: float
+        stock_after:
+          type: integer
+        movement_date:
+          type: string
+          format: date-time
+
+    KardexResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        movements:
+          type: array
+          items:
+            $ref: '#/components/schemas/KardexEntry'
+            properties:
+              product_name:
+                type: string
+
+    PricesResponse:
+      type: object
+      properties:
+        purchase_history:
+          type: array
+          items:
+            type: object
+            properties:
+              unit_price:
+                type: number
+                format: float
+              created_at:
+                type: string
+                format: date-time
+              supplier_name:
+                type: string
+        low_price:
+          $ref: '#/components/schemas/PriceEntry'
+        best_price:
+          $ref: '#/components/schemas/PriceEntry'
+        lastPrice:
+          $ref: '#/components/schemas/PriceEntry'
+
+    PriceEntry:
+      type: object
+      properties:
+        unit_price:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+        supplier_name:
+          type: string
+
+    PurchaseOrderRequest:
+      type: object
+      properties:
+        supplier_id:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              product_id:
+                type: integer
+              quantity:
+                type: integer
+                minimum: 1
+              unit_price:
+                type: number
+                format: float
+            required:
+              - product_id
+              - quantity
+              - unit_price
+      required:
+        - supplier_id
+        - items
+
+    PurchaseOrderResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        purchase_order_id:
+          type: integer
