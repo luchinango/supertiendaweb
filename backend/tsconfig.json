@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2018",
     "module": "CommonJS",
-    "strict": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
     "esModuleInterop": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "baseUrl": "./src",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,  // Evita que `tsc` genere archivos .js
-    "outDir": "./dist",
-    "rootDir": "./", // Define la raíz del proyecto
-    "moduleResolution": "node", // Necesario para resolver módulos
-    "types": ["express", "jsonwebtoken"]
+    "paths": {
+      "*": ["*"]
+    }
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

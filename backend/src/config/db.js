@@ -8,5 +8,4 @@ const pool = new pg_1.Pool({
     password: 'postgres',
     port: 5432,
 });
-
 exports.default = pool;

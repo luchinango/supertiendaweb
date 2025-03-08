@@ -1,24 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import { User, getUserById } from '../models/user';
 import database from '../config/db';
-
-export interface User {
-  id: number;
-  email: string;
-  password: string;
-  role_id?: number;
-  role?: string;
-}
-
-export const getUserById = async (id: number): Promise<User | null> => {
-  try {
-    const [user] = await database.query('SELECT * FROM users WHERE id = ?', [id]);
-    return user ? user[0] : null;
-  } catch (error) {
-    console.error('Error getting user by id:', error);
-    return null;
-  }
-};
 
 declare global {
   namespace Express {

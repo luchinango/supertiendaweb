@@ -2,9 +2,29 @@ import pool from "../config/db";
 
 export interface User {
   id: number;
+  username: string;
   email: string;
   password: string;
-  role_id: number; // Cambiamos role por role_id
+  role_id: number;
+  first_name: string;
+  last_name: string;
+  active?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface UserLogin {
+  username: string;
+  password: string;
+}
+
+export interface UserResponse {
+  id: number;
+  username: string;
+  email: string;
+  role_id: number;
+  first_name: string;
+  last_name: string;
 }
 
 export const getUserByEmail = async (email: string): Promise<User | null> => {
