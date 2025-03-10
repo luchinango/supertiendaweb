@@ -12,6 +12,7 @@ import purchaseOrderRoutes from './routes/purchaseOrders';
 import mermasRouter from './routes/mermas'; // Usa un solo nombre
 import creditRoutes from './services/creditService';
 import kardexRouter from './routes/kardex';
+import perishablesRouter from './routes/perishables';
 
 const app = express();
 
@@ -41,6 +42,21 @@ app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/mermas', mermasRouter); // Solo una vez
 app.use('/api/credits', creditRoutes);
 app.use('/api/kardex', kardexRouter);
+app.use('/api/perishables', perishablesRouter);
+
+// Actualizamos el cron para usar el nuevo endpoint
+const checkExpiredPerishables = async () => {
+    try {
+      const response = await axios.post('http://localhost:3000/api/perishables/check-expired', {}, {
+        headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
+      });
+      console.log('Perecederos vencidos procesados:', response.data);
+    } catch (error) {
+      console.error('Error al procesar perecederos vencidos:', error);
+    }
+  };
+  
+  cron.schedule('0 0 * * *', checkExpiredPerishables);
 
 const PORT: number = parseInt(process.env.PORT || '5000', 10);
 app.listen(PORT, () => {

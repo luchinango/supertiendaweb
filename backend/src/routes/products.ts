@@ -32,7 +32,6 @@ router.post('/', async (req: Request, res: Response) => {
       category_id,
       name,
       price,
-      stock,
       description,
       purchase_price,
       sale_price,
@@ -48,14 +47,13 @@ router.post('/', async (req: Request, res: Response) => {
     }: Partial<Product> = req.body;
 
     const result = await pool.query(
-      `INSERT INTO products (supplier_id, category_id, name, price, stock, description, purchase_price, sale_price, sku, barcode, brand, unit, min_stock, max_stock, actual_stock, expiration_date, image)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      `INSERT INTO products (supplier_id, category_id, name, price, description, purchase_price, sale_price, sku, barcode, brand, unit, min_stock, max_stock, actual_stock, expiration_date, image)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
       [
         supplier_id,
         category_id,
         name,
         price,
-        stock,
         description,
         purchase_price,
         sale_price,
