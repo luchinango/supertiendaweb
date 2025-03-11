@@ -13,6 +13,7 @@ import mermasRouter from './routes/mermas'; // Usa un solo nombre
 import creditRoutes from './services/creditService';
 import kardexRouter from './routes/kardex';
 import perishablesRouter from './routes/perishables';
+import reportRoutes from './routes/reports';
 
 const app = express();
 
@@ -43,6 +44,9 @@ app.use('/api/mermas', mermasRouter); // Solo una vez
 app.use('/api/credits', creditRoutes);
 app.use('/api/kardex', kardexRouter);
 app.use('/api/perishables', perishablesRouter);
+app.use("/api/reports", reportRoutes);
+
+
 
 // Actualizamos el cron para usar el nuevo endpoint
 const checkExpiredPerishables = async () => {
