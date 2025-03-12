@@ -3,7 +3,7 @@ import axios from 'axios';
 import pool from '../config/db';
 import authMiddleware from '../middleware/auth';
 import { Merma, MermaWithDetails } from '../models/mermas';
-import { User } from '../models/user';  // Añade esta importación
+import { User } from '../models/user';
 
 const router = express.Router();
 
@@ -196,6 +196,46 @@ router.post('/check-expired', async (req: Request, res: Response) => {
       await pool.query('ROLLBACK');
       res.status(500).json({ error: (error as Error).message });
   }
+});
+
+// Reportes de mermas
+router.get('/report', async (_req: Request, res: Response) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                SUM(quantity) AS total_mermas,
+                SUM(CASE WHEN type = 'vencido' THEN quantity ELSE 0 END) AS total_vencidos,
+                SUM(CASE WHEN type = 'dañado' THEN quantity ELSE 0 END) AS total_dañados,
+                SUM(CASE WHEN type = 'perdido' THEN quantity ELSE 0 END) AS total_perdidos,
+                json_agg(
+                    json_build_object(
+                        'id', m.id,
+                        'product_id', m.product_id,
+                        'product_name', p.name,
+                        'quantity', m.quantity,
+                        'type', m.type,
+                        'date', m.date,
+                        'value', m.value,
+                        'responsible_name', u.username,
+                        'observations', m.observations
+                    )
+                ) AS mermas_detalladas
+            FROM mermas m
+            LEFT JOIN products p ON m.product_id = p.id
+            LEFT JOIN users u ON m.responsible_id = u.id
+        `);
+
+        const report = result.rows[0];
+        res.json({
+            total_mermas: report.total_mermas || 0,
+            total_vencidos: report.total_vencidos || 0,
+            total_dañados: report.total_dañados || 0,
+            total_perdidos: report.total_perdidos || 0,
+            mermas_detalladas: report.mermas_detalladas || []
+        });
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
 });
 
 export default router;

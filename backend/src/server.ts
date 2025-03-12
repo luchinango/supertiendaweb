@@ -14,6 +14,10 @@ import creditRoutes from './services/creditService';
 import kardexRouter from './routes/kardex';
 import perishablesRouter from './routes/perishables';
 import reportRoutes from './routes/reports';
+import alarmRoutes from './routes/alarms';
+import categoriesRouter from './routes/categories';
+import cashRegistersRouter from './routes/cashRegisters';
+
 
 const app = express();
 
@@ -45,10 +49,12 @@ app.use('/api/credits', creditRoutes);
 app.use('/api/kardex', kardexRouter);
 app.use('/api/perishables', perishablesRouter);
 app.use("/api/reports", reportRoutes);
+app.use("/api/alarms", alarmRoutes);
+app.use('/api/categories', categoriesRouter);
+app.use('/api/cash-registers', cashRegistersRouter);
 
 
-
-// Actualizamos el cron para usar el nuevo endpoint
+// Actualizamos el cron para usar el endpoint
 const checkExpiredPerishables = async () => {
     try {
       const response = await axios.post('http://localhost:3000/api/perishables/check-expired', {}, {
