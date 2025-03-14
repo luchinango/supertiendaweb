@@ -1,11 +1,7 @@
-import React from "react"; // Agrega esta línea si se requieren los imports explícitos
-import "../app/globals.css";
-import { Inter } from "next/font/google";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
+import React from "react";
+import "./globals.css";
 import type { Metadata } from "next";
-
-const inter = Inter({ subsets: ["latin"] });
+import { Sidebar } from './components/Sidebar';
 
 export const metadata: Metadata = {
   title: "SuperTienda Web",
@@ -19,15 +15,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
-        <div className="flex h-screen bg-gray-100">
+      <head>
+        <title>SuperTienda</title>
+      </head>
+      <body style={{ margin: 0, padding: 0 }}>
+        <div style={{ display: 'flex' }}>
           <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Header />
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
-              {children}
-            </main>
-          </div>
+          <main style={{ 
+            flex: 1, 
+            backgroundColor: '#F8F9FB',
+            padding: '32px'
+          }}>
+            {children}
+          </main>
         </div>
       </body>
     </html>

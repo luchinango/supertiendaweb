@@ -1,51 +1,72 @@
-import Link from "next/link"
+"use client";
+
+import React from 'react';
+import Link from "next/link";
 import {
-  Home,
-  DollarSign,
+  LayoutDashboard,
+  ArrowLeftRight,
   BarChart2,
   Package,
-  Users,
+  Scale,
+  Users2,
   UserCircle,
   Truck,
-  Settings,
-  AlertTriangle,
   CreditCard,
+  Bell,
   ShoppingCart,
-  PackageX,
-} from "lucide-react"
+  Settings,
+} from "lucide-react";
 
 const menuItems = [
-  { name: "Dashboard", icon: Home, href: "/" },
-  { name: "Movimientos", icon: DollarSign, href: "/movimientos" },
-  { name: "Estadísticas", icon: BarChart2, href: "/estadisticas" },
-  { name: "Productos", icon: Package, href: "/productos" },
-  { name: "Mermas", icon: PackageX, href: "/mermas" },
-  { name: "Empleados", icon: Users, href: "/empleados" },
-  { name: "Clientes", icon: UserCircle, href: "/clientes" },
-  { name: "Proveedores", icon: Truck, href: "/proveedores" },
-  { name: "Créditos", icon: CreditCard, href: "/creditos" },
-  { name: "Alertas", icon: AlertTriangle, href: "/alertas" },
-  { name: "Órdenes de Compra", icon: ShoppingCart, href: "/ordenes-compra" },
-  { name: "Configuraciones", icon: Settings, href: "/configuraciones" },
-]
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: ArrowLeftRight, label: "Movimientos", href: "/movimientos" },
+  { icon: BarChart2, label: "Estadísticas", href: "/estadisticas" },
+  { icon: Package, label: "Productos", href: "/productos" },
+  { icon: Scale, label: "Mermas", href: "/mermas" },
+  { icon: Users2, label: "Empleados", href: "/empleados" },
+  { icon: UserCircle, label: "Clientes", href: "/clientes" },
+  { icon: Truck, label: "Proveedores", href: "/proveedores" },
+  { icon: CreditCard, label: "Créditos", href: "/creditos" },
+  { icon: Bell, label: "Alertas", href: "/alertas" },
+  { icon: ShoppingCart, label: "Órdenes de Compra", href: "/ordenes" },
+  { icon: Settings, label: "Configuraciones", href: "/configuraciones" },
+];
 
-export default function Sidebar() {
+export function Sidebar() {
   return (
-    <div className="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
-      <h2 className="text-2xl font-semibold text-center">SuperTienda</h2>
-      <nav>
+    <div style={{ 
+      width: '250px', 
+      backgroundColor: '#000', // fondo negro
+      color: 'white',
+      minHeight: '100vh'
+    }}>
+      <div style={{ padding: '16px', borderBottom: '1px solid #444' }}>
+        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 500 }}>SuperTienda</h1>
+      </div>
+      <nav style={{ marginTop: '16px' }}>
         {menuItems.map((item) => (
           <Link
-            key={item.name}
+            key={item.href}
             href={item.href}
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '8px 24px',
+              borderRadius: '8px',
+              color: 'white',
+              textDecoration: 'none',
+              transition: 'background-color 0.3s'
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#222')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
-            <item.icon className="inline-block mr-2 h-5 w-5" />
-            {item.name}
+            <item.icon style={{ width: '20px', height: '20px' }} />
+            <span style={{ fontSize: '14px' }}>{item.label}</span>
           </Link>
         ))}
       </nav>
     </div>
-  )
+  );
 }
 

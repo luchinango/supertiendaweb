@@ -1,6 +1,10 @@
-module.exports = {
+import type { PluginCreator } from "postcss";
+
+const config = {
   plugins: {
     tailwindcss: {},
-    autoprefixer: {},
-  },
-}
+    autoprefixer: {}
+  }
+};
+
+export default config;
