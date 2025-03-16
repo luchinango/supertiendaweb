@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import pool from '../config/db';
+import { authenticate, authorize } from '../middleware/auth';
 
 const router: Router = express.Router();
 
@@ -16,6 +17,9 @@ interface Supplier {
   supplier_type: string;
   status: string;
 }
+
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
 
 // CREATE - Crear un proveedor
 router.post('/', async (req: Request, res: Response) => {

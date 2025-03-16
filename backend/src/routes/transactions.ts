@@ -4,10 +4,11 @@ import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
+
 // Endpoint: Crear Transacción
-router.post('/:customerId/transactions', 
-  authenticate, 
-  authorize(['sales', 'cashier']), 
+router.post('/:customerId/transactions',  
   async (req: Request, res: Response) => {
     const { customerId } = req.params;
     const { amount, type, invoice_number, notes } = req.body;
@@ -52,7 +53,7 @@ router.post('/:customerId/transactions',
 });
 
 // Resto de los endpoints sin cambios
-router.get('/:customerId/transactions', authenticate, authorize(['admin', 'sales', 'cashier']), async (req: Request, res: Response) => {
+router.get('/:customerId/transactions', async (req: Request, res: Response) => {
   const { customerId } = req.params;
   const { limit = '50', offset = '0' } = req.query;
 
@@ -70,7 +71,7 @@ router.get('/:customerId/transactions', authenticate, authorize(['admin', 'sales
   }
 });
 
-router.get('/:customerId/transactions/:transactionId', authenticate, authorize(['admin', 'sales', 'cashier']), async (req: Request, res: Response) => {
+router.get('/:customerId/transactions/:transactionId', async (req: Request, res: Response) => {
   const { customerId, transactionId } = req.params;
   try {
     const result = await pool.query(
@@ -87,7 +88,7 @@ router.get('/:customerId/transactions/:transactionId', authenticate, authorize([
   }
 });
 
-router.patch('/:customerId/transactions/:transactionId/cancel', authenticate, authorize(['admin', 'cashier']), async (req: Request, res: Response) => {
+router.patch('/:customerId/transactions/:transactionId/cancel', async (req: Request, res: Response) => {
   const { customerId, transactionId } = req.params;
   try {
     await pool.query('BEGIN');

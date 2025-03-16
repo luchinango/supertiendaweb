@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import pool from '../config/db';
+import { authenticate, authorize } from "../middleware/auth";
 
 const router: Router = express.Router();
 
@@ -19,6 +20,9 @@ interface CartItem {
   name?: string;
   price?: number;
 }
+
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 // CREATE - Crear un carrito para un customer
 router.post('/', async (req: Request, res: Response) => {

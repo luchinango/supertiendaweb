@@ -1,8 +1,13 @@
 import express, { Request, Response } from 'express';
 import pool from '../config/db';
 import authMiddleware from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 
 const router = express.Router();
+
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
+
 
 // Informe de productos perecederos vencidos
 router.get('/report', authMiddleware.authenticate, async (_req: Request, res: Response) => {

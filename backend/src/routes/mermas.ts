@@ -1,13 +1,15 @@
 import express, { Request, Response } from 'express';
 import axios from 'axios';
 import pool from '../config/db';
-import authMiddleware from '../middleware/auth';
 import { Merma, MermaWithDetails } from '../models/mermas';
 import { User } from '../models/user';
+import { authenticate, authorize } from '../middleware/auth';
 
 const router = express.Router();
 
-// router.use(authMiddleware.authenticate);
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
+
 
 const checkExpiredProducts = async () => {
   const response = await axios.post('http://localhost:5000/api/mermas/check-expired', {}, {

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import pool from '../config/db';
+import { authenticate, authorize } from "../middleware/auth";
 
 const router: Router = express.Router();
 
@@ -27,6 +28,9 @@ interface Credit {
   credit_limit?: number; // Null o 0 para compras al contado, valor positivo para prepago
   status?: string;
 }
+
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 // CREATE - Registrar un nuevo cliente
 router.post('/register', async (req: Request, res: Response) => {

@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import pool from '../config/db'; // Asegúrate de que la ruta sea correcta
+import { authenticate, authorize } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -10,6 +11,9 @@ interface Category {
     description?: string; // Opcional porque puede ser NULL en la BD
     is_active: boolean;
 }
+
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
 
 // Crear una categoría
 router.post('/', async (req: Request, res: Response) => {

@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import express from "express";
 import pool from "../config/db";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { authenticate, authorize, generateToken } from "../middleware/auth"; // Importamos desde auth.ts
 
 const router: Router = express.Router();
 
@@ -56,18 +56,6 @@ interface ConsignmentItem {
 
 const SALT_ROUNDS = 10;
 
-// Middleware para verificar JWT (opcional)
-const authenticateToken = (req: Request, res: Response, next: Function) => {
-  const token = req.headers["authorization"]?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "No token provided" });
-
-  jwt.verify(token, process.env.JWT_SECRET!, (err, user) => {
-    if (err) return res.status(403).json({ error: "Invalid token" });
-    (req as any).user = user;
-    next();
-  });
-};
-
 // LOGIN
 router.post("/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -81,7 +69,6 @@ router.post("/login", async (req: Request, res: Response) => {
       [email, "active"]
     );
 
-    // Verificar si el usuario existe
     if (user.rows.length === 0) {
       return res
         .status(404)
@@ -96,11 +83,17 @@ router.post("/login", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Contraseña incorrecta" });
     }
 
-    const token = jwt.sign(
-      { id: user.rows[0].id, role: user.rows[0].role }, // Usamos 'role' para consistencia con auth.ts
-      process.env.JWT_SECRET || "clave_secreta_para_desarrollo", // Aseguramos un valor por defecto
-      { expiresIn: "1h" }
-    );
+    // Usamos generateToken de auth.ts
+    const token = generateToken({
+      id: user.rows[0].id,
+      username: user.rows[0].username,
+      email: user.rows[0].email,
+      role_id: user.rows[0].role_id,
+      role: user.rows[0].role,
+      password: user.rows[0].password,
+      first_name: user.rows[0].first_name,
+      last_name: user.rows[0].last_name,
+    });
 
     res.json({ token });
   } catch (error) {
@@ -149,6 +142,10 @@ router.post("/register", async (req: Request, res: Response) => {
     res.status(500).json({ error: (error as Error).message });
   }
 });
+
+// Aplicar authenticate y authorize a todas las rutas siguientes
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 // READ - Obtener todos los usuarios
 router.get("/", async (req: Request, res: Response) => {

@@ -3,6 +3,10 @@ import cors from 'cors';
 import cron from 'node-cron';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from "./swagger";
+import * as yaml from 'js-yaml';
+import { readFileSync } from 'fs';
 
 // Cargar variables de entorno desde .env
 dotenv.config();
@@ -46,10 +50,19 @@ app.use(cors({
 
 app.use(express.json());
 
+/* // Configurar Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); */
+
 // Ruta raíz para verificar el estado del servidor
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Backend funcionando', timestamp: new Date() });
 });
+
+// Cargar el archivo YAML
+const swaggerDocument = yaml.load(readFileSync('./docs/openapi.yaml', 'utf8')) as swaggerUi.JsonObject;
+
+// Configurar Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Registro de rutas
 app.use('/api/users', userRoutes);
@@ -109,7 +122,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 const PORT: number = parseInt(process.env.PORT || '5000', 10);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Documentación Swagger en http://localhost:${PORT}/api-docs`);
   // Generación de token de prueba (solo en desarrollo)
   if (process.env.NODE_ENV === 'development') {
     const testUser: User & { role?: string } = {

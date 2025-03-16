@@ -1,5 +1,6 @@
 import express, { Router, Request, Response } from 'express';
 import pool from '../config/db';
+import { authenticate, authorize } from '../middleware/auth';
 
 const router: Router = express.Router();
 
@@ -23,6 +24,9 @@ interface Product {
   expiration_date?: Date;
   image?: string;
 }
+
+router.use(authenticate); // Todas las rutas después requieren token
+router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 // CREATE - Crear un producto
 router.post('/', async (req: Request, res: Response) => {
