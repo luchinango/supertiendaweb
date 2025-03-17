@@ -359,9 +359,9 @@ router.post(
   }
 );
 
-// Registrar un pago en cuotas de una deuda
+// Registrar un pago de deuda
 router.post(
-  "/users/:userId/suppliers/:supplierId/debts/:debtId/payments",
+  "/users/:userId/suppliers/:supplierId/supplier_debts/:debtId/payments",
   async (req: Request, res: Response) => {
     try {
       const { userId, supplierId, debtId } = req.params;
@@ -380,7 +380,7 @@ router.post(
       }
 
       const currentDebt = debtCheck.rows[0];
-      if (currentDebt.amount < amount) {
+      if (currentDebt.remaining_amount < amount) { // Cambio: usar remaining_amount en lugar de amount
         return res
           .status(400)
           .json({ error: "Payment amount exceeds remaining debt" });
@@ -388,13 +388,13 @@ router.post(
 
       // Registrar el pago
       const paymentResult = await pool.query(
-        "INSERT INTO debt_payments (debt_id, amount, created_at) VALUES ($1, $2, CURRENT_TIMESTAMP) RETURNING *",
+        "INSERT INTO debt_payments (debt_id, amount, payment_date) VALUES ($1, $2, CURRENT_TIMESTAMP) RETURNING *",
         [debtId, amount]
       );
 
-      // Actualizar el monto de la deuda
+      // Actualizar el monto restante de la deuda
       await pool.query(
-        "UPDATE supplier_debts SET amount = amount - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+        "UPDATE supplier_debts SET remaining_amount = remaining_amount - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
         [amount, debtId]
       );
 

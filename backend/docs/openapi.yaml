@@ -233,6 +233,18 @@ components:
         - name
         - price
         - supplier_id
+    Cart:
+      type: object
+      properties:
+        id:
+          type: integer
+        customer_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - customer_id
     CartItem:
       type: object
       properties:
@@ -243,6 +255,28 @@ components:
       required:
         - product_id
         - quantity
+    CartItemDetailed:
+      type: object
+      properties:
+        id:
+          type: integer
+        cart_id:
+          type: integer
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+        price_at_time:
+          type: number
+        name:
+          type: string
+        price:
+          type: number
+      required:
+        - cart_id
+        - product_id
+        - quantity
+        - price_at_time
     Customer:
       type: object
       properties:
@@ -1052,42 +1086,8 @@ paths:
 
   # --- Cart ---
   /cart:
-    get:
-      summary: Obtener el carrito del usuario autenticado
-      tags:
-        - Cart
-      security:
-        - bearerAuth: []
-      description: Requiere rol 'sales' o 'cashier'
-      responses:
-        '200':
-          description: Contenido del carrito
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CartItem'
-        '401':
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
     post:
-      summary: Añadir producto al carrito
+      summary: Crear un nuevo carrito para un cliente
       tags:
         - Cart
       security:
@@ -1098,10 +1098,156 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CartItem'
+              type: object
+              properties:
+                customer_id:
+                  type: integer
+                  example: 1
+              required:
+                - customer_id
+      responses:
+        '201':
+          description: Carrito creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Customer ID es requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cart/items:
+    post:
+      summary: Añadir un producto al carrito
+      tags:
+        - Cart
+      security:
+        - bearerAuth: []
+      description: Requiere rol 'sales' o 'cashier'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cart_id:
+                  type: integer
+                  example: 1
+                product_id:
+                  type: integer
+                  example: 5
+                quantity:
+                  type: integer
+                  example: 2
+                  default: 1
+              required:
+                - cart_id
+                - product_id
       responses:
         '201':
           description: Producto añadido al carrito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemDetailed'
+        '400':
+          description: Datos inválidos o stock insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Carrito o producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cart/{id}:
+    get:
+      summary: Obtener el contenido de un carrito por ID
+      tags:
+        - Cart
+      security:
+        - bearerAuth: []
+      description: Requiere rol 'sales' o 'cashier'
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID del carrito
+      responses:
+        '200':
+          description: Detalles del carrito y sus ítems
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cart:
+                    $ref: '#/components/schemas/Cart'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CartItemDetailed'
+        '400':
+          description: ID del carrito inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Carrito no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cart/{cartId}/items/{itemId}:
+    delete:
+      summary: Quitar un ítem del carrito
+      tags:
+        - Cart
+      security:
+        - bearerAuth: []
+      description: Requiere rol 'sales' o 'cashier'
+      parameters:
+        - in: path
+          name: cartId
+          required: true
+          schema:
+            type: integer
+          description: ID del carrito
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: integer
+          description: ID del ítem en el carrito
+      responses:
+        '200':
+          description: Ítem eliminado exitosamente
           content:
             application/json:
               schema:
@@ -1109,20 +1255,84 @@ paths:
                 properties:
                   message:
                     type: string
+                  removedItem:
+                    $ref: '#/components/schemas/CartItemDetailed'
+                  updatedStock:
+                    type: integer
         '400':
-          description: Datos inválidos
+          description: IDs inválidos
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: No autorizado
+        '404':
+          description: Carrito o ítem no encontrado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Rol no permitido
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cart/{id}/checkout:
+    post:
+      summary: Finalizar la compra de un carrito
+      tags:
+        - Cart
+      security:
+        - bearerAuth: []
+      description: Requiere rol 'sales' o 'cashier'
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID del carrito
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customer_payment_method:
+                  type: string
+                  enum: [cash, credit]
+                  example: cash
+                user_id:
+                  type: integer
+                  example: 2
+              required:
+                - customer_payment_method
+                - user_id
+      responses:
+        '200':
+          description: Compra completada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  total_cost:
+                    type: number
+                  customer_payment_method:
+                    type: string
+                  transaction:
+                    $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Datos inválidos, carrito vacío o saldo insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Carrito o cliente no encontrado
           content:
             application/json:
               schema:

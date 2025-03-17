@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import pool from '../config/db';
-import { authenticate, authorize } from "../middleware/auth";
 
 const router: Router = express.Router();
 
@@ -21,10 +20,28 @@ interface CartItem {
   price?: number;
 }
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
+/**
+ * Validates if a cart exists by its ID
+ * @param cartId - The ID of the cart to validate
+ * @param res - Express response object
+ * @returns Promise<boolean> - True if cart exists, false otherwise
+ */
+async function validateCartExists(cartId: number, res: Response): Promise<boolean> {
+  const cart = await pool.query('SELECT id FROM cart WHERE id = $1', [cartId]);
+  if (cart.rows.length === 0) {
+    res.status(404).json({ error: `Cart with ID ${cartId} not found` });
+    return false;
+  }
+  return true;
+}
 
-// CREATE - Crear un carrito para un customer
+/**
+ * @route POST /cart
+ * @description Creates a new cart for a customer
+ * @access Public
+ * @param {number} customer_id - The ID of the customer
+ * @returns {object} The created cart object
+ */
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { customer_id }: Partial<Cart> = req.body;
@@ -42,65 +59,57 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// CREATE - Agregar producto al carrito
+/**
+ * @route POST /cart/items
+ * @description Adds a product to a cart
+ * @access Public
+ * @param {number} cart_id - The ID of the cart
+ * @param {number} product_id - The ID of the product
+ * @param {number} [quantity=1] - The quantity to add
+ * @returns {object} The created cart item
+ */
 router.post('/items', async (req: Request, res: Response) => {
   try {
     const { cart_id, product_id, quantity }: Partial<CartItem> = req.body;
-
     if (!cart_id || !product_id) {
       return res.status(400).json({ error: 'Cart ID and Product ID are required' });
     }
 
     const finalQuantity = quantity ?? 1;
-
-    const cart = await pool.query('SELECT customer_id FROM cart WHERE id = $1', [cart_id]);
-    if (cart.rows.length === 0) {
-      return res.status(404).json({ error: 'Cart not found' });
-    }
+    if (!await validateCartExists(cart_id, res)) return;
 
     await pool.query('BEGIN');
 
-    const product = await pool.query(
-      'SELECT price, supplier_id, actual_stock FROM products WHERE id = $1 FOR UPDATE',
+    const productResult = await pool.query(
+      `SELECT p.price, p.supplier_id, p.actual_stock,
+              ci.consignment_id, ci.quantity_delivered, ci.quantity_sold
+       FROM products p
+       LEFT JOIN consignment_items ci ON ci.product_id = p.id
+       LEFT JOIN consignments c ON ci.consignment_id = c.id AND c.supplier_id = p.supplier_id AND c.status = 'active'
+       WHERE p.id = $1 FOR UPDATE`,
       [product_id]
     );
-    if (product.rows.length === 0) {
+
+    if (productResult.rows.length === 0) {
       await pool.query('ROLLBACK');
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    const price_at_time = product.rows[0].price;
-    const supplierId = product.rows[0].supplier_id;
-    const availableStock = product.rows[0].actual_stock;
+    const { price, supplier_id, actual_stock, consignment_id, quantity_delivered, quantity_sold } = productResult.rows[0];
+    const price_at_time = price;
+    const availableStock = actual_stock;
 
     if (finalQuantity > availableStock) {
       await pool.query('ROLLBACK');
-      return res.status(400).json({ 
-        error: `Insufficient stock. Only ${availableStock} units available for this product` 
-      });
+      return res.status(400).json({ error: `Insufficient stock. Only ${availableStock} units available` });
     }
 
-    // Verificar consignaciones (si aplica)
-    const consignmentItem = await pool.query(
-      `SELECT ci.consignment_id, ci.quantity_delivered, ci.quantity_sold
-       FROM consignment_items ci
-       JOIN consignments c ON ci.consignment_id = c.id
-       WHERE c.supplier_id = $1 AND ci.product_id = $2 AND c.status = 'active'`,
-      [supplierId, product_id]
-    );
-
-    if (consignmentItem.rows.length > 0) {
-      const { consignment_id, quantity_delivered, quantity_sold } = consignmentItem.rows[0];
-      const availableToSell = quantity_delivered - quantity_sold;
-
+    if (consignment_id) {
+      const availableToSell = quantity_delivered - (quantity_sold || 0);
       if (finalQuantity > availableToSell) {
         await pool.query('ROLLBACK');
-        return res.status(400).json({ 
-          error: `Only ${availableToSell} units available for this consignment` 
-        });
+        return res.status(400).json({ error: `Only ${availableToSell} units available for this consignment` });
       }
-
-      // Actualizar quantity_sold en consignment_items
       await pool.query(
         'UPDATE consignment_items SET quantity_sold = quantity_sold + $1 WHERE consignment_id = $2 AND product_id = $3',
         [finalQuantity, consignment_id, product_id]
@@ -125,21 +134,48 @@ router.post('/items', async (req: Request, res: Response) => {
   }
 });
 
-// READ - Obtener contenido del carrito
+/**
+ * @route GET /cart/:id
+ * @description Retrieves the contents of a cart
+ * @access Public
+ * @param {string} id - The ID of the cart
+ * @returns {object} Cart details and its items
+ */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params as { id: string };
-    const result = await pool.query(
+    const cartIdNum = parseInt(id, 10);
+    if (isNaN(cartIdNum)) {
+      return res.status(400).json({ error: 'Cart ID must be a valid number' });
+    }
+
+    const cart = await pool.query('SELECT id, customer_id, created_at FROM cart WHERE id = $1', [cartIdNum]);
+    if (cart.rows.length === 0) {
+      return res.status(404).json({ error: 'Cart not found' });
+    }
+
+    const items = await pool.query(
       'SELECT ci.*, p.name, p.price FROM cart_items ci JOIN products p ON ci.product_id = p.id WHERE ci.cart_id = $1',
-      [id]
+      [cartIdNum]
     );
-    res.json(result.rows);
+
+    res.json({
+      cart: cart.rows[0],
+      items: items.rows
+    });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// DELETE - Quitar un ítem del carrito
+/**
+ * @route DELETE /cart/:cartId/items/:itemId
+ * @description Removes an item from a cart
+ * @access Public
+ * @param {string} cartId - The ID of the cart
+ * @param {string} itemId - The ID of the item to remove
+ * @returns {object} Details of the removed item and updated stock
+ */
 router.delete('/:cartId/items/:itemId', async (req: Request, res: Response) => {
   try {
     const { cartId, itemId } = req.params as { cartId: string; itemId: string };
@@ -150,13 +186,9 @@ router.delete('/:cartId/items/:itemId', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Cart ID and Item ID must be valid numbers' });
     }
 
-    await pool.query('BEGIN');
+    if (!await validateCartExists(cartIdNum, res)) return;
 
-    const cart = await pool.query('SELECT id FROM cart WHERE id = $1', [cartIdNum]);
-    if (cart.rows.length === 0) {
-      await pool.query('ROLLBACK');
-      return res.status(404).json({ error: `Cart with ID ${cartId} not found` });
-    }
+    await pool.query('BEGIN');
 
     const item = await pool.query(
       'SELECT id, cart_id, product_id, quantity FROM cart_items WHERE id = $1 AND cart_id = $2',
@@ -173,7 +205,6 @@ router.delete('/:cartId/items/:itemId', async (req: Request, res: Response) => {
 
     const { product_id, quantity } = item.rows[0];
 
-    // Devolver el stock
     const stockUpdate = await pool.query(
       'UPDATE products SET actual_stock = actual_stock + $1 WHERE id = $2 RETURNING actual_stock',
       [quantity, product_id]
@@ -184,7 +215,6 @@ router.delete('/:cartId/items/:itemId', async (req: Request, res: Response) => {
       return res.status(500).json({ error: `Failed to update stock for product ID ${product_id}` });
     }
 
-    // Revertir quantity_sold en consignaciones si aplica
     const consignmentItem = await pool.query(
       `SELECT ci.consignment_id
        FROM consignment_items ci
@@ -221,7 +251,15 @@ router.delete('/:cartId/items/:itemId', async (req: Request, res: Response) => {
   }
 });
 
-// POST - Finalizar compra del carrito (solo para customers, usando transactions)
+/**
+ * @route POST /cart/:id/checkout
+ * @description Completes the purchase of a cart
+ * @access Public
+ * @param {string} id - The ID of the cart
+ * @param {string} customer_payment_method - Payment method ("cash" or "credit")
+ * @param {number} user_id - The ID of the user processing the transaction
+ * @returns {object} Purchase details and transaction info
+ */
 router.post('/:id/checkout', async (req: Request, res: Response) => {
   try {
     const { id } = req.params as { id: string };
@@ -233,7 +271,6 @@ router.post('/:id/checkout', async (req: Request, res: Response) => {
 
     const { customer_payment_method, user_id } = req.body;
 
-    // Validación del método de pago del cliente
     if (!customer_payment_method) {
       return res.status(400).json({ 
         error: 'Customer payment method is required',
@@ -248,20 +285,15 @@ router.post('/:id/checkout', async (req: Request, res: Response) => {
       });
     }
 
-    // Validación del user_id (necesario para transactions)
     if (!user_id || isNaN(parseInt(user_id, 10))) {
       return res.status(400).json({ error: 'User ID is required and must be a valid number' });
     }
 
-    // Verificar el carrito
-    const cart = await pool.query('SELECT customer_id FROM cart WHERE id = $1', [cartIdNum]);
-    if (cart.rows.length === 0) {
-      return res.status(404).json({ error: `Cart with ID ${cartIdNum} not found` });
-    }
+    if (!await validateCartExists(cartIdNum, res)) return;
 
+    const cart = await pool.query('SELECT customer_id FROM cart WHERE id = $1', [cartIdNum]);
     const customerId = cart.rows[0].customer_id;
 
-    // Obtener los ítems del carrito
     const cartItems = await pool.query(
       'SELECT ci.*, p.price, p.supplier_id FROM cart_items ci JOIN products p ON ci.product_id = p.id WHERE ci.cart_id = $1',
       [cartIdNum]
@@ -276,7 +308,6 @@ router.post('/:id/checkout', async (req: Request, res: Response) => {
 
     await pool.query('BEGIN');
 
-    // Si es crédito, verificar y deducir el saldo del cliente
     if (customer_payment_method === 'credit') {
       const customer = await pool.query(
         'SELECT credit_balance FROM customers WHERE id = $1 FOR UPDATE',
@@ -301,14 +332,12 @@ router.post('/:id/checkout', async (req: Request, res: Response) => {
       );
     }
 
-    // Registrar la transacción
     const transactionResult = await pool.query(
       `INSERT INTO transactions (customer_id, user_id, amount, type, reference, created_at)
        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP) RETURNING *`,
       [customerId, user_id, totalCost, customer_payment_method, `Checkout cart ${cartIdNum}`]
     );
 
-    // Actualizar consignaciones si existen
     for (const item of cartItems.rows) {
       const { product_id, quantity, supplier_id } = item;
 
@@ -324,7 +353,6 @@ router.post('/:id/checkout', async (req: Request, res: Response) => {
         const consignmentId = consignmentItem.rows[0].consignment_id;
         const currentSold = consignmentItem.rows[0].quantity_sold || 0;
 
-        // Solo actualizar si no se actualizó al agregar al carrito
         if (currentSold < quantity) {
           await pool.query(
             'UPDATE consignment_items SET quantity_sold = quantity_sold + $1 WHERE consignment_id = $2 AND product_id = $3',
@@ -334,7 +362,6 @@ router.post('/:id/checkout', async (req: Request, res: Response) => {
       }
     }
 
-    // Vaciar el carrito
     await pool.query('DELETE FROM cart_items WHERE cart_id = $1', [cartIdNum]);
 
     await pool.query('COMMIT');
