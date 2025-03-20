@@ -17,6 +17,7 @@ import supplierRoutes from './routes/suppliers';
 import productRoutes from './routes/products';
 import cartRoutes from './routes/cart';
 import purchaseOrderRoutes from './routes/purchaseOrders';
+import transactionsRouter from './routes/transactions';
 import mermasRouter from './routes/mermas';
 import creditRoutes from './services/creditService';
 import kardexRouter from './routes/kardex';
@@ -67,10 +68,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // Registro de rutas
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/customers', transactionsRouter); // Para /api/customers/:customerId/transactions
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/purchase-orders', purchaseOrderRoutes);
+app.use('/api/transactions', transactionsRouter);
 app.use('/api/mermas', mermasRouter);
 app.use('/api/credits', creditRoutes);
 app.use('/api/kardex', kardexRouter);

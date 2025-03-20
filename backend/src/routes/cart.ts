@@ -86,7 +86,7 @@ router.post('/items', async (req: Request, res: Response) => {
        FROM products p
        LEFT JOIN consignment_items ci ON ci.product_id = p.id
        LEFT JOIN consignments c ON ci.consignment_id = c.id AND c.supplier_id = p.supplier_id AND c.status = 'active'
-       WHERE p.id = $1 FOR UPDATE`,
+       WHERE p.id = $1`,
       [product_id]
     );
 

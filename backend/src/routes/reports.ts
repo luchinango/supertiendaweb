@@ -1,6 +1,8 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import pool from "../config/db";
 import { authenticate, authorize } from "../middleware/auth";
+import PDFDocument from 'pdfkit';
+import escpos from 'escpos';
 
 const router = Router();
 
@@ -237,6 +239,90 @@ router.get("/frequent_customers", async (req, res) => {
       console.error("Error fetching frequent customers:", err);
       res.status(500).json({ error: "Error fetching frequent customers" });
   }
+});
+
+// Generar reporte genérico en PDF
+router.get('/pdf/:type', authenticate, async (req: Request, res: Response) => {
+    try {
+        const { type } = req.params;
+        const doc = new PDFDocument();
+        const filename = `reporte_${type}_${Date.now()}.pdf`;
+
+        // Configurar headers para descarga
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        // Consultar datos según tipo de reporte
+        let data: any[];
+        switch (type) {
+            case 'ventas':
+                data = (await pool.query('SELECT * FROM transactions WHERE type = $1', ['cash'])).rows;
+                break;
+            case 'inventario':
+                data = (await pool.query(`
+                    SELECT p.name, p.actual_stock, c.name as category 
+                    FROM products p
+                    JOIN categories c ON p.category_id = c.id
+                `)).rows;
+                break;
+            case 'mermas':
+                data = (await pool.query(`
+                    SELECT m.*, p.name as product_name 
+                    FROM mermas m
+                    JOIN products p ON m.product_id = p.id
+                `)).rows;
+                break;
+            default:
+                return res.status(400).json({ error: 'Tipo de reporte no válido' });
+        }
+
+        // Generar contenido PDF
+        doc.pipe(res);
+        doc.fontSize(18).text(`Reporte de ${type.toUpperCase()}`, { align: 'center' });
+        doc.moveDown();
+        
+        data.forEach((row: any, index: number) => {
+            doc.fontSize(12).text(`${index + 1}. ${JSON.stringify(row)}`);
+            doc.moveDown();
+        });
+
+        doc.end();
+    } catch (error) {
+        console.error('Error generando PDF:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Generar comando ESC/POS para impresoras térmicas
+router.get('/thermal/:type', authenticate, async (req: Request, res: Response) => {
+    try {
+        const { type } = req.params;
+        const device = new escpos.Network('192.168.1.100');  // IP de la impresora
+        const printer = new escpos.Printer(device);
+
+        // Obtener datos
+        const { rows } = await pool.query(`SELECT * FROM ${type}_view`);
+        
+        // Configurar respuesta
+        res.setHeader('Content-Type', 'text/plain');
+        
+        device.open(() => {
+            printer
+                .align('CT')
+                .text(`REPORTE ${type.toUpperCase()}`)
+                .feed();
+
+            rows.forEach((row: any) => {
+                printer.text(`${row.id} - ${row.name}`).feed();
+            });
+
+            printer.cut().close();
+            res.send('Comando enviado a impresora');
+        });
+    } catch (error) {
+        console.error('Error ESC/POS:', error);
+        res.status(500).json({ error: 'Error de comunicación con impresora' });
+    }
 });
 
 export default router;
