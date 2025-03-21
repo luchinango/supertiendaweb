@@ -2,13 +2,14 @@ openapi: 3.0.0
 info:
   title: API de Tienda
   version: 1.0.0
-  description: Documentación de la API para la gestión de una tienda, incluyendo usuarios, carritos, clientes, kardex, mermas, productos, órdenes de compra, perecederos, proveedores y transacciones.
+  description: Documentación de la API para la gestión de una tienda, incluyendo usuarios, carritos, clientes, kardex, mermas, productos, órdenes de compra, perecederos, proveedores, transacciones y negocios.
   contact:
     name: Tu Nombre
     email: tuemail@example.com
 servers:
   - url: http://localhost:5000/api
     description: Servidor de desarrollo
+
 components:
   securitySchemes:
     bearerAuth:
@@ -45,12 +46,14 @@ components:
         status:
           type: string
       required:
+        - id
         - username
         - password
         - email
         - first_name
         - last_name
         - role_id
+        - status
     Supplier:
       type: object
       properties:
@@ -75,6 +78,7 @@ components:
         status:
           type: string
       required:
+        - id
         - name
         - contact
         - phone
@@ -82,6 +86,7 @@ components:
         - company_name
         - tax_id
         - supplier_type
+        - status
     Transaction:
       type: object
       properties:
@@ -105,6 +110,14 @@ components:
         created_at:
           type: string
           format: date-time
+      required:
+        - id
+        - customer_id
+        - user_id
+        - amount
+        - type
+        - status
+        - created_at
     PurchaseOrder:
       type: object
       properties:
@@ -132,9 +145,12 @@ components:
         supplier_name:
           type: string
       required:
+        - id
         - product_id
         - supplier_id
         - quantity
+        - order_date
+        - status
     SupplierDebt:
       type: object
       properties:
@@ -154,6 +170,14 @@ components:
         updated_at:
           type: string
           format: date-time
+      required:
+        - id
+        - supplier_id
+        - user_id
+        - amount
+        - remaining_amount
+        - created_at
+        - updated_at
     DebtPayment:
       type: object
       properties:
@@ -166,6 +190,11 @@ components:
         payment_date:
           type: string
           format: date-time
+      required:
+        - id
+        - debt_id
+        - amount
+        - payment_date
     Consignment:
       type: object
       properties:
@@ -193,6 +222,17 @@ components:
         updated_at:
           type: string
           format: date-time
+      required:
+        - id
+        - supplier_id
+        - user_id
+        - start_date
+        - end_date
+        - total_value
+        - sold_value
+        - status
+        - created_at
+        - updated_at
     ConsignmentItem:
       type: object
       properties:
@@ -212,6 +252,15 @@ components:
           type: integer
         price_at_time:
           type: number
+      required:
+        - id
+        - consignment_id
+        - product_id
+        - quantity_sent
+        - quantity_sold
+        - quantity_returned
+        - quantity_delivered
+        - price_at_time
     Product:
       type: object
       properties:
@@ -230,8 +279,10 @@ components:
         category_id:
           type: integer
       required:
+        - id
         - name
         - price
+        - actual_stock
         - supplier_id
     Cart:
       type: object
@@ -244,7 +295,9 @@ components:
           type: string
           format: date-time
       required:
+        - id
         - customer_id
+        - created_at
     CartItem:
       type: object
       properties:
@@ -273,6 +326,7 @@ components:
         price:
           type: number
       required:
+        - id
         - cart_id
         - product_id
         - quantity
@@ -290,6 +344,11 @@ components:
           type: string
         phone:
           type: string
+      required:
+        - id
+        - first_name
+        - last_name
+        - email
     KardexEntry:
       type: object
       properties:
@@ -302,6 +361,11 @@ components:
         date:
           type: string
           format: date-time
+      required:
+        - product_id
+        - movement_type
+        - quantity
+        - date
     Merma:
       type: object
       properties:
@@ -312,6 +376,10 @@ components:
         expiration_date:
           type: string
           format: date
+      required:
+        - product_id
+        - quantity
+        - expiration_date
     Perishable:
       type: object
       properties:
@@ -324,13 +392,142 @@ components:
           format: date
         stock:
           type: integer
+      required:
+        - id
+        - name
+        - expiration_date
+        - stock
+    Business:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Supermercado Central
+        description:
+          type: string
+          example: Cadena de supermercados
+        address:
+          type: string
+          example: Av. Principal 123
+        tax_id:
+          type: string
+          example: TAX12345
+        status:
+          type: string
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          example: 2025-03-20T12:00:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2025-03-20T12:00:00Z
+      required:
+        - id
+        - name
+        - tax_id
+        - status
+        - created_at
+        - updated_at
+    BusinessUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        business_id:
+          type: integer
+          example: 1
+        business_role_id:
+          type: integer
+          example: 2
+        status:
+          type: string
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          example: 2025-03-20T12:05:00Z
+      required:
+        - id
+        - user_id
+        - business_id
+        - business_role_id
+        - status
+        - created_at
+    BusinessProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        business_id:
+          type: integer
+          example: 1
+        product_id:
+          type: integer
+          example: 1
+        custom_price:
+          type: number
+          format: float
+          example: 15.99
+        actual_stock:
+          type: integer
+          example: 100
+        created_at:
+          type: string
+          format: date-time
+          example: 2025-03-20T12:10:00Z
+      required:
+        - id
+        - business_id
+        - product_id
+        - actual_stock
+        - created_at
+    BusinessOrgChart:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        business_id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        position:
+          type: string
+          example: Gerente
+        parent_position_id:
+          type: integer
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: 2025-03-20T12:15:00Z
+      required:
+        - id
+        - business_id
+        - user_id
+        - position
+        - created_at
     Error:
       type: object
       properties:
         error:
           type: string
-        message:
-          type: string
+          example: Mensaje de error
+      required:
+        - error
+
 paths:
   # --- Users ---
   /users/login:
@@ -355,7 +552,7 @@ paths:
                 - email
                 - password
       responses:
-        "200":
+        '200':
           description: Token JWT devuelto
           content:
             application/json:
@@ -365,24 +562,24 @@ paths:
                   token:
                     type: string
                     example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        "401":
+        '401':
           description: Contraseña incorrecta
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Usuario no encontrado o inactivo
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/register:
     post:
       summary: Registrar un nuevo usuario
@@ -393,26 +590,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: '#/components/schemas/User'
       responses:
-        "201":
+        '201':
           description: Usuario registrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "400":
+                $ref: '#/components/schemas/User'
+        '400':
           description: Error en los datos enviados
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users:
     get:
       summary: Obtener todos los usuarios
@@ -422,32 +619,32 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin'
       responses:
-        "200":
+        '200':
           description: Lista de usuarios
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/User"
-        "401":
+                  $ref: '#/components/schemas/User'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/{id}:
     get:
       summary: Obtener un usuario por ID
@@ -464,36 +661,36 @@ paths:
             type: integer
           description: ID del usuario
       responses:
-        "200":
+        '200':
           description: Detalles del usuario
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "401":
+                $ref: '#/components/schemas/User'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Usuario no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     put:
       summary: Actualizar un usuario completamente
       tags:
@@ -513,38 +710,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: '#/components/schemas/User'
       responses:
-        "200":
+        '200':
           description: Usuario actualizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "401":
+                $ref: '#/components/schemas/User'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Usuario no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     patch:
       summary: Actualizar parcialmente un usuario
       tags:
@@ -583,42 +780,42 @@ paths:
                 role_id:
                   type: integer
       responses:
-        "200":
+        '200':
           description: Usuario actualizado parcialmente
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "400":
+                $ref: '#/components/schemas/User'
+        '400':
           description: No se proporcionaron datos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Usuario no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/delete/{id}:
     post:
       summary: Desactivar un usuario
@@ -635,7 +832,7 @@ paths:
             type: integer
           description: ID del usuario
       responses:
-        "200":
+        '200':
           description: Usuario desactivado
           content:
             application/json:
@@ -645,31 +842,31 @@ paths:
                   message:
                     type: string
                   data:
-                    $ref: "#/components/schemas/User"
-        "401":
+                    $ref: '#/components/schemas/User'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Usuario no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/me:
     get:
       summary: Obtener el usuario autenticado
@@ -679,24 +876,24 @@ paths:
         - bearerAuth: []
       description: Accesible por cualquier usuario autenticado
       responses:
-        "200":
+        '200':
           description: Detalles del usuario autenticado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "401":
+                $ref: '#/components/schemas/User'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/{userId}/suppliers/{supplierId}/debts:
     post:
       summary: Registrar una compra a crédito con un proveedor
@@ -739,8 +936,10 @@ paths:
                         type: integer
                       price:
                         type: number
+              required:
+                - amount
       responses:
-        "201":
+        '201':
           description: Deuda creada
           content:
             application/json:
@@ -750,37 +949,37 @@ paths:
                   message:
                     type: string
                   debt:
-                    $ref: "#/components/schemas/SupplierDebt"
-        "400":
+                    $ref: '#/components/schemas/SupplierDebt'
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Usuario o proveedor no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/{userId}/suppliers/{supplierId}/debts/{debtId}/payments:
     post:
       summary: Registrar un pago de una deuda
@@ -818,8 +1017,10 @@ paths:
                 amount:
                   type: number
                   example: 500.25
+              required:
+                - amount
       responses:
-        "201":
+        '201':
           description: Pago registrado
           content:
             application/json:
@@ -829,37 +1030,37 @@ paths:
                   message:
                     type: string
                   payment:
-                    $ref: "#/components/schemas/DebtPayment"
-        "400":
+                    $ref: '#/components/schemas/DebtPayment'
+        '400':
           description: Monto inválido o excede la deuda
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Deuda no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/{userId}/debts:
     get:
       summary: Obtener todas las deudas de un usuario con proveedores
@@ -876,7 +1077,7 @@ paths:
             type: integer
           description: ID del usuario
       responses:
-        "200":
+        '200':
           description: Lista de deudas
           content:
             application/json:
@@ -897,24 +1098,24 @@ paths:
                       type: string
                     total_paid:
                       type: number
-        "401":
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/{userId}/suppliers/{supplierId}/consignments:
     post:
       summary: Registrar una consignación
@@ -952,12 +1153,17 @@ paths:
                         type: integer
                       quantity_sent:
                         type: integer
+                    required:
+                      - product_id
+                      - quantity_sent
                 end_date:
                   type: string
                   format: date
                   example: 2023-12-31
+              required:
+                - items
       responses:
-        "201":
+        '201':
           description: Consignación creada
           content:
             application/json:
@@ -967,37 +1173,37 @@ paths:
                   message:
                     type: string
                   consignment:
-                    $ref: "#/components/schemas/Consignment"
-        "400":
+                    $ref: '#/components/schemas/Consignment'
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Usuario o proveedor no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /users/{userId}/suppliers/{supplierId}/consignments/{consignmentId}/settle:
     post:
       summary: Liquidar una consignación
@@ -1041,8 +1247,13 @@ paths:
                         type: integer
                       quantity_sold:
                         type: integer
+                    required:
+                      - product_id
+                      - quantity_sold
+              required:
+                - items
       responses:
-        "200":
+        '200':
           description: Consignación liquidada
           content:
             application/json:
@@ -1053,36 +1264,36 @@ paths:
                     type: string
                   totalAmount:
                     type: number
-        "400":
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Consignación no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Cart ---
   /cart:
@@ -1106,24 +1317,36 @@ paths:
               required:
                 - customer_id
       responses:
-        "201":
+        '201':
           description: Carrito creado exitosamente
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Cart"
-        "400":
+                $ref: '#/components/schemas/Cart'
+        '400':
           description: Customer ID es requerido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Rol no permitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /cart/items:
     post:
       summary: Añadir un producto al carrito
@@ -1153,30 +1376,42 @@ paths:
                 - cart_id
                 - product_id
       responses:
-        "201":
+        '201':
           description: Producto añadido al carrito
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CartItemDetailed"
-        "400":
+                $ref: '#/components/schemas/CartItemDetailed'
+        '400':
           description: Datos inválidos o stock insuficiente
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Rol no permitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Carrito o producto no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /cart/{id}:
     get:
       summary: Obtener el contenido de un carrito por ID
@@ -1193,7 +1428,7 @@ paths:
             type: integer
           description: ID del carrito
       responses:
-        "200":
+        '200':
           description: Detalles del carrito y sus ítems
           content:
             application/json:
@@ -1201,29 +1436,41 @@ paths:
                 type: object
                 properties:
                   cart:
-                    $ref: "#/components/schemas/Cart"
+                    $ref: '#/components/schemas/Cart'
                   items:
                     type: array
                     items:
-                      $ref: "#/components/schemas/CartItemDetailed"
-        "400":
+                      $ref: '#/components/schemas/CartItemDetailed'
+        '400':
           description: ID del carrito inválido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Rol no permitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Carrito no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /cart/{cartId}/items/{itemId}:
     delete:
       summary: Quitar un ítem del carrito
@@ -1246,7 +1493,7 @@ paths:
             type: integer
           description: ID del ítem en el carrito
       responses:
-        "200":
+        '200':
           description: Ítem eliminado exitosamente
           content:
             application/json:
@@ -1256,27 +1503,39 @@ paths:
                   message:
                     type: string
                   removedItem:
-                    $ref: "#/components/schemas/CartItemDetailed"
+                    $ref: '#/components/schemas/CartItemDetailed'
                   updatedStock:
                     type: integer
-        "400":
+        '400':
           description: IDs inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Rol no permitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Carrito o ítem no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /cart/{id}/checkout:
     post:
       summary: Finalizar la compra de un carrito
@@ -1310,7 +1569,7 @@ paths:
                 - customer_payment_method
                 - user_id
       responses:
-        "200":
+        '200':
           description: Compra completada exitosamente
           content:
             application/json:
@@ -1324,25 +1583,37 @@ paths:
                   customer_payment_method:
                     type: string
                   transaction:
-                    $ref: "#/components/schemas/Transaction"
-        "400":
+                    $ref: '#/components/schemas/Transaction'
+        '400':
           description: Datos inválidos, carrito vacío o saldo insuficiente
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Rol no permitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Carrito o cliente no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Customers ---
   /customers:
@@ -1354,32 +1625,32 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin' o 'sales'
       responses:
-        "200":
+        '200':
           description: Lista de clientes
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Customer"
-        "401":
+                  $ref: '#/components/schemas/Customer'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     post:
       summary: Crear un nuevo cliente
       tags:
@@ -1392,38 +1663,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
       responses:
-        "201":
+        '201':
           description: Cliente creado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
-        "400":
+                $ref: '#/components/schemas/Customer'
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Kardex ---
   /kardex:
@@ -1435,32 +1706,32 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin' o 'inventory'
       responses:
-        "200":
+        '200':
           description: Lista de movimientos de inventario
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/KardexEntry"
-        "401":
+                  $ref: '#/components/schemas/KardexEntry'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Mermas ---
   /mermas/check-expired:
@@ -1472,7 +1743,7 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin'
       responses:
-        "200":
+        '200':
           description: Mermas procesadas
           content:
             application/json:
@@ -1484,25 +1755,25 @@ paths:
                   expired_products:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Merma"
-        "401":
+                      $ref: '#/components/schemas/Merma'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Products ---
   /products:
@@ -1514,32 +1785,32 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin' o 'inventory'
       responses:
-        "200":
+        '200':
           description: Lista de productos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Product"
-        "401":
+                  $ref: '#/components/schemas/Product'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     post:
       summary: Crear un nuevo producto
       tags:
@@ -1552,38 +1823,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Product"
+              $ref: '#/components/schemas/Product'
       responses:
-        "201":
+        '201':
           description: Producto creado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Product"
-        "400":
+                $ref: '#/components/schemas/Product'
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Purchase Orders ---
   /purchase-orders/products:
@@ -1599,38 +1870,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Product"
+              $ref: '#/components/schemas/Product'
       responses:
-        "201":
+        '201':
           description: Producto creado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Product"
-        "400":
+                $ref: '#/components/schemas/Product'
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /purchase-orders/check-stock:
     get:
       summary: Verificar niveles de stock y crear órdenes de compra
@@ -1640,7 +1911,7 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin' o 'purchasing'
       responses:
-        "200":
+        '200':
           description: Órdenes de compra creadas
           content:
             application/json:
@@ -1652,25 +1923,25 @@ paths:
                   orders:
                     type: array
                     items:
-                      $ref: "#/components/schemas/PurchaseOrder"
-        "401":
+                      $ref: '#/components/schemas/PurchaseOrder'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /purchase-orders:
     post:
       summary: Crear una orden de compra manualmente
@@ -1684,44 +1955,44 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PurchaseOrder"
+              $ref: '#/components/schemas/PurchaseOrder'
       responses:
-        "201":
+        '201':
           description: Orden de compra creada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PurchaseOrder"
-        "400":
+                $ref: '#/components/schemas/PurchaseOrder'
+        '400':
           description: Cantidad requerida
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Producto o proveedor no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     get:
       summary: Obtener todas las órdenes de compra
       tags:
@@ -1730,32 +2001,32 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin' o 'purchasing'
       responses:
-        "200":
+        '200':
           description: Lista de órdenes de compra
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/PurchaseOrder"
-        "401":
+                  $ref: '#/components/schemas/PurchaseOrder'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /purchase-orders/{id}:
     get:
       summary: Obtener una orden de compra por ID
@@ -1772,36 +2043,36 @@ paths:
             type: integer
           description: ID de la orden de compra
       responses:
-        "200":
+        '200':
           description: Detalles de la orden de compra
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PurchaseOrder"
-        "401":
+                $ref: '#/components/schemas/PurchaseOrder'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Orden de compra no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     put:
       summary: Actualizar una orden de compra
       tags:
@@ -1821,44 +2092,44 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PurchaseOrder"
+              $ref: '#/components/schemas/PurchaseOrder'
       responses:
-        "200":
+        '200':
           description: Orden de compra actualizada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PurchaseOrder"
-        "400":
+                $ref: '#/components/schemas/PurchaseOrder'
+        '400':
           description: Cantidad requerida
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Orden de compra no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     delete:
       summary: Eliminar una orden de compra
       tags:
@@ -1874,7 +2145,7 @@ paths:
             type: integer
           description: ID de la orden de compra
       responses:
-        "200":
+        '200':
           description: Orden de compra eliminada
           content:
             application/json:
@@ -1884,31 +2155,31 @@ paths:
                   message:
                     type: string
                   purchaseOrder:
-                    $ref: "#/components/schemas/PurchaseOrder"
-        "401":
+                    $ref: '#/components/schemas/PurchaseOrder'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Orden de compra no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /purchase-orders/{id}/process:
     post:
       summary: Procesar una orden de compra
@@ -1934,36 +2205,36 @@ paths:
                   type: string
                   enum: [cash, credit, consignment]
       responses:
-        "200":
+        '200':
           description: Orden de compra procesada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PurchaseOrder"
-        "401":
+                $ref: '#/components/schemas/PurchaseOrder'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Orden de compra no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Perishables ---
   /perishables:
@@ -1975,32 +2246,32 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin' o 'inventory'
       responses:
-        "200":
+        '200':
           description: Lista de productos perecederos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Perishable"
-        "401":
+                  $ref: '#/components/schemas/Perishable'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Suppliers ---
   /suppliers:
@@ -2016,38 +2287,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Supplier"
+              $ref: '#/components/schemas/Supplier'
       responses:
-        "201":
+        '201':
           description: Proveedor creado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Supplier"
-        "400":
+                $ref: '#/components/schemas/Supplier'
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     get:
       summary: Obtener todos los proveedores
       tags:
@@ -2056,32 +2327,32 @@ paths:
         - bearerAuth: []
       description: Requiere rol 'admin' o 'purchasing'
       responses:
-        "200":
+        '200':
           description: Lista de proveedores
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Supplier"
-        "401":
+                  $ref: '#/components/schemas/Supplier'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /suppliers/{id}:
     get:
       summary: Obtener un proveedor por ID
@@ -2098,36 +2369,36 @@ paths:
             type: integer
           description: ID del proveedor
       responses:
-        "200":
+        '200':
           description: Detalles del proveedor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Supplier"
-        "401":
+                $ref: '#/components/schemas/Supplier'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Proveedor no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     put:
       summary: Actualizar un proveedor completamente
       tags:
@@ -2147,38 +2418,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Supplier"
+              $ref: '#/components/schemas/Supplier'
       responses:
-        "200":
+        '200':
           description: Proveedor actualizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Supplier"
-        "401":
+                $ref: '#/components/schemas/Supplier'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Proveedor no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     patch:
       summary: Actualizar parcialmente un proveedor
       tags:
@@ -2219,42 +2490,42 @@ paths:
                 status:
                   type: string
       responses:
-        "200":
+        '200':
           description: Proveedor actualizado parcialmente
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Supplier"
-        "400":
+                $ref: '#/components/schemas/Supplier'
+        '400':
           description: No se proporcionaron datos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Proveedor no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /suppliers/delete/{id}:
     post:
       summary: Desactivar un proveedor
@@ -2271,7 +2542,7 @@ paths:
             type: integer
           description: ID del proveedor
       responses:
-        "200":
+        '200':
           description: Proveedor desactivado
           content:
             application/json:
@@ -2281,31 +2552,31 @@ paths:
                   message:
                     type: string
                   data:
-                    $ref: "#/components/schemas/Supplier"
-        "401":
+                    $ref: '#/components/schemas/Supplier'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Proveedor no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   # --- Transactions ---
   /customers/{customerId}/transactions:
@@ -2344,36 +2615,36 @@ paths:
                 - amount
                 - type
       responses:
-        "201":
+        '201':
           description: Transacción creada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Transaction"
-        "400":
+                $ref: '#/components/schemas/Transaction'
+        '400':
           description: Datos inválidos
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     get:
       summary: Obtener transacciones de un cliente
       tags:
@@ -2401,7 +2672,7 @@ paths:
             default: 0
           description: Desplazamiento para paginación
       responses:
-        "200":
+        '200':
           description: Lista de transacciones
           content:
             application/json:
@@ -2413,25 +2684,25 @@ paths:
                   transactions:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Transaction"
-        "401":
+                      $ref: '#/components/schemas/Transaction'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /customers/{customerId}/transactions/{transactionId}:
     get:
       summary: Obtener una transacción por ID
@@ -2454,36 +2725,36 @@ paths:
             type: integer
           description: ID de la transacción
       responses:
-        "200":
+        '200':
           description: Detalles de la transacción
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Transaction"
-        "401":
+                $ref: '#/components/schemas/Transaction'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Transacción no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
   /customers/{customerId}/transactions/{transactionId}/cancel:
     patch:
       summary: Cancelar una transacción
@@ -2506,643 +2777,230 @@ paths:
             type: integer
           description: ID de la transacción
       responses:
-        "200":
+        '200':
           description: Transacción cancelada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Transaction"
-        "401":
+                $ref: '#/components/schemas/Transaction'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Rol no permitido
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Transacción no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Error del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
-  # --- Reports ---
-  /reports:
-    get:
-      summary: Obtener informe general
+  # --- Business ---
+  /business:
+    post:
+      summary: Crear un nuevo negocio
+      description: Registra un nuevo negocio en el sistema.
       tags:
-        - Reports
+        - Business
       security:
         - bearerAuth: []
-      description: Devuelve ventas totales, productos vendidos, clientes activos e inventario total del último mes. Requiere rol 'superuser' o 'system_admin'.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - tax_id
+              properties:
+                name:
+                  type: string
+                  description: Nombre del negocio
+                  example: Supermercado Central
+                description:
+                  type: string
+                  description: Descripción del negocio
+                  example: Cadena de supermercados
+                address:
+                  type: string
+                  description: Dirección del negocio
+                  example: Av. Principal 123
+                tax_id:
+                  type: string
+                  description: Identificador fiscal del negocio
+                  example: TAX12345
       responses:
-        "200":
-          description: Informe general generado exitosamente
+        '201':
+          description: Negocio creado exitosamente
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  totalSales:
-                    type: number
-                    description: Ventas totales del último mes
-                  productsSold:
-                    type: number
-                    description: Cantidad total de productos vendidos en el último mes
-                  activeCustomers:
-                    type: integer
-                    description: Número de clientes activos en el último mes
-                  totalInventory:
-                    type: number
-                    description: Inventario total actual
-                example:
-                  totalSales: 15000.75
-                  productsSold: 300
-                  activeCustomers: 50
-                  totalInventory: 1200
-        "401":
+                $ref: '#/components/schemas/Business'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/balance:
+                $ref: '#/components/schemas/Error'
     get:
-      summary: Obtener balance general
+      summary: Obtener todos los negocios
+      description: Lista todos los negocios registrados en el sistema.
       tags:
-        - Reports
+        - Business
       security:
         - bearerAuth: []
-      description: Calcula el balance general (ingresos menos gastos). Requiere rol 'superuser' o 'system_admin'.
       responses:
-        "200":
-          description: Balance general devuelto exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  balance:
-                    type: number
-                    description: Balance total (ingresos - gastos)
-                example:
-                  balance: 5000.25
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/expenses:
-    get:
-      summary: Obtener gastos totales
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Suma los gastos de órdenes de compra, pagos de deudas y mermas. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Gastos totales devueltos exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  totalExpenses:
-                    type: number
-                    description: Suma total de todos los gastos
-                example:
-                  totalExpenses: 8000.50
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/sales:
-    get:
-      summary: Obtener ventas totales
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Devuelve la suma total de todas las ventas. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Ventas totales devueltas exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total_sales:
-                    type: number
-                    description: Suma total de todas las ventas
-                example:
-                  total_sales: 15000.75
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/transactions:
-    get:
-      summary: Obtener todas las transacciones
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Lista todas las transacciones registradas. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de transacciones devuelta exitosamente
+        '200':
+          description: Lista de negocios
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Transaction"
-        "401":
+                  $ref: '#/components/schemas/Business'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/transactions/income:
+                $ref: '#/components/schemas/Error'
+  /business/{businessId}:
     get:
-      summary: Obtener transacciones de ingresos
+      summary: Obtener un negocio por ID
+      description: Devuelve los detalles de un negocio específico.
       tags:
-        - Reports
+        - Business
       security:
         - bearerAuth: []
-      description: Lista las transacciones de tipo 'cash' y 'credit'. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de transacciones de ingresos devuelta exitosamente
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Transaction"
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/transactions/expenses:
-    get:
-      summary: Obtener transacciones de gastos
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Lista los gastos de órdenes de compra, pagos de deudas y mermas. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de transacciones de gastos devuelta exitosamente
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      enum: [purchase_order, debt_payment, merma]
-                    id:
-                      type: integer
-                    amount:
-                      type: number
-                    created_at:
-                      type: string
-                      format: date-time
-                  example:
-                    type: "purchase_order"
-                    id: 1
-                    amount: 500.00
-                    created_at: "2023-10-01T10:00:00Z"
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/credits:
-    get:
-      summary: Obtener clientes con saldo de crédito positivo
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Lista los clientes con saldo de crédito mayor a 0. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de clientes con crédito devuelta exitosamente
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    first_name:
-                      type: string
-                    last_name:
-                      type: string
-                    balance:
-                      type: number
-                  example:
-                    id: 1
-                    first_name: "Juan"
-                    last_name: "Pérez"
-                    balance: 200.50
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/payable_credits:
-    get:
-      summary: Obtener cuentas por pagar a proveedores
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Lista las deudas pendientes con proveedores. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de cuentas por pagar devuelta exitosamente
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    company_name:
-                      type: string
-                    remaining_amount:
-                      type: number
-                  example:
-                    id: 1
-                    company_name: "Proveedor ABC"
-                    remaining_amount: 1000.75
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/cash_registers:
-    get:
-      summary: Obtener información de cajas registradoras
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Lista todas las cajas registradoras. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de cajas registradoras devuelta exitosamente
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    # Asumiendo campos típicos, ajustar según la estructura real
-                    name:
-                      type: string
-                    balance:
-                      type: number
-                  example:
-                    id: 1
-                    name: "Caja Principal"
-                    balance: 5000.00
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/best_selling_products:
-    get:
-      summary: Obtener los productos más vendidos
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Lista los 10 productos más vendidos. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de productos más vendidos devuelta exitosamente
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    product_id:
-                      type: integer
-                    product_name:
-                      type: string
-                    supplier_id:
-                      type: integer
-                    supplier_name:
-                      type: string
-                    total_quantity_sold:
-                      type: number
-                  example:
-                    product_id: 1
-                    product_name: "Producto A"
-                    supplier_id: 1
-                    supplier_name: "Proveedor ABC"
-                    total_quantity_sold: 150
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /reports/frequent_customers:
-    get:
-      summary: Obtener los clientes más frecuentes
-      tags:
-        - Reports
-      security:
-        - bearerAuth: []
-      description: Lista los 10 clientes con más transacciones. Requiere rol 'superuser' o 'system_admin'.
-      responses:
-        "200":
-          description: Lista de clientes frecuentes devuelta exitosamente
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    customer_id:
-                      type: integer
-                    first_name:
-                      type: string
-                    last_name:
-                      type: string
-                    transaction_count:
-                      type: integer
-                  example:
-                    customer_id: 1
-                    first_name: "Juan"
-                    last_name: "Pérez"
-                    transaction_count: 25
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /products/barcode:
-    get:
-      summary: Obtener producto por código de barras
-      tags:
-        - Products
-      security:
-        - bearerAuth: []
-      description: Devuelve los detalles de un producto basado en su código de barras. Requiere rol 'admin', 'inventory', 'sales' o 'cashier'.
       parameters:
-        - in: query
-          name: barcode
+        - name: businessId
+          in: path
           required: true
           schema:
-            type: string
-          description: Código de barras del producto (ej. "7712345000019")
+            type: integer
+          description: ID del negocio
       responses:
-        "200":
-          description: Producto encontrado
+        '200':
+          description: Detalles del negocio
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Product"
-        "400":
-          description: Barcode es requerido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Producto no encontrado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Business'
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio no encontrado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  /products/purchase:
-    post:
-      summary: Registrar una compra de producto
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Actualizar un negocio completamente
+      description: Actualiza todos los detalles de un negocio existente.
       tags:
-        - Products
+        - Business
       security:
         - bearerAuth: []
-      description: Registra la entrada de un producto al inventario, actualizando el stock y permitiendo registrar crédito al proveedor o consignación. Requiere rol 'admin' o 'purchasing'.
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Business'
+      responses:
+        '200':
+          description: Negocio actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Business'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Actualizar parcialmente un negocio
+      description: Actualiza ciertos campos de un negocio existente.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
       requestBody:
         required: true
         content:
@@ -3150,136 +3008,452 @@ paths:
             schema:
               type: object
               properties:
-                barcode:
+                name:
                   type: string
-                  description: Código de barras del producto
-                  example: "7712345000019"
-                quantity:
-                  type: integer
-                  description: Cantidad comprada
-                  example: 5
-                supplier_id:
-                  type: integer
-                  description: ID del proveedor
-                  example: 1
-                payment_type:
+                description:
                   type: string
-                  enum: [cash, credit, consignment]
-                  description: Tipo de pago (efectivo, crédito o consignación)
-                  example: "credit"
-                user_id:
-                  type: integer
-                  description: ID del usuario que realiza la compra
-                  example: 1
+                address:
+                  type: string
+                tax_id:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Negocio actualizado parcialmente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Business'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /business/{businessId}/users:
+    post:
+      summary: Asignar un usuario a un negocio
+      description: Asocia un usuario existente a un negocio con un rol específico.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
               required:
-                - barcode
-                - quantity
-                - supplier_id
-                - payment_type
                 - user_id
-      responses:
-        "201":
-          description: Compra registrada exitosamente
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                        example: "Purchase registered with credit"
-                      debt:
-                        $ref: "#/components/schemas/SupplierDebt"
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                        example: "Purchase registered as consignment"
-                      consignment_id:
-                        type: integer
-                        example: 1
-                  - type: object
-                    properties:
-                      message:
-                        type: string
-                        example: "Purchase registered (cash)"
-        "400":
-          description: Faltan campos requeridos o datos inválidos
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Producto no encontrado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: No autorizado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /products/sell:
-    post:
-      summary: Registrar una venta de producto
-      tags:
-        - Products
-      security:
-        - bearerAuth: []
-      description: Registra la venta de un producto, reduciendo el stock y permitiendo registrar crédito al cliente si aplica. Requiere rol 'sales' o 'cashier'.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
+                - business_role_id
               properties:
-                barcode:
-                  type: string
-                  description: Código de barras del producto
-                  example: "7712345000019"
-                quantity:
-                  type: integer
-                  description: Cantidad vendida
-                  example: 1
-                customer_id:
-                  type: integer
-                  description: ID del cliente
-                  example: 1
-                payment_type:
-                  type: string
-                  enum: [cash, credit]
-                  description: Tipo de pago (efectivo o crédito)
-                  example: "credit"
                 user_id:
                   type: integer
-                  description: ID del usuario que realiza la venta
+                  description: ID del usuario
+                  example: 1
+                business_role_id:
+                  type: integer
+                  description: ID del rol del usuario dentro del negocio
                   example: 2
-              required:
-                - barcode
-                - quantity
-                - customer_id
-                - payment_type
-                - user_id
       responses:
-        "201":
-          description: Venta registrada exitosamente
+        '201':
+          description: Usuario asignado al negocio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessUser'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio o usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Obtener usuarios de un negocio
+      description: Lista todos los usuarios asociados a un negocio específico.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+      responses:
+        '200':
+          description: Lista de usuarios del negocio
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusinessUser'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /business/{businessId}/products:
+    post:
+      summary: Agregar un producto a un negocio
+      description: Asocia un producto existente al catálogo de un negocio con stock y precio opcional.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_id
+                - actual_stock
+              properties:
+                product_id:
+                  type: integer
+                  description: ID del producto
+                  example: 1
+                custom_price:
+                  type: number
+                  format: float
+                  description: Precio personalizado para el negocio (opcional)
+                  example: 15.99
+                actual_stock:
+                  type: integer
+                  description: Cantidad inicial de stock en el negocio
+                  example: 100
+      responses:
+        '201':
+          description: Producto agregado al negocio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessProduct'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio o producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Obtener productos de un negocio
+      description: Lista todos los productos asociados a un negocio específico.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+      responses:
+        '200':
+          description: Lista de productos del negocio
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusinessProduct'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /business/{businessId}/org-chart:
+    post:
+      summary: Agregar una posición al organigrama del negocio
+      description: Asocia un usuario a una posición dentro del organigrama de un negocio.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - position
+              properties:
+                user_id:
+                  type: integer
+                  description: ID del usuario
+                  example: 1
+                position:
+                  type: string
+                  description: Nombre del cargo o posición en el organigrama
+                  example: Gerente
+                parent_position_id:
+                  type: integer
+                  description: ID de la posición superior en el organigrama (opcional)
+                  example: null
+      responses:
+        '201':
+          description: Posición agregada al organigrama
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessOrgChart'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio o usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Obtener el organigrama de un negocio
+      description: Devuelve la estructura jerárquica del organigrama de un negocio.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+      responses:
+        '200':
+          description: Estructura del organigrama
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusinessOrgChart'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /business/{businessId}/org-chart/{orgChartId}:
+    put:
+      summary: Actualizar una posición en el organigrama
+      description: Actualiza los detalles de una posición específica en el organigrama.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+        - name: orgChartId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la posición en el organigrama
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessOrgChart'
+      responses:
+        '200':
+          description: Posición actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessOrgChart'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio o posición no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Eliminar una posición del organigrama
+      description: Elimina una posición específica del organigrama del negocio.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del negocio
+        - name: orgChartId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la posición en el organigrama
+      responses:
+        '200':
+          description: Posición eliminada exitosamente
           content:
             application/json:
               schema:
@@ -3287,80 +3461,22 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Sale registered"
-                  transaction:
-                    $ref: "#/components/schemas/Transaction"
-        "400":
-          description: Faltan campos requeridos, datos inválidos o stock insuficiente
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Producto no encontrado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                    example: Posición eliminada del organigrama
+        '401':
           description: No autorizado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Rol no permitido
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Negocio o posición no encontrada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Error del servidor
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-/reports/pdf/{type}:
-  get:
-    tags:
-      - Reports
-    summary: Genera un reporte en formato PDF
-    parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          type: string
-          enum: [ventas, inventario, mermas]
-    responses:
-      '200':
-        description: Archivo PDF generado
-        content:
-          application/pdf:
-            schema:
-              type: string
-              format: binary
-      '400':
-        description: Tipo de reporte inválido
-
-/reports/thermal/{type}:
-  get:
-    tags:
-      - Reports
-    summary: Envía comando a impresora térmica
-    parameters:
-      - in: path
-        name: type
-        required: true
-        schema:
-          type: string
-          enum: [ventas, inventario]
-    responses:
-      '200':
-        description: Comando ejecutado
-        content:
-          text/plain:
-            schema:
-              type: string
-      '500':
-        description: Error de comunicación
+                $ref: '#/components/schemas/Error'                

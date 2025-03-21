@@ -28,6 +28,7 @@ import categoriesRouter from './routes/categories';
 import cashRegistersRouter from './routes/cashRegisters';
 import { generateToken } from './middleware/auth';
 import { User as UserModel } from './models/user';
+import businessRoutes from './routes/business';
 
 // Definición de la interfaz User
 export interface User {
@@ -72,6 +73,7 @@ app.use('/api/customers', transactionsRouter); // Para /api/customers/:customerI
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/customers', require('./routes/customers'));
 app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/transactions', transactionsRouter);
 app.use('/api/mermas', mermasRouter);
@@ -82,6 +84,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/alarms', alarmRoutes);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/cash-registers', cashRegistersRouter);
+app.use('/api/business', businessRoutes);
 
 // Tarea cron para productos vencidos (mermas)
 const checkExpiredProducts = async () => {
