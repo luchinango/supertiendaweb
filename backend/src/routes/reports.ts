@@ -6,8 +6,8 @@ import escpos from 'escpos';
 
 const router = Router();
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
+// router.use(authenticate); // Todas las rutas después requieren token
+// router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
 
 router.get("/", async (req, res) => {
   try {

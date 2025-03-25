@@ -4,8 +4,8 @@ import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
+// router.use(authenticate); // Todas las rutas después requieren token
+// router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 // Endpoint: Crear Transacción
 router.post('/:customerId/transactions',  

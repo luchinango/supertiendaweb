@@ -42,6 +42,10 @@ async function validateCartExists(cartId: number, res: Response): Promise<boolea
  * @param {number} customer_id - The ID of the customer
  * @returns {object} The created cart object
  */
+
+// router.use(authMiddleware.authenticate); // Ajusta según tu implementación de autenticación
+// router.use(restrictToRoles);
+
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { customer_id }: Partial<Cart> = req.body;

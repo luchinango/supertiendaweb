@@ -18,8 +18,8 @@ interface Supplier {
   status: string;
 }
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
+// router.use(authenticate); // Todas las rutas después requieren token
+// router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
 
 // CREATE - Crear un proveedor
 router.post('/', async (req: Request, res: Response) => {

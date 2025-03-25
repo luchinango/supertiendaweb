@@ -28,8 +28,8 @@ interface Product {
   category_id?: number;
 }
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
+// router.use(authenticate); // Todas las rutas después requieren token
+// router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 // Register new product (Admin only)
 // POST /products

@@ -7,8 +7,8 @@ const router = express.Router();
 
 // --- Business CRUD ---
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
+//router.use(authenticate); // Todas las rutas después requieren token
+//router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
 
 // Crear un negocio
 router.post(

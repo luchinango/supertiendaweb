@@ -12,8 +12,8 @@ interface Category {
     is_active: boolean;
 }
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
+// router.use(authenticate); // Todas las rutas después requieren token
+// router.use(authorize(["superuser", "system_admin"])); // Todas las rutas después requieren roles específicos
 
 // Crear una categoría
 router.post('/', async (req: Request, res: Response) => {

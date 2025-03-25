@@ -3,6 +3,8 @@ import cors from 'cors';
 import cron from 'node-cron';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { generateToken } from './middleware/auth';
+import { User as UserModel } from './models/user';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from "./swagger";
 import * as yaml from 'js-yaml';
@@ -15,6 +17,7 @@ import userRoutes from './routes/user';
 import customerRoutes from './routes/customers';
 import supplierRoutes from './routes/suppliers';
 import productRoutes from './routes/products';
+import salesControlRouter from './routes/salesControl';
 import cartRoutes from './routes/cart';
 import purchaseOrderRoutes from './routes/purchaseOrders';
 import transactionsRouter from './routes/transactions';
@@ -26,9 +29,10 @@ import reportRoutes from './routes/reports';
 import alarmRoutes from './routes/alarms';
 import categoriesRouter from './routes/categories';
 import cashRegistersRouter from './routes/cashRegisters';
-import { generateToken } from './middleware/auth';
-import { User as UserModel } from './models/user';
+
 import businessRoutes from './routes/business';
+
+
 
 // Definición de la interfaz User
 export interface User {
@@ -67,13 +71,14 @@ const swaggerDocument = yaml.load(readFileSync('./docs/openapi.yaml', 'utf8')) a
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Registro de rutas
+// Registro de rutas
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/customers', transactionsRouter); // Para /api/customers/:customerId/transactions
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/sales-control', salesControlRouter);
 app.use('/api/cart', cartRoutes);
-app.use('/api/customers', require('./routes/customers'));
 app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/transactions', transactionsRouter);
 app.use('/api/mermas', mermasRouter);
@@ -116,7 +121,7 @@ const checkExpiredPerishables = async () => {
 
 // Programar ambas tareas a las 00:00
 cron.schedule('0 0 * * *', checkExpiredProducts);
-cron.schedule('0 0 * * *', checkExpiredPerishables);
+// cron.schedule('0 0 * * *', checkExpiredPerishables);
 
 // Manejo global de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

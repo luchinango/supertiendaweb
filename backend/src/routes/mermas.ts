@@ -7,8 +7,8 @@ import { authenticate, authorize } from '../middleware/auth';
 
 const router = express.Router();
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
+// router.use(authenticate); // Todas las rutas después requieren token
+// router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 
 const checkExpiredProducts = async () => {
@@ -17,49 +17,100 @@ const checkExpiredProducts = async () => {
   });
 };
 
-checkExpiredProducts().catch(console.error);
+// checkExpiredProducts().catch(console.error);
 
 // Crear una merma manualmente
-router.post('/', async (req: Request, res: Response) => {
-    const { product_id, quantity, type, date, value, responsible_id, observations }: Merma = req.body;
+router.post('/check-expired', async (req: Request, res: Response) => {
+  console.log('Endpoint /check-expired llamado');
+  const currentDate = new Date().toISOString().split('T')[0];
 
-    try {
-        await pool.query('BEGIN');
+  try {
+    await pool.query('BEGIN');
 
-        const productResult = await pool.query('SELECT actual_stock, sale_price FROM products WHERE id = $1', [product_id]);
-        const product = productResult.rows[0];
-        if (!product) {
-            throw new Error('Producto no encontrado');
+    const expiredProductsResult = await pool.query(`
+      SELECT id, name, actual_stock, sale_price, expiration_date, shelf_life_days
+      FROM products
+      WHERE actual_stock > 0
+      AND (expiration_date <= $1 OR expiration_date IS NOT NULL)
+    `, [currentDate]);
+
+    const expiredProducts = expiredProductsResult.rows;
+    const mermasRegistradas: { product_id: number; quantity: number }[] = [];
+
+    for (const product of expiredProducts) {
+      let quantityToRemove = product.actual_stock;
+
+      if (!product.expiration_date && product.shelf_life_days) {
+        const lastEntry = await pool.query(`
+          SELECT movement_date
+          FROM kardex
+          WHERE product_id = $1 AND movement_type = 'entry'
+          ORDER BY movement_date DESC
+          LIMIT 1
+        `, [product.id]);
+
+        if (lastEntry.rows.length > 0) {
+          const entryDate = new Date(lastEntry.rows[0].movement_date);
+          const expirationThreshold = new Date(entryDate);
+          expirationThreshold.setDate(entryDate.getDate() + product.shelf_life_days);
+
+          if (expirationThreshold <= new Date()) {
+            const mermaValue = product.sale_price * quantityToRemove;
+
+            const mermaResult = await pool.query(
+              `INSERT INTO mermas (product_id, quantity, type, date, value, observations, is_automated)
+               VALUES ($1, $2, 'vencido', $3, $4, $5, true) RETURNING id`,
+              [product.id, quantityToRemove, currentDate, mermaValue, `Producto vencido automáticamente (duración: ${product.shelf_life_days} días)`]
+            );
+            const mermaId = mermaResult.rows[0].id;
+
+            const kardexResult = await pool.query(
+              `INSERT INTO kardex (product_id, movement_type, quantity, unit_price, reference_id, reference_type, stock_after)
+               VALUES ($1, 'exit', $2, $3, $4, 'merma', $5) RETURNING id`,
+              [product.id, quantityToRemove, product.sale_price, mermaId, 0]
+            );
+            const kardexId = kardexResult.rows[0].id;
+
+            await pool.query('UPDATE mermas SET kardex_id = $1 WHERE id = $2', [kardexId, mermaId]);
+            await pool.query('UPDATE products SET actual_stock = 0 WHERE id = $1', [product.id]);
+
+            mermasRegistradas.push({ product_id: product.id, quantity: quantityToRemove });
+          }
         }
-        if (product.actual_stock < quantity) {
-            throw new Error('Stock insuficiente');
-        }
-
-        const mermaValue = value || product.sale_price * quantity;
+      } else if (product.expiration_date && new Date(product.expiration_date) <= new Date()) {
+        const mermaValue = product.sale_price * quantityToRemove;
 
         const mermaResult = await pool.query(
-            `INSERT INTO mermas (product_id, quantity, type, date, value, responsible_id, observations)
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-            [product_id, quantity, type, date, mermaValue, responsible_id, observations]
+          `INSERT INTO mermas (product_id, quantity, type, date, value, observations, is_automated)
+           VALUES ($1, $2, 'vencido', $3, $4, $5, true) RETURNING id`,
+          [product.id, quantityToRemove, currentDate, mermaValue, `Producto vencido automáticamente (fecha: ${product.expiration_date})`]
         );
         const mermaId = mermaResult.rows[0].id;
 
         const kardexResult = await pool.query(
-            `INSERT INTO kardex (product_id, movement_type, quantity, unit_price, reference_id, reference_type, stock_after)
-             VALUES ($1, 'exit', $2, $3, $4, 'merma', $5) RETURNING id`,
-            [product_id, quantity, product.sale_price, mermaId, product.actual_stock - quantity]
+          `INSERT INTO kardex (product_id, movement_type, quantity, unit_price, reference_id, reference_type, stock_after)
+           VALUES ($1, 'exit', $2, $3, $4, 'merma', $5) RETURNING id`,
+          [product.id, quantityToRemove, product.sale_price, mermaId, 0]
         );
         const kardexId = kardexResult.rows[0].id;
 
         await pool.query('UPDATE mermas SET kardex_id = $1 WHERE id = $2', [kardexId, mermaId]);
-        await pool.query('UPDATE products SET actual_stock = actual_stock - $1 WHERE id = $2', [quantity, product_id]);
+        await pool.query('UPDATE products SET actual_stock = 0 WHERE id = $1', [product.id]);
 
-        await pool.query('COMMIT');
-        res.status(201).json({ message: 'Merma registrada exitosamente', mermaId });
-    } catch (error) {
-        await pool.query('ROLLBACK');
-        res.status(400).json({ error: (error as Error).message });
+        mermasRegistradas.push({ product_id: product.id, quantity: quantityToRemove });
+      }
     }
+
+    await pool.query('COMMIT');
+    res.json({
+      message: 'Revisión de productos vencidos completada',
+      mermasRegistradas,
+    });
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Error en /check-expired:', error);
+    res.status(500).json({ error: (error as Error).message });
+  }
 });
 
 // Listar todas las mermas

@@ -2,6 +2,8 @@ import express, { Router, Request, Response } from 'express';
 import pool from '../config/db';
 import { authenticate, authorize } from '../middleware/auth';
 
+console.log('Cargando products.ts - Versión actualizada al ' + new Date().toISOString());
+
 const router: Router = express.Router();
 
 interface Product {
@@ -28,8 +30,8 @@ interface Product {
   is_organic?: boolean;
 }
 
-router.use(authenticate); // Todas las rutas después requieren token
-router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
+// router.use(authenticate); // Todas las rutas después requieren token
+// router.use(authorize(["superuser", "system_admin", "client_supermarket_1", "client_supermarket_2"])); // Todas las rutas después requieren roles específicos
 
 // CREATE - Crear un producto
 router.post('/', async (req: Request, res: Response) => {
