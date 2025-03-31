@@ -2,10 +2,10 @@ import { Pool } from 'pg';
 
 const pool: Pool = new Pool({
   user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'tienda',
-  password: process.env.DB_PASSWORD || 'postgres',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
+  host: process.env.DB_HOST || '206.183.128.36',
+  database: process.env.DB_NAME || 'super_tienda',
+  password: process.env.DB_PASSWORD || 'qgvTfRSMUerCtY4FqUNvDpuzBsH84D',
+  port: parseInt(process.env.DB_PORT || '5217', 10),
 });
 
 /* app.use(cors({
