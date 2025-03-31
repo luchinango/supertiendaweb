@@ -6,8 +6,8 @@ import { Input } from "app/components/ui/input"
 import { Card, CardContent } from "app/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
 import { Search, Download, LayoutGrid, Plus } from "lucide-react"
-import { CategoriesDialog } from "../components/CategoriesDialog"
-import { AddProductDialog } from "../components/AddProductDialog"
+import { CategoriesDialog } from "app/components/CategoriesDialog"
+import { AddProductDialog } from "app/components/AddProductDialog"
 import useSWR from "swr"
 
 interface Product {
@@ -56,10 +56,33 @@ const productosFicticios: Product[] = [
 ]
 
 function useProductos() {
-  const fetcher = (url: string) => fetch(url).then((res) => res.json())
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/productos"
-  const { data, error, isLoading } = useSWR(apiUrl, fetcher)
-  return { productos: data, error, isLoading }
+  const fetcher = (url: string) =>
+    fetch(url, {
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return res.json();
+    })
+    .then((data) => {
+      // Transforma la respuesta de la API al formato esperado en la UI
+      return data.map((p: any) => ({
+        id: p.id,
+        nombre: p.name,
+        precio: p.price,
+        stock: p.actual_stock,
+        categoria: p.category_id, // Puedes mapearlo a un nombre si tienes la lista de categorías
+        imagen: "/placeholder.svg" // O agrega la lógica necesaria para obtener la URL de imagen
+      }));
+    });
+  const apiUrl = "http://127.0.0.1:5000/api/products"; // URL forzada para pruebas
+  const { data, error, isLoading } = useSWR(apiUrl, fetcher);
+  return { productos: data, error, isLoading };
 }
 
 export default function Inventario() {

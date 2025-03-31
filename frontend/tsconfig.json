@@ -7,7 +7,7 @@
       "esnext"
     ],
     "allowJs": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true, //Así no verifica definiciones de tipos de librerías externas
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
