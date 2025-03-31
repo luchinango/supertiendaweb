@@ -3,7 +3,7 @@ import cors from 'cors';
 import cron from 'node-cron';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { generateToken } from './middleware/auth';
+import { generateToken, requireAdmin } from './middleware/auth';
 import { User as UserModel } from './models/user';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from "./swagger";
@@ -62,6 +62,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); */
 // Ruta raíz para verificar el estado del servidor
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Backend funcionando', timestamp: new Date() });
+});
+
+// Ejemplo de ruta protegida
+app.get('/api/admin', requireAdmin, (req, res) => {
+  res.json({ message: 'Acceso para admin concedido' });
 });
 
 // Cargar el archivo YAML

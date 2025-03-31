@@ -52,4 +52,12 @@ export const authorize = (allowedRoles: string[]) => {
   };
 };
 
-export default { authenticate, authorize, generateToken };
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers['authorization'];
+  if (!token || token !== process.env.ADMIN_TOKEN) {
+    return res.status(401).json({ message: 'No autorizado' });
+  }
+  next();
+}
+
+export default { authenticate, authorize, generateToken, requireAdmin };
