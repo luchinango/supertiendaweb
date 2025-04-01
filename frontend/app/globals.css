@@ -89,20 +89,7 @@
  
 @layer base {
   * {
-    /* stylelint-disable-next-line at-rule-no-unknown */
-    @apply border; /* usa la clase 'border' de Tailwind */
-  }
-  body {
-    /* stylelint-disable-next-line at-rule-no-unknown */
-    @apply bg-background text-foreground;
-  }
-}
- 
-
- 
-@layer base {
-  * {
-    @apply border-border;
+    /* @apply border-border; */ /* Elimina o comenta esta línea */
   }
   body {
     @apply bg-background text-foreground;
