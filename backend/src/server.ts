@@ -32,8 +32,6 @@ import cashRegistersRouter from './routes/cashRegisters';
 
 import businessRoutes from './routes/business';
 
-
-
 // Definición de la interfaz User
 export interface User {
   id: number;
@@ -70,12 +68,11 @@ app.get('/api/admin', requireAdmin, (req, res) => {
 });
 
 // Cargar el archivo YAML
-const swaggerDocument = yaml.load(readFileSync('./docs/openapi.yaml', 'utf8')) as swaggerUi.JsonObject;
+// const swaggerDocument = yaml.load(readFileSync('./docs/openapi.yaml', 'utf8')) as swaggerUi.JsonObject;
 
 // Configurar Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// Registro de rutas
 // Registro de rutas
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
@@ -130,8 +127,13 @@ cron.schedule('0 0 * * *', checkExpiredProducts);
 
 // Manejo global de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Algo salió mal en el servidor' });
+  console.error('Error capturado en el middleware global:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
+  res.status(500).json({ error: err.message || 'Algo salió mal en el servidor' });
 });
 
 // Iniciar el servidor

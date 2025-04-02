@@ -121,6 +121,78 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// READ - Obtener productos filtrados por categoría
+router.get('/by-category', async (req: Request, res: Response) => {
+  try {
+    const { category_id, category_name } = req.query as {
+      category_id?: string;
+      category_name?: string;
+    };
+
+    if (!category_id && !category_name) {
+      return res.status(400).json({ 
+        error: 'Se requiere al menos category_id o category_name como parámetro' 
+      });
+    }
+
+    let query = `
+      SELECT p.*, c.name AS category_name, s.name AS supplier_name
+      FROM public.products p
+      LEFT JOIN public.categories c ON p.category_id = c.id
+      LEFT JOIN public.suppliers s ON p.supplier_id = s.id
+    `;
+    const queryParams: (string | number)[] = [];
+    let whereAdded = false;
+
+    if (category_id) {
+      query += whereAdded ? ' AND ' : ' WHERE ';
+      const catId = parseInt(category_id);
+      if (isNaN(catId)) {
+        return res.status(400).json({ error: 'category_id debe ser un número válido' });
+      }
+      queryParams.push(catId);
+      query += `p.category_id = $${queryParams.length}`;
+      whereAdded = true;
+    }
+
+    if (category_name) {
+      if (!category_name.trim()) {
+        return res.status(400).json({ error: 'category_name no puede estar vacío' });
+      }
+      query += whereAdded ? ' AND ' : ' WHERE ';
+      queryParams.push(`%${category_name.trim()}%`);
+      query += `c.name ILIKE $${queryParams.length}`; // Corregido: usamos c.name directamente
+      whereAdded = true;
+    }
+
+    query += ` ORDER BY p.name ASC`;
+
+    console.log('Query:', query);
+    console.log('Params:', queryParams);
+
+    const result = await pool.query(query, queryParams);
+    
+    if (result.rows.length === 0) {
+      return res.status(200).json({ 
+        message: 'No se encontraron productos para los filtros especificados',
+        data: []
+      });
+    }
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching products by category:', {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      query: req.query
+    });
+    res.status(500).json({ 
+      error: 'Error al obtener productos por categoría',
+      details: (error as Error).message 
+    });
+  }
+});
+
 // READ - Obtener un producto por ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -147,8 +219,8 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   const productId = parseInt(req.params.id, 10);
   const {
-    supplier_id, name, price, stock, description, purchase_price, sale_price,
-    sku, barcode, brand, unit, min_stock, max_stock, actual_stock,
+    supplier_id, name, price, actual_stock, description, purchase_price, sale_price,
+    sku, barcode, brand, unit, min_stock, max_stock,
     expiration_date, image, category_id
   } = req.body;
 
@@ -159,17 +231,17 @@ router.put('/:id', async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `UPDATE products 
-       SET supplier_id = $1, name = $2, price = $3, stock = $4, description = $5,
+       SET supplier_id = $1, name = $2, price = $3, actual_stock = $4, description = $5,
            purchase_price = $6, sale_price = $7, sku = $8, barcode = $9, brand = $10,
-           unit = $11, min_stock = $12, max_stock = $13, actual_stock = $14,
-           expiration_date = $15, image = $16, category_id = $17
-       WHERE id = $18
+           unit = $11, min_stock = $12, max_stock = $13,
+           expiration_date = $14, image = $15, category_id = $16
+       WHERE id = $17
        RETURNING *`,
       [
-        supplier_id, name, price, stock, description || null, purchase_price || 0,
+        supplier_id, name, price, actual_stock || 0, description || null, purchase_price || 0,
         sale_price || 0, sku || null, barcode || null, brand || null, unit || null,
-        min_stock || 0, max_stock || 0, actual_stock || 0, expiration_date || null,
-        image || null, category_id, productId
+        min_stock || 0, max_stock || 0,
+        expiration_date || null, image || null, category_id, productId
       ]
     );
 

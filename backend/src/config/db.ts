@@ -12,4 +12,12 @@ const pool: Pool = new Pool({
   origin: 'http://localhost:3000', // O la URL de tu frontend en producción
 })); */
 
+pool.connect((err, client, release) => {
+  if (err) {
+    return console.error('Error al conectar a la base de datos:', err.stack);
+  }
+  console.log('Conexión a la base de datos exitosa');
+  release();
+});
+
 export default pool;

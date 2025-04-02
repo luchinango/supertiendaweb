@@ -110,15 +110,76 @@ router.get("/sales", async (req, res) => {
   }
 });
 
+
+// Reportes de las transacciones
+// Puedes filtrar por fecha y periodo (diario, semanal, mensual, trimestral, semestral, anual)
 router.get("/transactions", async (req, res) => {
-  try {
-      const query = `SELECT * FROM public.transactions;`;
-      const result = await pool.query(query);
-      res.json(result.rows);
-  } catch (err) {
-      console.error("Error fetching transactions:", err);
-      res.status(500).json({ error: "Error fetching transactions" });
-  }
+    try {
+        const { startDate, endDate, period } = req.query as {
+            startDate?: string;
+            endDate?: string;
+            period?: string;
+        };
+
+        let query = `SELECT * FROM public.transactions`;
+        const queryParams: string[] = [];
+
+        if (startDate || endDate) {
+            query += ` WHERE `;
+            if (startDate) {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+                    throw new Error("Invalid startDate format. Use YYYY-MM-DD");
+                }
+                queryParams.push(startDate);
+                query += `created_at >= $${queryParams.length}`;
+            }
+            if (endDate) {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+                    throw new Error("Invalid endDate format. Use YYYY-MM-DD");
+                }
+                if (startDate) query += ` AND `;
+                queryParams.push(endDate);
+                query += `created_at <= $${queryParams.length}`;
+            }
+        }
+
+        if (period) {
+            const periodConditions: { [key: string]: string } = {
+                daily: "DATE_TRUNC('day', created_at) = CURRENT_DATE",
+                weekly: "DATE_TRUNC('week', created_at) = DATE_TRUNC('week', CURRENT_DATE)",
+                monthly: "DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)",
+                quarterly: "DATE_TRUNC('quarter', created_at) = DATE_TRUNC('quarter', CURRENT_DATE)",
+                semiannual: "DATE_TRUNC('month', created_at) >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '6 months') AND DATE_TRUNC('month', created_at) <= DATE_TRUNC('month', CURRENT_DATE)",
+                yearly: "DATE_TRUNC('year', created_at) = DATE_TRUNC('year', CURRENT_DATE)"
+            };
+
+            const periodLower = period.toLowerCase();
+            if (periodConditions[periodLower]) {
+                query += startDate || endDate ? ` AND ` : ` WHERE `;
+                query += periodConditions[periodLower];
+            } else {
+                throw new Error(`Invalid period value. Valid options: ${Object.keys(periodConditions).join(', ')}`);
+            }
+        }
+
+        query += ` ORDER BY created_at ASC;`;
+
+        console.log('Query:', query);
+        console.log('Params:', queryParams);
+
+        const result = await pool.query(query, queryParams);
+        res.json(result.rows);
+    } catch (err: any) {
+        console.error("Error fetching transactions:", {
+            message: err.message,
+            stack: err.stack,
+            queryParams: req.query
+        });
+        res.status(500).json({ 
+            error: "Error fetching transactions",
+            details: err.message 
+        });
+    }
 });
 
 router.get("/transactions/income", async (req, res) => {
@@ -242,7 +303,7 @@ router.get("/frequent_customers", async (req, res) => {
 });
 
 // Generar reporte genérico en PDF
-router.get('/pdf/:type', authenticate, async (req: Request, res: Response) => {
+router.get('/pdf/:type', async (req: Request, res: Response) => {
     try {
         const { type } = req.params;
         const doc = new PDFDocument();
@@ -294,7 +355,7 @@ router.get('/pdf/:type', authenticate, async (req: Request, res: Response) => {
 });
 
 // Generar comando ESC/POS para impresoras térmicas
-router.get('/thermal/:type', authenticate, async (req: Request, res: Response) => {
+router.get('/thermal/:type',  async (req: Request, res: Response) => {
     try {
         const { type } = req.params;
         const device = new escpos.Network('192.168.1.100');  // IP de la impresora

@@ -102,8 +102,10 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 // CREATE - Registrar un usuario
-router.post("/register", async (req: Request, res: Response) => {
+router.post('/register', async (req: Request, res: Response) => {
   try {
+    console.log('Solicitud recibida:', req.body); // Log del cuerpo recibido
+
     const {
       username,
       password,
@@ -116,29 +118,37 @@ router.post("/register", async (req: Request, res: Response) => {
     } = req.body;
 
     if (!role_id) {
-      return res.status(400).json({ error: "El campo role_id es obligatorio" });
+      return res.status(400).json({ error: 'El campo role_id es obligatorio' });
     }
 
-    const hashedPassword = await bcrypt.hash(password || "", SALT_ROUNDS);
+    console.log('Datos extraídos:', { username, password, email, role_id }); // Log de datos procesados
 
-    const result = await pool.query(
-      `INSERT INTO users (username, password, email, first_name, last_name, address, mobile_phone, role_id, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [
-        username,
-        hashedPassword,
-        email,
-        first_name,
-        last_name,
-        address,
-        mobile_phone,
-        role_id,
-        "active",
-      ]
-    );
+    const hashedPassword = await bcrypt.hash(password || '', SALT_ROUNDS);
+    console.log('Contraseña hasheada correctamente'); // Confirmar que bcrypt funciona
 
+    const query = `
+      INSERT INTO users (username, password, email, first_name, last_name, address, mobile_phone, role_id, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *`;
+    const values = [
+      username,
+      hashedPassword,
+      email,
+      first_name,
+      last_name,
+      address,
+      mobile_phone,
+      role_id,
+      'active',
+    ];
+
+    console.log('Ejecutando consulta con valores:', values); // Log antes de la consulta
+    const result = await pool.query(query, values);
+
+    console.log('Usuario registrado:', result.rows[0]); // Log del resultado
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    console.error('Error en /register:', (error as Error).message, (error as Error).stack); // Log detallado del error
     res.status(500).json({ error: (error as Error).message });
   }
 });
