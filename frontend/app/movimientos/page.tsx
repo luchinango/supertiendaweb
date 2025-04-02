@@ -14,6 +14,7 @@ import { DateRangePicker } from "../components/DateRangePicker"
 import type { DateRange } from "react-day-picker"
 import { addDays } from "date-fns"
 import { es } from "date-fns/locale"
+import useSWR from "swr"
 
 interface Transaction {
   id: number
@@ -28,7 +29,7 @@ interface Transaction {
 const sampleTransactions: Transaction[] = [
   {
     id: 1,
-    concept: "1 Coca-Cola S/A 2l Nr, 1 Pepsi Black de 1l, 2 Nacional Celeste de 12 rollos",
+    concept: "1 Coca-Cola S/A 2l, 1 Pepsi Black de 1l, 2 Nacional Celeste de 12 rollos",
     value: 66,
     paymentMethod: "Efectivo",
     dateTime: "24/ene/2025 | 9:23 PM",
@@ -47,6 +48,8 @@ const sampleTransactions: Transaction[] = [
   // Add more sample transactions as needed
 ]
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
 export default function Movimientos() {
   const [isCashRegisterOpen, setIsCashRegisterOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -59,11 +62,23 @@ export default function Movimientos() {
     to: addDays(new Date(2025, 0, 20), 6),
   })
 
-  const totalSales = sampleTransactions.filter((t) => t.type === "ingreso").reduce((sum, t) => sum + t.value, 0)
+  // SWR calls to endpoints
+  const { data: balanceData, error: balanceError } = useSWR('http://localhost:5000/api/reports/balance', fetcher)
+  const { data: salesData, error: salesError } = useSWR('http://localhost:5000/api/reports/sales', fetcher)
+  const { data: expensesData, error: expensesError } = useSWR('http://localhost:5000/api/reports/expenses', fetcher)
+  const { data: incomeData, error: incomeError } = useSWR('http://localhost:5000/api/reports/transactions/income', fetcher)
+  const { data: egresoData, error: egresoError } = useSWR('http://localhost:5000/api/reports/transactions/expenses', fetcher)
+  const { data: creditsData, error: creditsError } = useSWR('http://localhost:5000/api/reports/credits', fetcher)
+  const { data: payableData, error: payableError } = useSWR('http://localhost:5000/api/reports/payable_credits', fetcher)
+  const { data: cashRegisterData, error: cashRegisterError } = useSWR('http://localhost:5000/api/reports/cash_registers', fetcher)
 
-  const totalExpenses = sampleTransactions.filter((t) => t.type === "egreso").reduce((sum, t) => sum + t.value, 0)
+  if (balanceError || salesError || expensesError) return <div>Error al cargar los datos.</div>
+  if (!balanceData || !salesData || !expensesData) return <div>Cargando...</div>
 
-  const balance = totalSales - totalExpenses
+  // Convert to number using correct keys:
+  const balance = Number(balanceData.balance)
+  const totalSales = Number(salesData.total_sales)
+  const totalExpenses = Number(expensesData.totalExpenses)
 
   function handleDateChange(date: DateRange): void {
     setDate({
@@ -86,30 +101,39 @@ export default function Movimientos() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Balance */}
         <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Balance</p>
               <p className={`text-2xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-600"}`}>
                 {balance >= 0 ? "Bs " : "-Bs "}
-                {Math.abs(balance).toFixed(2)}
+                {Math.abs(balance).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </CardContent>
         </Card>
+
+        {/* Ventas Totales */}
         <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Ventas totales</p>
-              <p className="text-2xl font-bold text-green-600">Bs {totalSales.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-600">
+                Bs {totalSales.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
             </div>
           </CardContent>
         </Card>
+
+        {/* Gastos Totales */}
         <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Gastos totales</p>
-              <p className="text-2xl font-bold text-red-600">Bs {totalExpenses.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-red-600">
+                Bs {totalExpenses.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -167,44 +191,156 @@ export default function Movimientos() {
                   <TabsTrigger value="por-cobrar">Por cobrar</TabsTrigger>
                   <TabsTrigger value="por-pagar">Por pagar</TabsTrigger>
                 </TabsList>
-                <TabsContent value="ingresos">
-                  <div className="relative overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="text-xs uppercase border-b">
-                        <tr>
-                          <th className="px-4 py-3">Concepto</th>
-                          <th className="px-4 py-3">Valor</th>
-                          <th className="px-4 py-3">Medio de pago</th>
-                          <th className="px-4 py-3">Fecha y hora</th>
-                          <th className="px-4 py-3">Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sampleTransactions
-                          .filter((transaction) => transaction.type === "ingreso")
-                          .map((transaction) => (
+                {/* Pestaña Ingresos */}
+                <TabsContent value="ingresos" className="space-y-4">
+                  {incomeError && <p>Error al cargar los ingresos</p>}
+                  {!incomeData ? (
+                    <p>Cargando ingresos...</p>
+                  ) : (
+                    <div className="relative overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="text-xs uppercase border-b">
+                          <tr>
+                            <th className="px-4 py-3">Concepto</th>
+                            <th className="px-4 py-3">Valor</th>
+                            <th className="px-4 py-3">Medio de pago</th>
+                            <th className="px-4 py-3">Fecha y hora</th>
+                            <th className="px-4 py-3">Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {incomeData.map((transaction: any) => (
                             <tr key={transaction.id} className="border-b">
-                              <td className="px-4 py-3">{transaction.concept}</td>
-                              <td className="px-4 py-3">Bs {transaction.value}</td>
-                              <td className="px-4 py-3">{transaction.paymentMethod}</td>
-                              <td className="px-4 py-3">{transaction.dateTime}</td>
                               <td className="px-4 py-3">
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  {transaction.status}
+                                {transaction.concept || transaction.reference || "N/a"}
+                              </td>
+                              <td className="px-4 py-3">
+                                Bs {Number(transaction.amount ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3">{transaction.type || "N/a"}</td>
+                              <td className="px-4 py-3">{transaction.created_at || "N/a"}</td>
+                              <td className="px-4 py-3">
+                                <Badge variant="outline">
+                                  {transaction.status || "Desconocido"}
                                 </Badge>
                               </td>
                             </tr>
                           ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Pestaña Egresos */}
+                <TabsContent value="egresos" className="space-y-4">
+                  {egresoError && <p>Error al cargar los egresos</p>}
+                  {!egresoData ? (
+                    <p>Cargando egresos...</p>
+                  ) : (
+                    <div className="relative overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="text-xs uppercase border-b">
+                          <tr>
+                            <th className="px-4 py-3">Tipo</th>
+                            <th className="px-4 py-3">Valor</th>
+                            <th className="px-4 py-3">Fecha</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(Array.isArray(egresoData) ? egresoData : []).map((transaction: any, index: number) => (
+                            <tr key={`egreso-${transaction.type}-${transaction.id}-${index}`} className="border-b">
+                              <td className="px-4 py-3">{transaction.type}</td>
+                              <td className="px-4 py-3">
+                                Bs {Number(transaction.amount || 0).toLocaleString('es-BO', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2
+                                })}
+                              </td>
+                              <td className="px-4 py-3">
+                                {transaction.created_at
+                                  ? new Date(transaction.created_at).toLocaleString('es-BO')
+                                  : ""}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Pestaña Por cobrar */}
+                <TabsContent value="por-cobrar" className="space-y-4">
+                  {creditsError && <p>Error al cargar créditos por cobrar</p>}
+                  {!creditsData ? (
+                    <p>Cargando créditos por cobrar...</p>
+                  ) : (
+                    <div className="relative overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="text-xs uppercase border-b">
+                          <tr>
+                            <th className="px-4 py-3">Cliente</th>
+                            <th className="px-4 py-3">Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {creditsData.map((credit: any) => (
+                            <tr key={credit.id} className="border-b">
+                              <td className="px-4 py-3">
+                                {credit.first_name} {credit.last_name}
+                              </td>
+                              <td className="px-4 py-3">
+                                Bs {Number(credit.balance || 0).toLocaleString('es-BO', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Pestaña Por pagar */}
+                <TabsContent value="por-pagar" className="space-y-4">
+                  {payableError && <p>Error al cargar los créditos por pagar</p>}
+                  {!payableData ? (
+                    <p>Cargando créditos por pagar...</p>
+                  ) : (
+                    <div className="relative overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="text-xs uppercase border-b">
+                          <tr>
+                            <th className="px-4 py-3">Empresa</th>
+                            <th className="px-4 py-3">Monto pendiente</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(Array.isArray(payableData) ? payableData : []).map((credit: any, index: number) => (
+                            <tr key={`payable-${credit.id}-${index}`} className="border-b">
+                              <td className="px-4 py-3">{credit.company_name}</td>
+                              <td className="px-4 py-3">
+                                Bs {Number(credit.remaining_amount || 0).toLocaleString('es-BO', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="cierres">
+        <TabsContent value="cierres" className="space-y-4">
           <div className="flex flex-wrap gap-4 items-center mb-4">
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
@@ -240,13 +376,75 @@ export default function Movimientos() {
               Descargar reporte
             </Button>
           </div>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="rounded-full bg-gray-100 p-6 mb-4">
-              <Search className="h-12 w-12 text-gray-400" />
+
+          {cashRegisterError && (
+            <p>Error al cargar los cierres de caja</p>
+          )}
+
+          {!cashRegisterData ? (
+            <p>Cargando cierres de caja...</p>
+          ) : cashRegisterData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="rounded-full bg-gray-100 p-6 mb-4">
+                <Search className="h-12 w-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                No se encontraron cierres de caja con estos filtros
+              </h3>
+              <p className="text-gray-500">
+                Intenta buscar usando otros criterios
+              </p>
             </div>
-            <h3 className="text-lg font-semibold mb-2">No se encontraron cierres de caja con estos filtros</h3>
-            <p className="text-gray-500">Intenta buscar usando otros criterios</p>
-          </div>
+          ) : (
+            <div className="relative overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase border-b">
+                  <tr>
+                    <th className="px-4 py-3">Fecha de apertura</th>
+                    <th className="px-4 py-3">Fecha de cierre</th>
+                    <th className="px-4 py-3">Monto apertura</th>
+                    <th className="px-4 py-3">Monto cierre</th>
+                    <th className="px-4 py-3">Notas</th>
+                    <th className="px-4 py-3">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cashRegisterData.map((cierre: any, index: number) => (
+                    <tr key={`cierre-${cierre.id}-${index}`} className="border-b">
+                      <td className="px-4 py-3">
+                        {cierre.opening_date
+                          ? new Date(cierre.opening_date).toLocaleString('es-BO')
+                          : "N/a"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {cierre.closing_date
+                          ? new Date(cierre.closing_date).toLocaleString('es-BO')
+                          : "N/a"}
+                      </td>
+                      <td className="px-4 py-3">
+                        Bs {Number(cierre.opening_amount || 0).toLocaleString('es-BO', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </td>
+                      <td className="px-4 py-3">
+                        Bs {Number(cierre.closing_amount || 0).toLocaleString('es-BO', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </td>
+                      <td className="px-4 py-3">{cierre.notes || "N/a"}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline">
+                          {cierre.status || "N/a"}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

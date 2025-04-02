@@ -13,10 +13,10 @@ const pg_1 = require("pg");
 
 const pool = new pg_1.Pool({
     user: 'postgres',
-    host: 'localhost',
-    database: 'tienda',
-    password: 'Leo2007',
-    port: 5433,
+    host: '206.183.128.36',
+    database: 'super_tienda',
+    password: 'qgvTfRSMUerCtY4FqUNvDpuzBsH84D',
+    port: 5217,
 });
 
 exports.default = pool;
