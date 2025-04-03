@@ -29,8 +29,8 @@ import reportRoutes from './routes/reports';
 import alarmRoutes from './routes/alarms';
 import categoriesRouter from './routes/categories';
 import cashRegistersRouter from './routes/cashRegisters';
-
 import businessRoutes from './routes/business';
+import inventoryReportRoutes from './routes/inventoryReports';
 
 // Definición de la interfaz User
 export interface User {
@@ -92,6 +92,7 @@ app.use('/api/alarms', alarmRoutes);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/cash-registers', cashRegistersRouter);
 app.use('/api/business', businessRoutes);
+app.use('/api/inventory-report', inventoryReportRoutes);
 
 // Tarea cron para productos vencidos (mermas)
 const checkExpiredProducts = async () => {

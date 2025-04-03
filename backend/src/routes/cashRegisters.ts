@@ -1,36 +1,33 @@
 import express, { Request, Response } from 'express';
 import pool from '../config/db'; 
-import authMiddleware from '../middleware/auth'; 
-import { authenticate, authorize } from "../middleware/auth";
 
 const router = express.Router();
 
-// Middleware para verificar roles 1, 2 o 3
+// Middleware de autenticación y autorización eliminado
+// router.use(authenticate); // Eliminado
+// Middleware para restringir a roles 1, 2 o 3 también eliminado/comentado
+/*
 const restrictToRoles = (req: Request, res: Response, next: Function) => {
-    const userRole = (req as any).user?.role_id; // Cambiar de .role a .role_id
-    if (![1, 2, 3].includes(userRole)) {
+    const userRole = (req as any).user?.role_id;
+    if (!userRole || ![1, 2, 3].includes(userRole)) {
         return res.status(403).json({ error: 'Acceso denegado. Rol no autorizado.' });
     }
     next();
 };
+router.use(restrictToRoles);
+*/
 
-// Aplicar autenticación y restricción de roles a todas las rutas
-// router.use(authMiddleware.authenticate); // Ajusta según tu implementación de autenticación
-// router.use(restrictToRoles);
-
-// Interfaz corregida para CashRegister
 interface CashRegister {
     id?: number;
-    user_id: number; // Cambiado de opening_user_id
-    opening_amount: number; // Cambiado de initial_amount
-    closing_amount?: number; // Nullable o con valor por defecto
+    user_id: number;
+    opening_amount: number;
+    closing_amount?: number;
     opening_date: string;
     closing_date?: string;
-    notes?: string; // Cambiado de observations
+    notes?: string;
     status: 'abierta' | 'cerrada' | 'pendiente';
 }
 
-// Interfaz para AuditCashRegister
 interface AuditCashRegister {
     id?: number;
     cash_register_id: number;
@@ -42,17 +39,16 @@ interface AuditCashRegister {
 
 // Apertura de caja
 router.post('/open', async (req: Request, res: Response) => {
-    const { opening_amount, notes } = req.body; // Ajustado a los nombres de la tabla
-    const userId = (req as any).user.id; // ID del usuario autenticado
+    const { opening_amount, notes } = req.body;
+    const userId = 1; // Valor predeterminado para pruebas sin autenticación
 
-    if (opening_amount === undefined || opening_amount < 0) {
-        return res.status(400).json({ error: 'Monto inicial inválido' });
+    if (typeof opening_amount !== 'number' || opening_amount < 0) {
+        return res.status(400).json({ error: 'El monto inicial debe ser un número no negativo' });
     }
 
     try {
         await pool.query('BEGIN');
 
-        // Verificar si ya hay una caja abierta o pendiente
         const existing = await pool.query(
             `SELECT id FROM cash_registers WHERE status IN ('abierta', 'pendiente') LIMIT 1`
         );
@@ -60,18 +56,16 @@ router.post('/open', async (req: Request, res: Response) => {
             throw new Error('Ya existe una caja abierta o pendiente');
         }
 
-        // Insertar nueva caja
         const cashResult = await pool.query(
-            `INSERT INTO cash_registers (opening_amount, status, user_id, notes, closing_amount)
-             VALUES ($1, 'abierta', $2, $3, $4) RETURNING *`,
-            [opening_amount, userId, notes || null, 0.00] // closing_amount con valor por defecto
+            `INSERT INTO cash_registers (user_id, opening_amount, status, opening_date, notes, closing_amount)
+             VALUES ($1, $2, 'abierta', CURRENT_TIMESTAMP, $3, $4) RETURNING *`,
+            [userId, opening_amount, notes || null, 0.00]
         );
         const newCashRegister: CashRegister = cashResult.rows[0];
 
-        // Registrar en auditoría
         await pool.query(
-            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, details)
-             VALUES ($1, 'apertura', $2, $3)`,
+            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, action_date, details)
+             VALUES ($1, 'apertura', $2, CURRENT_TIMESTAMP, $3)`,
             [newCashRegister.id, userId, `Caja abierta con monto inicial: ${opening_amount}`]
         );
 
@@ -79,29 +73,29 @@ router.post('/open', async (req: Request, res: Response) => {
         res.status(201).json({ message: 'Caja abierta exitosamente', cashRegister: newCashRegister });
     } catch (error) {
         await pool.query('ROLLBACK');
+        console.error('Error al abrir caja:', error);
         res.status(400).json({ error: (error as Error).message });
     }
 });
 
 // Cierre normal de caja
 router.put('/close', async (req: Request, res: Response) => {
-    const { closing_amount, notes } = req.body; // Cambiado de final_amount a closing_amount y observations a notes
-    const userId = (req as any).user.id;
+    const { closing_amount, notes } = req.body;
+    const userId = 1; // Valor predeterminado para pruebas sin autenticación
 
-    if (closing_amount === undefined || closing_amount < 0) {
-        return res.status(400).json({ error: 'Monto final inválido' });
+    if (typeof closing_amount !== 'number' || closing_amount < 0) {
+        return res.status(400).json({ error: 'El monto final debe ser un número no negativo' });
     }
 
     try {
         await pool.query('BEGIN');
 
-        // Buscar caja abierta y actualizarla
         const cashResult = await pool.query(
             `UPDATE cash_registers
              SET status = 'cerrada', 
                  closing_amount = $1, 
                  closing_date = CURRENT_TIMESTAMP,
-                 user_id = $2,  -- Asumiendo que user_id se actualiza al cerrar
+                 user_id = $2,  -- Nota: Esto sobrescribe el user_id original
                  notes = COALESCE($3, notes)
              WHERE status = 'abierta'
              RETURNING *`,
@@ -112,10 +106,9 @@ router.put('/close', async (req: Request, res: Response) => {
         }
         const closedCashRegister: CashRegister = cashResult.rows[0];
 
-        // Registrar en auditoría
         await pool.query(
-            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, details)
-             VALUES ($1, 'cierre_normal', $2, $3)`,
+            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, action_date, details)
+             VALUES ($1, 'cierre_normal', $2, CURRENT_TIMESTAMP, $3)`,
             [closedCashRegister.id, userId, `Caja cerrada con monto final: ${closing_amount}`]
         );
 
@@ -123,18 +116,18 @@ router.put('/close', async (req: Request, res: Response) => {
         res.json({ message: 'Caja cerrada exitosamente', cashRegister: closedCashRegister });
     } catch (error) {
         await pool.query('ROLLBACK');
+        console.error('Error al cerrar caja:', error);
         res.status(400).json({ error: (error as Error).message });
     }
 });
 
-// Cierre inesperado (simulado)
+// Cierre inesperado
 router.put('/unexpected-close', async (req: Request, res: Response) => {
-    const userId = (req as any).user.id;
+    const userId = 1; // Valor predeterminado para pruebas sin autenticación
 
     try {
         await pool.query('BEGIN');
 
-        // Actualizar caja abierta a pendiente
         const cashResult = await pool.query(
             `UPDATE cash_registers
              SET status = 'pendiente', 
@@ -147,10 +140,9 @@ router.put('/unexpected-close', async (req: Request, res: Response) => {
         }
         const pendingCashRegister: CashRegister = cashResult.rows[0];
 
-        // Registrar en auditoría
         await pool.query(
-            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, details)
-             VALUES ($1, 'cierre_pendiente', $2, $3)`,
+            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, action_date, details)
+             VALUES ($1, 'cierre_pendiente', $2, CURRENT_TIMESTAMP, $3)`,
             [pendingCashRegister.id, userId, 'Cierre inesperado detectado']
         );
 
@@ -158,11 +150,12 @@ router.put('/unexpected-close', async (req: Request, res: Response) => {
         res.json({ message: 'Caja marcada como pendiente', cashRegister: pendingCashRegister });
     } catch (error) {
         await pool.query('ROLLBACK');
+        console.error('Error al marcar cierre inesperado:', error);
         res.status(400).json({ error: (error as Error).message });
     }
 });
 
-// Verificación al reinicio del sistema
+// Verificación de estado
 router.get('/check-status', async (req: Request, res: Response) => {
     try {
         const result = await pool.query(
@@ -181,29 +174,29 @@ router.get('/check-status', async (req: Request, res: Response) => {
             res.json({ message: 'No hay cajas abiertas o pendientes. Puedes abrir una nueva.' });
         }
     } catch (error) {
+        console.error('Error al verificar estado:', error);
         res.status(500).json({ error: (error as Error).message });
     }
 });
 
 // Auditoría y cierre de caja pendiente
 router.put('/audit-and-close', async (req: Request, res: Response) => {
-    const { closing_amount, notes } = req.body; // Cambiado de final_amount a closing_amount y observations a notes
-    const userId = (req as any).user.id;
+    const { closing_amount, notes } = req.body;
+    const userId = 1; // Valor predeterminado para pruebas sin autenticación
 
-    if (closing_amount === undefined || closing_amount < 0) {
-        return res.status(400).json({ error: 'Monto final inválido' });
+    if (typeof closing_amount !== 'number' || closing_amount < 0) {
+        return res.status(400).json({ error: 'El monto final debe ser un número no negativo' });
     }
 
     try {
         await pool.query('BEGIN');
 
-        // Buscar caja pendiente
         const cashResult = await pool.query(
             `UPDATE cash_registers
              SET status = 'cerrada', 
                  closing_amount = $1, 
                  closing_date = CURRENT_TIMESTAMP,
-                 user_id = $2,  -- Cambiado de closing_user_id a user_id
+                 user_id = $2,  -- Nota: Esto sobrescribe el user_id original
                  notes = COALESCE($3, notes)
              WHERE status = 'pendiente'
              RETURNING *`,
@@ -214,10 +207,9 @@ router.put('/audit-and-close', async (req: Request, res: Response) => {
         }
         const closedCashRegister: CashRegister = cashResult.rows[0];
 
-        // Registrar en auditoría
         await pool.query(
-            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, details)
-             VALUES ($1, 'auditoria', $2, $3)`,
+            `INSERT INTO audit_cash_registers (cash_register_id, action, user_id, action_date, details)
+             VALUES ($1, 'auditoria', $2, CURRENT_TIMESTAMP, $3)`,
             [closedCashRegister.id, userId, `Caja pendiente cerrada tras auditoría. Monto final: ${closing_amount}`]
         );
 
@@ -225,6 +217,7 @@ router.put('/audit-and-close', async (req: Request, res: Response) => {
         res.json({ message: 'Caja pendiente cerrada tras auditoría', cashRegister: closedCashRegister });
     } catch (error) {
         await pool.query('ROLLBACK');
+        console.error('Error al auditar y cerrar caja:', error);
         res.status(400).json({ error: (error as Error).message });
     }
 });
