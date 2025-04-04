@@ -75,4 +75,26 @@ export const cancelTransaction = async (
   return await api.patch(`/api/customers/${customerId}/transactions/${transactionId}/cancel`).then((res: AxiosResponse) => res.data);
 };
 
-export default api;
+interface TransactionService {
+  createSale(data: any): Promise<any>;
+  createExpense(data: any): Promise<any>;
+  getTransactions(filters: any): Promise<any>;
+}
+
+const transactionService: TransactionService = {
+  async createSale(data) {
+    // Implementation of createSale
+    return Promise.resolve({ /* sale data */ });
+  },
+  async createExpense(data) {
+    // Implementation of createExpense
+    return Promise.resolve({ /* expense data */ });
+  },
+  async getTransactions(filters) {
+    // Implementation of getTransactions
+    return Promise.resolve([]);
+  }
+};
+
+export default transactionService;
+// export default api;

@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response, NextFunction, Application} from 'express';
 import cors from 'cors';
 import cron from 'node-cron';
 import axios from 'axios';
@@ -31,6 +31,7 @@ import categoriesRouter from './routes/categories';
 import cashRegistersRouter from './routes/cashRegisters';
 import businessRoutes from './routes/business';
 import inventoryReportRoutes from './routes/inventoryReports';
+import movimientosRouter from './routes/movimientosRouter';
 
 // Definición de la interfaz User
 export interface User {
@@ -93,6 +94,23 @@ app.use('/api/categories', categoriesRouter);
 app.use('/api/cash-registers', cashRegistersRouter);
 app.use('/api/business', businessRoutes);
 app.use('/api/inventory-report', inventoryReportRoutes);
+app.use('/api/movimientos', movimientosRouter); // Para /api/movimientos/:movimientoId
+
+// Depuración: Listar todas las rutas registradas
+app._router.stack.forEach((middleware: any) => {
+  if (middleware.route) {
+    // Rutas directas
+    console.log(`Ruta registrada: ${middleware.route.path} (${Object.keys(middleware.route.methods).join(', ')})`);
+  } else if (middleware.name === 'router' && middleware.handle.stack) {
+    // Rutas dentro de un router (como movimientosRouter)
+    const path = middleware.regexp.toString().replace(/\/\^\\/, '').replace(/\\\/?.*/, '');
+    middleware.handle.stack.forEach((handler: any) => {
+      if (handler.route) {
+        console.log(`Ruta registrada: ${path}${handler.route.path} (${Object.keys(handler.route.methods).join(', ')})`);
+      }
+    });
+  }
+});
 
 // Tarea cron para productos vencidos (mermas)
 const checkExpiredProducts = async () => {

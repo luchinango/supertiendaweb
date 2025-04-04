@@ -1,5 +1,9 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+// src/services/reportService.ts
+import cashRegisterService from './cashRegisterService';
+import transactionService from './transactionService';
+import pool from '../config/db';
 
+// Interfaces (mantenemos las que ya tienes)
 interface GeneralReportResponse {
   totalSales: number;
   productsSold: number;
@@ -75,74 +79,43 @@ interface ErrorResponse {
 
 type ApiResponse<T> = T | ErrorResponse;
 
-const API_URL: string = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Funciones de reportService (eliminamos axios y usamos la lógica directa)
+class ReportService {
+  async getClosings(): Promise<any[]> {
+    const cashRegisters = await cashRegisterService.getAllCashRegisters();
+    const closings = [];
+    for (const cr of cashRegisters) {
+      if (cr.status !== 'cerrada') continue;
 
-const api: AxiosInstance = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-});
+      const transactionsQuery = `
+        SELECT 
+          SUM(CASE WHEN t.customer_id IS NOT NULL THEN t.amount ELSE 0 END) as total_sales,
+          SUM(CASE WHEN t.customer_id IS NULL THEN t.amount ELSE 0 END) as total_expenses
+        FROM transactions t
+        WHERE t.created_at >= $1 AND (t.created_at <= $2 OR $2 IS NULL)
+      `;
+      const transactionsResult = await pool.query(transactionsQuery, [cr.opening_date, cr.closing_date]);
+      const totalSales = parseFloat(transactionsResult.rows[0].total_sales) || 0;
+      const totalExpenses = parseFloat(transactionsResult.rows[0].total_expenses) || 0;
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      closings.push({
+        cashRegisterId: cr.id,
+        openedAt: cr.opening_date,
+        closedAt: cr.closing_date,
+        summary: {
+          totalSales,
+          totalExpenses,
+          balance: parseFloat(cr.closing_amount),
+        },
+      });
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+    return closings;
+  }
 
-// Funciones específicas para report.ts
-export const fetchGeneralReport = async (): Promise<ApiResponse<GeneralReportResponse>> => {
-  return await api.get('/api/report').then((res: AxiosResponse) => res.data);
-};
+  async downloadReport(filters: any, format: string): Promise<any> {
+    const transactions = await transactionService.getTransactions(filters);
+    return { message: `Reporte generado en formato ${format}`, data: transactions };
+  }
+}
 
-export const fetchBalance = async (): Promise<ApiResponse<BalanceResponse>> => {
-  return await api.get('/api/report/balance').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchExpenses = async (): Promise<ApiResponse<ExpensesResponse>> => {
-  return await api.get('/api/report/expenses').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchSales = async (): Promise<ApiResponse<SalesResponse>> => {
-  return await api.get('/api/report/sales').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchTransactions = async (): Promise<ApiResponse<TransactionResponse[]>> => {
-  return await api.get('/api/report/transactions').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchIncomeTransactions = async (): Promise<ApiResponse<TransactionResponse[]>> => {
-  return await api.get('/api/report/transactions/income').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchExpenseTransactions = async (): Promise<ApiResponse<TransactionResponse[]>> => {
-  return await api.get('/api/report/transactions/expenses').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchCredits = async (): Promise<ApiResponse<CreditResponse[]>> => {
-  return await api.get('/api/report/credits').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchPayableCredits = async (): Promise<ApiResponse<PayableCreditResponse[]>> => {
-  return await api.get('/api/report/payable_credits').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchCashRegisters = async (): Promise<ApiResponse<CashRegisterResponse[]>> => {
-  return await api.get('/api/report/cash_registers').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchBestSellingProducts = async (): Promise<ApiResponse<BestSellingProductResponse[]>> => {
-  return await api.get('/api/report/best_selling_products').then((res: AxiosResponse) => res.data);
-};
-
-export const fetchFrequentCustomers = async (): Promise<ApiResponse<FrequentCustomerResponse[]>> => {
-  return await api.get('/api/report/frequent_customers').then((res: AxiosResponse) => res.data);
-};
-
-export default api;
+export default new ReportService();
