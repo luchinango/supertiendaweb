@@ -52,7 +52,6 @@ router.post('/:customerId/transactions',
     }
 });
 
-// Resto de los endpoints sin cambios
 router.get('/:customerId/transactions', async (req: Request, res: Response) => {
   const { customerId } = req.params;
   const { limit = '50', offset = '0' } = req.query;

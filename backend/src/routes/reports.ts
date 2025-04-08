@@ -22,17 +22,28 @@ router.get("/", async (req, res) => {
     const salesResult = await pool.query(querySales);
     const totalSales = salesResult.rows[0]?.total_sales || 0;
 
-    // Productos vendidos (usando cart_items y uniendo con transactions)
+    // Productos vendidos último mes (usando cart_items y cart)
     const queryProducts = `
-            SELECT 
-            COALESCE(SUM(ci.quantity), 0) AS products_sold
-            FROM public.cart_items ci
-            JOIN public.cart c ON ci.cart_id = c.id
-            JOIN public.transactions t ON c.id = t.cart_id
-            WHERE t.created_at >= NOW() - INTERVAL '1 month'
-        `;
+SELECT 
+COALESCE(SUM(ci.quantity), 0) AS products_sold
+FROM public.cart_items ci
+JOIN public.cart c ON ci.cart_id = c.id
+WHERE c.created_at >= NOW() - INTERVAL '1 month'
+`;
     const productsResult = await pool.query(queryProducts);
     const productsSold = productsResult.rows[0]?.products_sold || 0;
+
+    // Total de productos vendidos históricos
+    const queryTotalProducts = `
+SELECT 
+COALESCE(SUM(ci.quantity), 0) AS total_products_sold
+FROM public.cart_items ci
+JOIN public.cart c ON ci.cart_id = c.id
+`;
+
+    const totalProductsResult = await pool.query(queryTotalProducts);
+    const totalProductsSold =
+      totalProductsResult.rows[0]?.total_products_sold || 0;
 
     // Clientes activos (usando customer_id y created_at)
     const queryActiveCustomers = `
@@ -54,6 +65,7 @@ router.get("/", async (req, res) => {
     res.json({
       totalSales,
       productsSold,
+      totalProductsSold, // Nuevo campo agregado
       activeCustomers,
       totalInventory,
     });
@@ -310,6 +322,40 @@ router.get("/frequent_customers", async (req, res) => {
   } catch (err) {
     console.error("Error fetching frequent customers:", err);
     res.status(500).json({ error: "Error fetching frequent customers" });
+  }
+});
+
+// Productos con bajo stock
+router.get("/low-stock", async (req, res) => {
+  try {
+    const queryLowStock = `
+            SELECT 
+                id,
+                name,
+                actual_stock,
+                min_stock
+            FROM public.products
+            WHERE actual_stock <= min_stock
+            ORDER BY actual_stock ASC
+        `;
+    
+    const lowStockResult = await pool.query(queryLowStock);
+    const lowStockProducts = lowStockResult.rows;
+
+    if (lowStockProducts.length === 0) {
+      return res.json({
+        message: "No products with low stock found",
+        products: []
+      });
+    }
+
+    res.json({
+      totalLowStock: lowStockProducts.length,
+      products: lowStockProducts
+    });
+  } catch (err) {
+    console.error("Error fetching low stock products:", err);
+    res.status(500).json({ error: "Error retrieving low stock products" });
   }
 });
 

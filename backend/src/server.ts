@@ -86,7 +86,7 @@ app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/transactions', transactionsRouter);
 app.use('/api/mermas', mermasRouter);
 app.use('/api/credits', creditRoutes);
-app.use('/api/kardex', kardexRouter);
+app.use('/api', kardexRouter);
 app.use('/api/perishables', perishablesRouter);
 app.use('/api/reports', reportRoutes);
 app.use('/api/alarms', alarmRoutes);
@@ -97,20 +97,20 @@ app.use('/api/inventory-report', inventoryReportRoutes);
 app.use('/api/movimientos', movimientosRouter); // Para /api/movimientos/:movimientoId
 
 // Depuración: Listar todas las rutas registradas
-app._router.stack.forEach((middleware: any) => {
-  if (middleware.route) {
+// app._router.stack.forEach((middleware: any) => {
+//   if (middleware.route) {
     // Rutas directas
-    console.log(`Ruta registrada: ${middleware.route.path} (${Object.keys(middleware.route.methods).join(', ')})`);
-  } else if (middleware.name === 'router' && middleware.handle.stack) {
+//     console.log(`Ruta registrada: ${middleware.route.path} (${Object.keys(middleware.route.methods).join(', ')})`);
+//   } else if (middleware.name === 'router' && middleware.handle.stack) {
     // Rutas dentro de un router (como movimientosRouter)
-    const path = middleware.regexp.toString().replace(/\/\^\\/, '').replace(/\\\/?.*/, '');
-    middleware.handle.stack.forEach((handler: any) => {
-      if (handler.route) {
-        console.log(`Ruta registrada: ${path}${handler.route.path} (${Object.keys(handler.route.methods).join(', ')})`);
-      }
-    });
-  }
-});
+//     const path = middleware.regexp.toString().replace(/\/\^\\/, '').replace(/\\\/?.*/, '');
+//     middleware.handle.stack.forEach((handler: any) => {
+//       if (handler.route) {
+//         console.log(`Ruta registrada: ${path}${handler.route.path} (${Object.keys(handler.route.methods).join(', ')})`);
+//       }
+//     });
+//   }
+// });
 
 // Tarea cron para productos vencidos (mermas)
 const checkExpiredProducts = async () => {
