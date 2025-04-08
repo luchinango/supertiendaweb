@@ -359,6 +359,45 @@ router.get("/low-stock", async (req, res) => {
   }
 });
 
+// Frecuencia de compras por proveedores
+router.get("/supplier-purchase-frequency", async (req, res) => {
+  try {
+    const querySupplierFrequency = `
+            SELECT 
+                s.id AS supplier_id,
+                s.name AS supplier_name,
+                COUNT(po.id) AS total_purchases,
+                SUM(CASE WHEN po.payment_type = 'cash' THEN 1 ELSE 0 END) AS cash_purchases,
+                SUM(CASE WHEN po.payment_type = 'credit' THEN 1 ELSE 0 END) AS credit_purchases,
+                COALESCE(SUM(poi.quantity), 0) AS total_units_purchased,
+                COALESCE(SUM(po.total_amount), 0) AS total_amount_spent
+            FROM public.suppliers s
+            LEFT JOIN public.purchase_orders po ON s.id = po.supplier_id
+            LEFT JOIN public.purchase_order_items poi ON po.id = poi.purchase_order_id
+            GROUP BY s.id, s.name
+            ORDER BY total_purchases DESC
+        `;
+    
+    const frequencyResult = await pool.query(querySupplierFrequency);
+    const supplierFrequency = frequencyResult.rows;
+
+    if (supplierFrequency.length === 0) {
+      return res.json({
+        message: "No purchase frequency data available",
+        suppliers: []
+      });
+    }
+
+    res.json({
+      totalSuppliers: supplierFrequency.length,
+      suppliers: supplierFrequency
+    });
+  } catch (err) {
+    console.error("Error fetching supplier purchase frequency:", err);
+    res.status(500).json({ error: "Error retrieving supplier purchase frequency" });
+  }
+});
+
 // Generar reporte genérico en PDF
 router.get("/pdf/:type", async (req: Request, res: Response) => {
   try {
