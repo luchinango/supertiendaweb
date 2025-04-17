@@ -2,18 +2,34 @@
 
 import { useState } from "react"
 import { X } from "lucide-react"
-import { Button } from "app/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "app/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "app/components/ui/input"
 import { Label } from "app/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
 
-interface NewBusinessDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+export interface BusinessFormData {
+  name: string
+  type: string
+  address: string
+  city: string
+  phone: string
+  email: string
+  document: string
+  logo?: string
 }
 
-export function NewBusinessDialog({ open, onOpenChange }: NewBusinessDialogProps) {
+export interface NewBusinessDialogProps {
+  open: boolean
+  onOpenChange: (value: boolean) => void
+  onSubmit: (formData: BusinessFormData) => void // <-- Importante
+}
+
+export function NewBusinessDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+}: NewBusinessDialogProps) {
   const [businessType, setBusinessType] = useState("")
   const [businessName, setBusinessName] = useState("")
   const [address, setAddress] = useState("")
@@ -24,7 +40,16 @@ export function NewBusinessDialog({ open, onOpenChange }: NewBusinessDialogProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Here would go the logic to create the business
+    const formData: BusinessFormData = {
+      name: businessName,
+      type: businessType,
+      address: address,
+      city: city,
+      phone: phone,
+      email: email,
+      document: document,
+    }
+    onSubmit(formData)
     onOpenChange(false)
   }
 

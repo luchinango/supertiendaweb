@@ -30,7 +30,7 @@ const menuItems = [
   { icon: Truck, label: "Proveedores", href: "/proveedores" },
   { icon: CreditCard, label: "Créditos", href: "/creditos" },
   { icon: Bell, label: "Alertas", href: "/alertas" },
-  { icon: ShoppingCart, label: "Órdenes de Compra", href: "/ordenes" },
+  { icon: ShoppingCart, label: "Órdenes de Compra", href: "/ordenes-compra" },
   { icon: Settings, label: "Configuraciones", href: "/configuraciones" },
 ];
 

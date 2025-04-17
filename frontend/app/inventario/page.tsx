@@ -5,7 +5,7 @@ import { Button } from "app/components/ui/button"
 import { Input } from "app/components/ui/input"
 import { Card, CardContent } from "app/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
-import { Search, Download, Grid2X2, Plus } from "lucide-react"
+import { Search, Download, Grid2x2, Plus, Grid } from "lucide-react"
 import { CategoriesDialog } from "../components/CategoriesDialog"
 import { AddProductDialog } from "../components/AddProductDialog"
 
@@ -96,7 +96,7 @@ export default function Inventario() {
         <h1 className="text-2xl font-medium text-[#1e1e1e]">Inventario</h1>
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => setShowCategories(true)} className="gap-2 h-10 px-4 py-2">
-            <Grid2X2 className="h-4 w-4" />
+            <Grid2x2 className="h-4 w-4" />
             Categorías
           </Button>
           <Button

@@ -1,27 +1,42 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "app/components/ui/button"
-import { Input } from "app/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "app/components/ui/tabs"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "app/components/ui/accordion"
-import { Label } from "app/components/ui/label"
-import { Switch } from "app/components/ui/switch"
-import { Card } from "app/components/ui/card"
-import { Link2, Upload } from "lucide-react"
-import { NewBusinessDialog } from "../components/NewBusinessDialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Card } from "@/components/ui/card"
+import { Upload } from "lucide-react"
+
+// Importamos la interfaz que ya creaste en NewBusinessDialog
+import { NewBusinessDialog, BusinessFormData } from "../components/NewBusinessDialog"
+// Si usas un BusinessSwitcher, impórtalo también:
+import { BusinessSwitcher } from "../components/BusinessSwitcher"
+import { Business } from "../types"
 
 export default function Configuraciones() {
-  const [businessType, setBusinessType] = useState("minimercado")
-  const [businessName, setBusinessName] = useState("Todito")
-  const [address, setAddress] = useState("Av. Hernando Siles 601")
-  const [city, setCity] = useState("Sucre")
-  const [phone, setPhone] = useState("63349336")
-  const [email, setEmail] = useState("jamil2.estrada@gmail.com")
-  const [document, setDocument] = useState("5676916019")
-  const [logo, setLogo] = useState<string | null>(null)
+  // Ejemplo de lista de negocios con uno por defecto
+  const [businesses, setBusinesses] = useState<Business[]>([{
+    id: "1",
+    name: "Todito",
+    type: "minimercado",
+    address: "Av. Hernando Siles 601",
+    city: "Sucre",
+    phone: "63349336",
+    email: "jamil2.estrada@gmail.com",
+    document: "5676916019",
+  }])
+
+  // Si quieres un selector (o switcher) de negocios actual:
+  const [currentBusinessId, setCurrentBusinessId] = useState("1")
+
+  const currentBusiness = businesses.find(b => b.id === currentBusinessId) || businesses[0]
+
   const [showNewBusiness, setShowNewBusiness] = useState(false)
+  const [logo, setLogo] = useState<string | null>(null)
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -29,9 +44,27 @@ export default function Configuraciones() {
       const reader = new FileReader()
       reader.onloadend = () => {
         setLogo(reader.result as string)
+        // Actualiza el negocio actual con el nuevo logo
+        setBusinesses(businesses.map(b =>
+          b.id === currentBusinessId ? { ...b, logo: reader.result as string } : b
+        ))
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  const handleAddBusiness = (formData: BusinessFormData) => {
+    // Asegúrate de que formData tenga todos los campos (type, address, phone, etc)
+    const newBusiness: Business = {
+      id: (businesses.length + 1).toString(),
+      ...formData,
+    }
+    setBusinesses([...businesses, newBusiness])
+  }
+
+  // Método para cambiar de negocio si tienes un BusinessSwitcher
+  const handleBusinessChange = (business: Business) => {
+    setCurrentBusinessId(business.id)
   }
 
   return (
@@ -55,7 +88,7 @@ export default function Configuraciones() {
                     {logo ? (
                       <img src={logo || "/placeholder.svg"} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="text-6xl font-bold text-gray-300">{businessName.charAt(0)}</div>
+                      <div className="text-6xl font-bold text-gray-300">{currentBusiness.name.charAt(0)}</div>
                     )}
                   </div>
                   <label
@@ -74,7 +107,7 @@ export default function Configuraciones() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="business-type">Tipo de negocio *</Label>
-                  <Select value={businessType} onValueChange={setBusinessType}>
+                  <Select value={currentBusiness.type} onValueChange={(value) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, type: value } : b))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar tipo de negocio" />
                     </SelectTrigger>
@@ -86,19 +119,28 @@ export default function Configuraciones() {
                   </Select>
                 </div>
 
+                <div className="w-full md:w-auto">
+                  <BusinessSwitcher
+                    businesses={businesses}
+                    currentBusiness={currentBusiness}
+                    onBusinessChange={handleBusinessChange}
+                    onAddBusiness={() => setShowNewBusiness(true)}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="business-name">Nombre del negocio *</Label>
-                  <Input id="business-name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                  <Input id="business-name" value={currentBusiness.name} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, name: e.target.value } : b))} />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="address">Dirección del negocio</Label>
-                  <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
+                  <Input id="address" value={currentBusiness.address} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, address: e.target.value } : b))} />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="city">Ciudad donde se ubica el negocio</Label>
-                  <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+                  <Input id="city" value={currentBusiness.city} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, city: e.target.value } : b))} />
                 </div>
 
                 <div className="space-y-2">
@@ -114,8 +156,8 @@ export default function Configuraciones() {
                     </Select>
                     <Input
                       id="phone"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      value={currentBusiness.phone}
+                      onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, phone: e.target.value } : b))}
                       className="flex-1 ml-2"
                     />
                   </div>
@@ -123,12 +165,12 @@ export default function Configuraciones() {
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Correo electrónico</Label>
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input id="email" type="email" value={currentBusiness.email} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, email: e.target.value } : b))} />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="document">Documento</Label>
-                  <Input id="document" value={document} onChange={(e) => setDocument(e.target.value)} />
+                  <Input id="document" value={currentBusiness.document} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, document: e.target.value } : b))} />
                 </div>
               </div>
 
@@ -242,7 +284,11 @@ export default function Configuraciones() {
           </Card>
         </TabsContent>
       </Tabs>
-      <NewBusinessDialog open={showNewBusiness} onOpenChange={setShowNewBusiness} />
+      <NewBusinessDialog
+        open={showNewBusiness}
+        onOpenChange={setShowNewBusiness}
+        onSubmit={handleAddBusiness}
+      />
     </div>
   )
 }
