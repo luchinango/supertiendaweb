@@ -4,6 +4,7 @@ import React from 'react';
 import Link from "next/link";
 import {
   LayoutDashboard,
+  DollarSign,
   ArrowLeftRight,
   BarChart2,
   Package,
@@ -19,6 +20,7 @@ import {
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: DollarSign, label:"Ventas", href: "/ventas" },
   { icon: ArrowLeftRight, label: "Movimientos", href: "/movimientos" },
   { icon: BarChart2, label: "Estadísticas", href: "/estadisticas" },
   { icon: Package, label: "Productos", href: "/productos" },

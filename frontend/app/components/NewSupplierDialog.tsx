@@ -1,57 +1,45 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useState } from "react"
 import { Button } from "app/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "app/components/ui/dialog"
 import { Input } from "app/components/ui/input"
 import { Label } from "app/components/ui/label"
-import { Plus } from 'lucide-react'
 
 interface NewSupplierDialogProps {
-  onAddSupplier: (supplier: {
-    name: string
-    contact: string
-    phone: string
-    email: string
-  }) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onAdd: (supplier: { name: string; phone: string; contact: string; email: string }) => void
 }
 
-export function NewSupplierDialog({ onAddSupplier }: NewSupplierDialogProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
+export function NewSupplierDialog({ open, onOpenChange, onAdd }: NewSupplierDialogProps) {
+  const [name, setName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [contact, setContact] = useState("")
+  const [email, setEmail] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onAddSupplier({ name, contact, phone, email })
-    setIsOpen(false)
-    setName('')
-    setContact('')
-    setPhone('')
-    setEmail('')
+    onAdd({ name, phone, contact, email })
+    setName("")
+    setPhone("")
+    setContact("")
+    setEmail("")
+    onOpenChange(false)
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nuevo proveedor
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Agregar nuevo proveedor</DialogTitle>
+          <DialogTitle>Crear proveedor</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nombre del proveedor</Label>
             <Input
@@ -62,7 +50,7 @@ export function NewSupplierDialog({ onAddSupplier }: NewSupplierDialogProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="contact">Nombre de contacto</Label>
+            <Label htmlFor="contact">Contacto</Label>
             <Input
               id="contact"
               value={contact}
@@ -89,7 +77,9 @@ export function NewSupplierDialog({ onAddSupplier }: NewSupplierDialogProps) {
               required
             />
           </div>
-          <Button type="submit" className="w-full">Agregar proveedor</Button>
+          <Button type="submit" className="w-full bg-[#1e293b] hover:bg-[#334155]">
+            Crear proveedor
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

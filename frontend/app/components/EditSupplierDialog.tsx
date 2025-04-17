@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react"
 import { Button } from "app/components/ui/button"
 import {
   Dialog,
@@ -10,22 +10,25 @@ import {
 } from "app/components/ui/dialog"
 import { Input } from "app/components/ui/input"
 import { Label } from "app/components/ui/label"
+import { Supplier } from "@/app/types"
 
-interface Supplier {
-  id: number
-  name: string
-  contact: string
-  phone: string
-  email: string
-}
+// Remover o comentar la redeclaración local:
+// interface Supplier {
+//   id: number
+//   name: string
+//   contact: string
+//   phone: string
+//   email: string
+// }
 
 interface EditSupplierDialogProps {
   supplier: Supplier
-  onEditSupplier: (supplier: Supplier) => void
-  onClose: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onEdit: (updatedSupplier: Supplier) => void
 }
 
-export function EditSupplierDialog({ supplier, onEditSupplier, onClose }: EditSupplierDialogProps) {
+export function EditSupplierDialog({ supplier, open, onOpenChange, onEdit }: EditSupplierDialogProps) {
   const [name, setName] = useState(supplier.name)
   const [contact, setContact] = useState(supplier.contact)
   const [phone, setPhone] = useState(supplier.phone)
@@ -40,11 +43,11 @@ export function EditSupplierDialog({ supplier, onEditSupplier, onClose }: EditSu
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onEditSupplier({ ...supplier, name, contact, phone, email })
+    onEdit({ ...supplier, name, contact, phone, email })
   }
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar proveedor</DialogTitle>
@@ -88,8 +91,12 @@ export function EditSupplierDialog({ supplier, onEditSupplier, onClose }: EditSu
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit">Guardar cambios</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit">
+              Guardar cambios
+            </Button>
           </div>
         </form>
       </DialogContent>

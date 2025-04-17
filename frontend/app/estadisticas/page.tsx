@@ -38,22 +38,19 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
+// Actualización de salesData
 const salesData = [
-  {
-    hora: '8:00',
-    'Viernes anterior': 240,
-    'Hoy': 96,
-  },
-  {
-    hora: '9:00',
-    'Viernes anterior': 360,
-    'Hoy': 120,
-  },
-  {
-    hora: '10:00',
-    'Viernes anterior': 240,
-    'Hoy': 80,
-  },
+  { time: "12:00am-2:00am", previous: 0, current: 0 },
+  { time: "2:00am-4:00am", previous: 0, current: 0 },
+  { time: "4:00am-6:00am", previous: 0, current: 0 },
+  { time: "6:00am-8:00am", previous: 0, current: 0 },
+  { time: "8:00am-10:00am", previous: 230, current: 30 },
+  { time: "10:00am-12:00pm", previous: 480, current: 90 },
+  { time: "12:00pm-2:00pm", previous: 150, current: 130 },
+  { time: "2:00pm-4:00pm", previous: 250, current: 0 },
+  { time: "4:00pm-6:00pm", previous: 520, current: 0 },
+  { time: "6:00pm-8:00pm", previous: 450, current: 0 },
+  { time: "8:00pm-10:00pm", previous: 850, current: 0 },
 ]
 
 const productsData = [
@@ -214,21 +211,21 @@ export default function Estadisticas() {
               <div className="flex gap-4 text-sm">
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-green-100 rounded mr-2"></div>
-                  Viernes anterior
+                  Periodo anterior
                 </div>
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-green-600 rounded mr-2"></div>
-                  Hoy
+                  Periodo actual
                 </div>
               </div>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsBarChart data={salesData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="hora" />
+                    <XAxis dataKey="time" />
                     <YAxis />
-                    <Bar dataKey="Viernes anterior" fill="#dcfce7" />
-                    <Bar dataKey="Hoy" fill="#16a34a" />
+                    <Bar dataKey="previous" fill="#dcfce7" />
+                    <Bar dataKey="current" fill="#16a34a" />
                   </RechartsBarChart>
                 </ResponsiveContainer>
               </div>
