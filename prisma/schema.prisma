@@ -6,9 +6,24 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Añade esta línea para especificar la ruta de salida
+  output   = "../frontend/node_modules/.prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?  // Optional description
+  price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Añade aquí todos los campos que tenga tu tabla 'products'
+}
+
+// Define otros modelos si los necesitas (e.g., User, Order, etc.)

@@ -1,8 +1,10 @@
+/// <reference path="../../types/node-escpos.d.ts" />
 import { Router, Request, Response } from "express";
 import pool from "../config/db";
-import { authenticate, authorize } from "../middleware/auth";
+
 import PDFDocument from "pdfkit";
-import escpos from "escpos";
+// Cambia el import a node-escpos
+import escpos from 'node-escpos';
 
 const router = Router();
 
@@ -583,32 +585,85 @@ router.get("/pdf/:type", async (req: Request, res: Response) => {
   }
 });
 
-// Generar comando ESC/POS para impresoras térmicas
+// Generar comando ESC/POS para impresoras térmicas (MODIFICADO)
 router.get("/thermal/:type", async (req: Request, res: Response) => {
   try {
     const { type } = req.params;
-    const device = new escpos.Network("192.168.1.100"); // IP de la impresora
+    // Asegúrate de que la IP y el puerto sean correctos para tu impresora
+    // El constructor puede variar ligeramente según el tipo de dispositivo (Network, Serial, USB)
+    const device = new escpos.Network("192.168.1.100");
     const printer = new escpos.Printer(device);
 
-    // Obtener datos
-    const { rows } = await pool.query(`SELECT * FROM ${type}_view`);
+    // Obtener datos (Asegúrate de que la vista exista y sea segura)
+    // ¡CUIDADO! Interpolar directamente req.params.type en una query SQL es PELIGROSO (SQL Injection).
+    // Deberías validar 'type' contra una lista permitida o usar una forma más segura.
+    // Ejemplo de validación simple:
+    const allowedTypes = ["ventas", "inventario", "mermas"]; // Lista de tipos permitidos
+    if (!allowedTypes.includes(type.toLowerCase())) {
+        return res.status(400).json({ error: "Tipo de reporte térmico no válido" });
+    }
+    // Asumiendo que tienes vistas seguras como 'ventas_view', 'inventario_view', etc.
+    const { rows } = await pool.query(`SELECT * FROM public.${type.toLowerCase()}_view`); // Usa el tipo validado
 
     // Configurar respuesta
     res.setHeader("Content-Type", "text/plain");
 
-    device.open(() => {
-      printer.align("CT").text(`REPORTE ${type.toUpperCase()}`).feed();
+    // La API de node-escpos puede usar callbacks o promesas.
+    // Este es un ejemplo con callback similar al anterior, pero adaptado.
+    device.open((errorOpen: Error | null) => {
+      if (errorOpen) {
+        console.error("Error al abrir conexión con impresora:", errorOpen);
+        // No envíes el error detallado al cliente en producción
+        return res.status(500).json({ error: "No se pudo conectar con la impresora" });
+      }
 
-      rows.forEach((row: any) => {
-        printer.text(`${row.id} - ${row.name}`).feed();
-      });
+      try {
+        printer
+          .align("CT") // Centrar
+          .encode("latin1") // O la codificación que necesite tu impresora para acentos/ñ
+          .text(`REPORTE ${type.toUpperCase()}`)
+          .feed(1); // Avanza 1 línea
 
-      printer.cut().close();
-      res.send("Comando enviado a impresora");
+        rows.forEach((row: any) => {
+          // Adapta esto según las columnas de tu vista
+          let line = `${row.id || 'N/A'} - ${row.name || row.description || 'Sin Nombre'}`;
+          if (row.amount) line += ` - Monto: ${row.amount}`;
+          if (row.actual_stock) line += ` - Stock: ${row.actual_stock}`;
+          // Limita la longitud si es necesario
+          printer.text(line.substring(0, 42)).feed(1); // Ajusta 42 al ancho de tu impresora
+        });
+
+        printer
+          .feed(2) // Avanza 2 líneas antes de cortar
+          .cut()
+          .close((errorClose: Error | null) => {
+            if (errorClose) {
+              console.error("Error al cerrar conexión con impresora:", errorClose);
+              // No necesariamente un error fatal si ya se envió parte de la impresión
+            }
+            console.log("Comandos de impresión enviados.");
+            // Envía la respuesta al cliente DESPUÉS de intentar cerrar la conexión
+            // Es posible que la impresión aún esté en curso en la impresora física.
+            if (!res.headersSent) {
+                 res.status(200).send("Comandos de impresión enviados a la impresora.");
+            }
+          });
+
+      } catch (printError: any) {
+          console.error("Error durante la secuencia de impresión:", printError);
+          if (!res.headersSent) {
+            res.status(500).json({ error: "Error al generar comandos de impresión" });
+          }
+          // Intenta cerrar el dispositivo aunque haya habido un error de impresión
+          try { device.close(() => {}); } catch (e) {}
+      }
     });
-  } catch (error) {
-    console.error("Error ESC/POS:", error);
-    res.status(500).json({ error: "Error de comunicación con impresora" });
+
+  } catch (error: any) { // Captura errores generales (ej: error de base de datos)
+    console.error("Error en la ruta /thermal/:type :", error);
+    if (!res.headersSent) {
+        res.status(500).json({ error: "Error interno del servidor al procesar reporte térmico" });
+    }
   }
 });
 

@@ -12,8 +12,18 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "*": ["*"]
-    }
+    },
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",   // Tus archivos fuente
+    "types/**/*"  // Añade esto para asegurar que TS vea la carpeta
+  ],
+  "exclude": [
+    "node_modules",
+    "dist" // Excluye la carpeta de salida
+  ]
 }
