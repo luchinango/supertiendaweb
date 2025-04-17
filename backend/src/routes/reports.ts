@@ -135,7 +135,20 @@ router.get("/transactions", async (req, res) => {
       period?: string;
     };
 
-    let query = `SELECT * FROM public.transactions`;
+    let query = `
+      SELECT 
+        id, 
+        amount, 
+        created_at, 
+        customer_id, 
+        type,
+        CASE 
+          WHEN type = 'credit' THEN 'pending'
+          WHEN type = 'cash' THEN 'completed'
+          ELSE 'unknown'
+        END AS status
+      FROM public.transactions
+    `;
     const queryParams: string[] = [];
 
     if (startDate || endDate) {
@@ -160,16 +173,12 @@ router.get("/transactions", async (req, res) => {
     if (period) {
       const periodConditions: { [key: string]: string } = {
         daily: "DATE_TRUNC('day', created_at) = CURRENT_DATE",
-        weekly:
-          "DATE_TRUNC('week', created_at) = DATE_TRUNC('week', CURRENT_DATE)",
-        monthly:
-          "DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)",
-        quarterly:
-          "DATE_TRUNC('quarter', created_at) = DATE_TRUNC('quarter', CURRENT_DATE)",
+        weekly: "DATE_TRUNC('week', created_at) = DATE_TRUNC('week', CURRENT_DATE)",
+        monthly: "DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)",
+        quarterly: "DATE_TRUNC('quarter', created_at) = DATE_TRUNC('quarter', CURRENT_DATE)",
         semiannual:
           "DATE_TRUNC('month', created_at) >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '6 months') AND DATE_TRUNC('month', created_at) <= DATE_TRUNC('month', CURRENT_DATE)",
-        yearly:
-          "DATE_TRUNC('year', created_at) = DATE_TRUNC('year', CURRENT_DATE)",
+        yearly: "DATE_TRUNC('year', created_at) = DATE_TRUNC('year', CURRENT_DATE)",
       };
 
       const periodLower = period.toLowerCase();
@@ -178,9 +187,7 @@ router.get("/transactions", async (req, res) => {
         query += periodConditions[periodLower];
       } else {
         throw new Error(
-          `Invalid period value. Valid options: ${Object.keys(
-            periodConditions
-          ).join(", ")}`
+          `Invalid period value. Valid options: ${Object.keys(periodConditions).join(", ")}`
         );
       }
     }
@@ -207,62 +214,149 @@ router.get("/transactions", async (req, res) => {
 
 router.get("/transactions/income", async (req, res) => {
   try {
-    const query = `SELECT * FROM public.transactions WHERE type IN ('cash', 'credit');`;
+    const query = `
+      SELECT 
+        id, 
+        amount, 
+        created_at, 
+        type,
+        type AS payment_method,
+        CASE 
+          WHEN type = 'cash' THEN 'completed'
+          WHEN type = 'credit' THEN 'pending'
+          ELSE 'unknown'
+        END AS status
+      FROM public.transactions 
+      WHERE type IN ('cash', 'credit');
+    `;
     const result = await pool.query(query);
     res.json(result.rows);
-  } catch (err) {
-    console.error("Error fetching income transactions:", err);
-    res.status(500).json({ error: "Error fetching income transactions" });
+  } catch (err: any) {
+    console.error("Error fetching income transactions:", {
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({
+      error: "Error fetching income transactions",
+      details:
+        process.env.NODE_ENV === "development"
+          ? err.message
+          : "Internal server error",
+    });
   }
 });
 
 router.get("/transactions/expenses", async (req, res) => {
   try {
     const query = `
-          SELECT 'purchase_order' AS type, id, total_amount AS amount, created_at FROM public.purchase_orders
-          UNION ALL
-          SELECT 'debt_payment' AS type, id, amount, created_at FROM public.debt_payments
-          UNION ALL
-          SELECT 'merma' AS type, id, value AS amount, date AS created_at FROM public.mermas;
-      `;
+      SELECT 
+        'purchase_order' AS type, 
+        id, 
+        total_amount AS amount, 
+        created_at, 
+        'unknown' AS payment_method,
+        'completed' AS status
+      FROM public.purchase_orders
+      UNION ALL
+      SELECT 
+        'debt_payment' AS type, 
+        id, 
+        amount, 
+        created_at, 
+        'unknown' AS payment_method,
+        'completed' AS status
+      FROM public.debt_payments
+      UNION ALL
+      SELECT 
+        'merma' AS type, 
+        id, 
+        value AS amount, 
+        date AS created_at, 
+        'none' AS payment_method,
+        'recorded' AS status
+      FROM public.mermas;
+    `;
     const result = await pool.query(query);
     res.json(result.rows);
-  } catch (err) {
-    console.error("Error fetching expense transactions:", err);
-    res.status(500).json({ error: "Error fetching expense transactions" });
+  } catch (err: any) {
+    console.error("Error fetching expense transactions:", {
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({
+      error: "Error fetching expense transactions",
+      details:
+        process.env.NODE_ENV === "development"
+          ? err.message
+          : "Internal server error",
+    });
   }
 });
 
 router.get("/credits", async (req, res) => {
   try {
     const query = `
-          SELECT c.id, c.first_name, c.last_name, cr.balance
-          FROM public.customers c
-          JOIN public.credits cr ON c.id = cr.customer_id
-          WHERE cr.balance > 0;
-      `;
+      SELECT 
+        c.id, 
+        c.first_name, 
+        c.last_name, 
+        cr.balance,
+        'credit' AS payment_method,
+        CASE 
+          WHEN cr.balance > 0 THEN 'pending'
+          ELSE 'paid'
+        END AS status
+      FROM public.customers c
+      JOIN public.credits cr ON c.id = cr.customer_id
+      WHERE cr.balance > 0;
+    `;
     const result = await pool.query(query);
     res.json(result.rows);
-  } catch (err) {
-    console.error("Error fetching credits:", err);
-    res.status(500).json({ error: "Error fetching credits" });
+  } catch (err: any) {
+    console.error("Error fetching credits:", {
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({
+      error: "Error fetching credits",
+      details:
+        process.env.NODE_ENV === "development"
+          ? err.message
+          : "Internal server error",
+    });
   }
 });
 
-// Cuentas por pagar
 router.get("/payable_credits", async (req, res) => {
   try {
     const query = `
-            SELECT s.id, s.company_name, sd.remaining_amount
-            FROM public.suppliers s
-            JOIN public.supplier_debts sd ON s.id = sd.supplier_id
-            WHERE sd.remaining_amount > 0;
-        `;
+      SELECT 
+        s.id, 
+        s.company_name, 
+        sd.remaining_amount,
+        'credit' AS payment_method,
+        CASE 
+          WHEN sd.remaining_amount > 0 THEN 'pending'
+          ELSE 'paid'
+        END AS status
+      FROM public.suppliers s
+      JOIN public.supplier_debts sd ON s.id = sd.supplier_id
+      WHERE sd.remaining_amount > 0;
+    `;
     const result = await pool.query(query);
     res.json(result.rows);
-  } catch (err) {
-    console.error("Error fetching payable credits:", err);
-    res.status(500).json({ error: "Error fetching payable credits" });
+  } catch (err: any) {
+    console.error("Error fetching payable credits:", {
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({
+      error: "Error fetching payable credits",
+      details:
+        process.env.NODE_ENV === "development"
+          ? err.message
+          : "Internal server error",
+    });
   }
 });
 
@@ -405,51 +499,80 @@ router.get("/pdf/:type", async (req: Request, res: Response) => {
     const doc = new PDFDocument();
     const filename = `reporte_${type}_${Date.now()}.pdf`;
 
-    // Configurar headers para descarga
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
-    // Consultar datos según tipo de reporte
     let data: any[];
     switch (type) {
       case "ventas":
         data = (
-          await pool.query("SELECT * FROM transactions WHERE type = $1", [
-            "cash",
-          ])
+          await pool.query(`
+            SELECT 
+              t.id, 
+              t.amount, 
+              t.created_at, 
+              t.type,
+              CASE 
+                WHEN t.type = 'credit' THEN 'pending'
+                WHEN t.type = 'cash' THEN 'completed'
+                ELSE 'unknown'
+              END AS status,
+              c.first_name, 
+              c.last_name
+            FROM transactions t
+            LEFT JOIN customers c ON t.customer_id = c.id
+            WHERE t.type = $1
+          `, ["cash"])
         ).rows;
         break;
       case "inventario":
         data = (
           await pool.query(`
-                    SELECT p.name, p.actual_stock, c.name as category 
-                    FROM products p
-                    JOIN categories c ON p.category_id = c.id
-                `)
+            SELECT 
+              p.name, 
+              p.actual_stock, 
+              c.name as category,
+              CASE 
+                WHEN p.actual_stock <= p.min_stock THEN 'low'
+                WHEN p.actual_stock = 0 THEN 'out_of_stock'
+                ELSE 'in_stock'
+              END AS status
+            FROM products p
+            JOIN categories c ON p.category_id = c.id
+          `)
         ).rows;
         break;
       case "mermas":
         data = (
           await pool.query(`
-                    SELECT m.*, p.name as product_name 
-                    FROM mermas m
-                    JOIN products p ON m.product_id = p.id
-                `)
+            SELECT 
+              m.*, 
+              p.name as product_name,
+              'recorded' AS status
+            FROM mermas m
+            JOIN products p ON m.product_id = p.id
+          `)
         ).rows;
         break;
       default:
         return res.status(400).json({ error: "Tipo de reporte no válido" });
     }
 
-    // Generar contenido PDF
     doc.pipe(res);
-    doc
-      .fontSize(18)
-      .text(`Reporte de ${type.toUpperCase()}`, { align: "center" });
+    doc.fontSize(18).text(`Reporte de ${type.toUpperCase()}`, { align: "center" });
     doc.moveDown();
 
     data.forEach((row: any, index: number) => {
-      doc.fontSize(12).text(`${index + 1}. ${JSON.stringify(row)}`);
+      doc.fontSize(12).text(`${index + 1}. ID: ${row.id}`);
+      if (row.amount) doc.text(`Monto: ${row.amount}`);
+      if (row.created_at) doc.text(`Fecha: ${row.created_at}`);
+      if (row.type) doc.text(`Tipo: ${row.type}`);
+      if (row.status) doc.text(`Estado: ${row.status}`);
+      if (row.first_name) doc.text(`Cliente: ${row.first_name} ${row.last_name || ''}`);
+      if (row.name) doc.text(`Nombre: ${row.name}`);
+      if (row.actual_stock) doc.text(`Stock: ${row.actual_stock}`);
+      if (row.category) doc.text(`Categoría: ${row.category}`);
+      if (row.product_name) doc.text(`Producto: ${row.product_name}`);
       doc.moveDown();
     });
 
