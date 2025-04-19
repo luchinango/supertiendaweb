@@ -1,13 +1,19 @@
 /* filepath: /c:/Proyectos/supertiendaweb/frontend/app/globals.css */
-/* stylelint-disable at-rule-no-unknown */
+/* stylelint-disable at-rule-no-unknown, tailwindcss/at-rule-unknown */
+
+@import "tailwindcss";
+
 .border-border {
   border-color: hsl(var(--border));
 }
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-/* stylelint-enable at-rule-no-unknown */
- 
+
+/*@import "tailwindcss/preflight";
+/* stylelint-disable-next-line at-rule-no-unknown, tailwindcss/at-rule-unknown 
+@tailwind utilities;*/
+
+/* stylelint-disable-next-line at-rule-no-unknown */
+/*@tailwind utilities;*/
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -49,6 +55,10 @@
     --chart-4: 43 74% 66%;
  
     --chart-5: 27 87% 67%;
+
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
   }
  
   .dark {
@@ -88,10 +98,17 @@
 }
  
 @layer base {
-  * {
-    /* @apply border-border; */ /* Elimina o comenta esta línea */
-  }
   body {
-    @apply bg-background text-foreground;
+    color: rgb(var(--foreground-rgb));
+    background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
   }
+}
+
+@keyframes slide-in-from-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-from-right {
+  animation: slide-in-from-right 0.3s ease-out forwards;
 }

@@ -1,11 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "app/components/ui/button"
-import { Input } from "app/components/ui/input"
-import { Card, CardContent } from "app/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
-import { Search, Download, Grid2x2, Plus, Grid } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Search, Download, Grid2X2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CategoriesDialog } from "../components/CategoriesDialog"
 import { AddProductDialog } from "../components/AddProductDialog"
 
@@ -13,75 +12,135 @@ interface Product {
   id: number
   nombre: string
   precio: number
+  costo: number
   stock: number
   categoria: string
   imagen: string
+  ganancia: number
+  gananciaPercent: number
 }
 
 const productosFicticios: Product[] = [
   {
     id: 1,
-    nombre: "ACT II Pipoca Man-tequilla 91g",
+    nombre: "ACT II Pipoca Mantequilla 91g",
     precio: 14,
-    stock: 7,
+    costo: 12.6,
+    stock: 6,
     categoria: "Snacks",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 1.4,
+    gananciaPercent: 10,
   },
   {
     id: 2,
-    nombre: "ACT II Pipoca Man-tequilla Extra 91g",
+    nombre: "ACT II Pipoca Mantequilla Extra 91g",
     precio: 14,
-    stock: 8,
+    costo: 12.6,
+    stock: 7,
     categoria: "Snacks",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 1.4,
+    gananciaPercent: 10,
   },
   {
     id: 3,
-    nombre: "Aguai Azucar Blanca de 1kg",
-    precio: 7,
-    stock: 24,
-    categoria: "Abarrotes",
+    nombre: "Adayo Acondicionador de 500ml",
+    precio: 10,
+    costo: 7.5,
+    stock: 2,
+    categoria: "Cuidado Personal",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 2.5,
+    gananciaPercent: 25,
   },
   {
     id: 4,
-    nombre: "Aguai Azucar Blanca de 5kg",
-    precio: 31,
-    stock: 3,
-    categoria: "Abarrotes",
+    nombre: "Adayo Shampoo de 1l",
+    precio: 16,
+    costo: 13.5,
+    stock: 7,
+    categoria: "Cuidado Personal",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 2.5,
+    gananciaPercent: 16,
   },
   {
     id: 5,
-    nombre: "Ajinomen Sopa instantanea en sachet",
-    precio: 5,
-    stock: 44,
-    categoria: "Abarrotes",
+    nombre: "Agua Para Vida 2lt",
+    precio: 6,
+    costo: 4.5,
+    stock: 3,
+    categoria: "Bebidas",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 1.5,
+    gananciaPercent: 25,
   },
   {
     id: 6,
-    nombre: "Ajinomen Sopa Instantanea en vaso",
-    precio: 9,
-    stock: 7,
-    categoria: "Abarrotes",
+    nombre: "Agua Para Vida S/G 3lt",
+    precio: 7,
+    costo: 6,
+    stock: 3,
+    categoria: "Bebidas",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 1,
+    gananciaPercent: 14,
   },
   {
     id: 7,
-    nombre: "Alargador de 10m",
-    precio: 35,
-    stock: 3,
-    categoria: "Electrónica",
+    nombre: "Aguai Azucar Blanca de 1kg",
+    precio: 7,
+    costo: 5.87,
+    stock: 42,
+    categoria: "Abarrotes",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 1.13,
+    gananciaPercent: 16,
   },
   {
     id: 8,
-    nombre: "Alargador de 3m",
-    precio: 15,
-    stock: 0,
-    categoria: "Electrónica",
+    nombre: "Aguai Azucar Blanca de 5kg",
+    precio: 32,
+    costo: 28.5,
+    stock: 5,
+    categoria: "Abarrotes",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 3.5,
+    gananciaPercent: 11,
+  },
+  {
+    id: 9,
+    nombre: "Ají Amarillo Dulce 20 gr.",
+    precio: 2.5,
+    costo: 2,
+    stock: 6,
+    categoria: "Condimentos",
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 0.5,
+    gananciaPercent: 20,
+  },
+  {
+    id: 10,
+    nombre: "Ají Rojo Dulce 20 gr.",
+    precio: 3,
+    costo: 2.2,
+    stock: 10,
+    categoria: "Condimentos",
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 0.8,
+    gananciaPercent: 27,
+  },
+  {
+    id: 11,
+    nombre: "Ajinomen Sopa instantanea en sached 80g",
+    precio: 6,
+    costo: 5.04,
+    stock: 72,
+    categoria: "Abarrotes",
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
+    ganancia: 0.96,
+    gananciaPercent: 16,
   },
 ]
 
@@ -90,38 +149,49 @@ export default function Inventario() {
   const [showCategories, setShowCategories] = useState(false)
   const [showAddProduct, setShowAddProduct] = useState(false)
 
+  const filteredProducts = productosFicticios.filter((product) =>
+    product.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  // Calculate total inventory cost
+  const totalInventoryCost = productosFicticios.reduce((sum, product) => sum + product.costo * product.stock, 0)
+
+  // Format number with commas
+  const formatNumber = (num: number) => {
+    return num.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-medium text-[#1e1e1e]">Inventario</h1>
+        <h1 className="text-2xl font-medium">Inventario</h1>
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setShowCategories(true)} className="gap-2 h-10 px-4 py-2">
-            <Grid2x2 className="h-4 w-4" />
+          <Button variant="outline" onClick={() => setShowCategories(true)} className="gap-2">
+            <Grid2X2 className="h-4 w-4" />
             Categorías
           </Button>
           <Button
             variant="default"
             onClick={() => setShowAddProduct(true)}
-            className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e] h-10 px-4 py-2"
+            className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]"
           >
-            <Plus className="h-4 w-4" />
             Agregar productos
           </Button>
         </div>
       </div>
 
       <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-[360px]">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar producto..."
-            className="pl-9 h-10"
+            className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Select>
-          <SelectTrigger className="w-[240px] h-10">
+          <SelectTrigger className="w-[240px]">
             <SelectValue placeholder="Ver todas las categorías" />
           </SelectTrigger>
           <SelectContent>
@@ -132,7 +202,7 @@ export default function Inventario() {
           </SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button variant="outline" className="gap-2 h-10">
+        <Button variant="outline" className="gap-2">
           <Download className="h-4 w-4" />
           Descargar reporte
         </Button>
@@ -160,7 +230,7 @@ export default function Inventario() {
           </div>
           <div>
             <p className="text-sm text-gray-600">Total de referencias</p>
-            <p className="text-2xl font-semibold">1244</p>
+            <p className="text-2xl font-semibold">1477</p>
           </div>
         </div>
         <div className="flex items-center gap-4 p-6 bg-white rounded-lg border border-gray-200">
@@ -177,38 +247,56 @@ export default function Inventario() {
           </div>
           <div>
             <p className="text-sm text-gray-600">Costo total de inventario</p>
-            <p className="text-2xl font-semibold text-green-600">Bs 64.015,42</p>
+            <p className="text-2xl font-semibold text-green-600">Bs {formatNumber(totalInventoryCost)}</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-        {productosFicticios.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="aspect-square relative bg-gray-50">
-                <img
-                  src={product.imagen || "/placeholder.svg"}
-                  alt={product.nombre}
-                  className="absolute inset-0 w-full h-full object-contain p-4"
-                />
-              </div>
-              <div className="p-3 space-y-2">
-                <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{product.nombre}</h3>
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold">Bs {product.precio}</p>
-                  <p className="text-sm text-gray-500">
-                    {product.stock === 0 ? (
-                      <span className="text-red-500">{product.stock} disponibles</span>
-                    ) : (
-                      `${product.stock} disponibles`
-                    )}
-                  </p>
+      {/* Tabla de productos */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="grid grid-cols-[1fr_200px_200px_200px_200px] gap-4 p-4 border-b border-gray-200 bg-gray-50">
+          <div className="font-medium text-gray-600">Producto</div>
+          <div className="font-medium text-gray-600 text-right">Precio</div>
+          <div className="font-medium text-gray-600 text-right">Costo</div>
+          <div className="font-medium text-gray-600 text-right">Cantidad disponible</div>
+          <div className="font-medium text-gray-600 text-right">Ganancia</div>
+        </div>
+
+        <div className="divide-y">
+          {filteredProducts.map((product) => (
+            <div key={product.id} className="grid grid-cols-[1fr_200px_200px_200px_200px] gap-4 p-4 items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center">
+                  <span className="text-xs text-gray-500">P</span>
                 </div>
+                <span>{product.nombre}</span>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              <div className="text-right">
+                <Input value={`Bs. ${product.precio}`} className="text-right" readOnly />
+              </div>
+              <div className="text-right">
+                <Input value={`Bs. ${product.costo}`} className="text-right" readOnly />
+              </div>
+              <div className="text-right">
+                <Input value={product.stock.toString()} className="text-right" readOnly />
+              </div>
+              <div className="text-right flex items-center justify-end">
+                <span className="mr-2">Bs {product.ganancia}</span>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    product.gananciaPercent >= 25
+                      ? "bg-green-100 text-green-800"
+                      : product.gananciaPercent >= 15
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {product.gananciaPercent}%
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <CategoriesDialog open={showCategories} onOpenChange={setShowCategories} />
@@ -216,4 +304,3 @@ export default function Inventario() {
     </div>
   )
 }
-

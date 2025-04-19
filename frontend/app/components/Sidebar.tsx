@@ -23,7 +23,7 @@ const menuItems = [
   { icon: DollarSign, label:"Ventas", href: "/ventas" },
   { icon: ArrowLeftRight, label: "Movimientos", href: "/movimientos" },
   { icon: BarChart2, label: "Estadísticas", href: "/estadisticas" },
-  { icon: Package, label: "Productos", href: "/productos" },
+  { icon: Package, label: "Inventario", href: "/inventario" },
   { icon: Scale, label: "Mermas", href: "/mermas" },
   { icon: Users2, label: "Empleados", href: "/empleados" },
   { icon: UserCircle, label: "Clientes", href: "/clientes" },

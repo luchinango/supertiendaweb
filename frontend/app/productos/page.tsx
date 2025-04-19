@@ -64,25 +64,22 @@ function useProductos() {
       }
     })
     .then((res) => {
-      if (!res.ok) {
-        throw new Error("Network response was not ok");
-      }
-      return res.json();
+      if (!res.ok) throw new Error("Network response was not ok")
+      return res.json()
     })
-    .then((data) => {
-      // Transforma la respuesta de la API al formato esperado en la UI
-      return data.map((p: any) => ({
+    .then((data) =>
+      data.map((p: any) => ({
         id: p.id,
         nombre: p.name,
         precio: p.price,
         stock: p.actual_stock,
-        categoria: p.category_id, // Puedes mapearlo a un nombre si tienes la lista de categorías
-        imagen: "/placeholder.svg" // O agrega la lógica necesaria para obtener la URL de imagen
-      }));
-    });
-  const apiUrl = "http://127.0.0.1:5000/api/products"; // URL forzada para pruebas
-  const { data, error, isLoading } = useSWR(apiUrl, fetcher);
-  return { productos: data, error, isLoading };
+        categoria: p.category_id,
+        imagen: "/placeholder.svg"
+      }))
+    )
+
+  const { data, error, isLoading } = useSWR("http://127.0.0.1:5000/api/products", fetcher)
+  return { productos: data, error, isLoading }
 }
 
 export default function Inventario() {
