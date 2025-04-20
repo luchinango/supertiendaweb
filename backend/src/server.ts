@@ -32,6 +32,7 @@ import cashRegistersRouter from './routes/cashRegisters';
 import businessRoutes from './routes/business';
 import inventoryReportRoutes from './routes/inventoryReports';
 import movimientosRouter from './routes/movimientosRouter';
+import employeesRouter from './routes/employeesRouter';
 
 // Definición de la interfaz User
 export interface User {
@@ -48,7 +49,7 @@ const app = express();
 
 // Configuración de CORS
 app.use(cors({
-  origin: 'http://localhost:3000', // Cambia esto en producción
+  origin: process.env.cors_origin, // Cambia esto en producción
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true, // Si usas autenticación con cookies o JWT
 }));
@@ -95,6 +96,7 @@ app.use('/api/cash-registers', cashRegistersRouter);
 app.use('/api/business', businessRoutes);
 app.use('/api/inventory-report', inventoryReportRoutes);
 app.use('/api/movimientos', movimientosRouter); // Para /api/movimientos/:movimientoId
+app.use('/api/employees', employeesRouter);
 
 // Depuración: Listar todas las rutas registradas
 // app._router.stack.forEach((middleware: any) => {

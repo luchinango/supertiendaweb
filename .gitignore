@@ -39,3 +39,5 @@ Thumbs.db
 # Ignorar configuraciones de editores y IDEs
 .vscode/
 .idea/
+/backend/generated
+/backups

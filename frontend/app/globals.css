@@ -2,6 +2,7 @@
 /* stylelint-disable at-rule-no-unknown, tailwindcss/at-rule-unknown */
 
 @import "tailwindcss";
+  
 
 .border-border {
   border-color: hsl(var(--border));

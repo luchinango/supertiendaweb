@@ -11,37 +11,74 @@ import {
   TableHeader,
   TableRow,
 } from "app/components/ui/table"
-import { Search, Plus, Pencil } from 'lucide-react'
+import { Search, Plus, Pencil, Eye, Trash2, UserPlus } from 'lucide-react'
 import { NewEmployeeDialog } from '../components/NewEmployeeDialog'
 import { EditEmployeeDialog } from '../components/EditEmployeeDialog'
-
-// Sample data for employees
-const sampleEmployees = [
-  { id: 1, name: 'Juan Pérez', position: 'Vendedor', salary: 3000, startDate: '2023-01-15' },
-  { id: 2, name: 'María García', position: 'Cajera', salary: 2800, startDate: '2023-02-01' },
-  { id: 3, name: 'Carlos Rodríguez', position: 'Gerente', salary: 5000, startDate: '2022-11-01' },
-]
+import useSWR from "swr"
+import EmployeeDto from '../types/EmployeeDto'
+import { useEmployees } from "../hooks/useEmployees";
+import toast from 'react-hot-toast';
 
 export default function Empleados() {
-  const [employees, setEmployees] = useState(sampleEmployees)
+  const { employees, error, isLoading, mutate , editEmployee } = useEmployees()
   const [searchTerm, setSearchTerm] = useState('')
-  const [editingEmployee, setEditingEmployee] = useState<typeof sampleEmployees[0] | null>(null)
+  const [editingEmployee, setEditingEmployee] = useState<EmployeeDto | null>(null);
 
-  const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredEmployees: EmployeeDto[] = employees.filter((employee: EmployeeDto) =>
+    employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     employee.position.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleAddEmployee = (newEmployee: Omit<typeof sampleEmployees[0], 'id'>) => {
-    setEmployees([...employees, { ...newEmployee, id: employees.length + 1 }])
+  const handleAddEmployee = (newEmployee: EmployeeDto) => {
+    mutate();
   }
 
-  const handleEditEmployee = (updatedEmployee: typeof sampleEmployees[0]) => {
-    setEmployees(employees.map(employee => 
-      employee.id === updatedEmployee.id ? updatedEmployee : employee
-    ))
-    setEditingEmployee(null)
-  }
+  const handleSaveEdit = async (updatedEmployee: EmployeeDto) => {
+    await editEmployee(updatedEmployee.id, updatedEmployee);
+    setEditingEmployee(null);
+  };
+
+  const handleCreateUser = async (employee: EmployeeDto) => {
+    try {
+      const response = await fetch('/api/users/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employeeId: employee.id,
+          email: `${employee.firstName.toLowerCase()}.${employee.lastName.toLowerCase()}@empresa.com`,
+          initialPassword: 'TempPassword123',
+          role: 'employee'
+        })
+      });
+  
+      if (!response.ok) throw new Error('Error al crear usuario');
+      
+      mutate(employees.map(emp => 
+        emp.id === employee.id ? { ...emp, hasUser: true } : emp
+      ));
+  
+      toast.success('Usuario creado exitosamente');
+    } catch (error) {
+      toast.error('Error al crear usuario');
+      console.error(error);
+    }
+  };
+
+
+  const handleDelete = async (id: Number) => {
+    if (!confirm('¿Está seguro de eliminar este empleado?')) return;
+    
+    try {
+      await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+      mutate(employees.filter(emp => emp.id !== id));
+      toast.success('Empleado eliminado');
+    } catch (error) {
+      toast.error('Error al eliminar empleado');
+      console.error(error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -75,17 +112,48 @@ export default function Empleados() {
         <TableBody>
           {filteredEmployees.map((employee) => (
             <TableRow key={employee.id}>
-              <TableCell>{employee.name}</TableCell>
+              <TableCell>{employee.firstName}</TableCell>
               <TableCell>{employee.position}</TableCell>
-              <TableCell>Bs {employee.salary.toLocaleString()}</TableCell>
+              <TableCell>Bs {employee.salary}</TableCell>
               <TableCell>{new Date(employee.startDate).toLocaleDateString()}</TableCell>
-              <TableCell>
+              <TableCell className="flex space-x-1">
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="hover:bg-gray-100 cursor-pointer transition-colors"
                   onClick={() => setEditingEmployee(employee)}
+                  title="Editar"
                 >
                   <Pencil className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleCreateUser(employee)}
+                  title="Crear usuario"
+                  //</TableCell>disabled={employee.hasUser}
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  //onClick={() => viewEmployeeDetails(employee.id)}
+                  title="Ver detalles"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(employee.id)}
+                  title="Eliminar"
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </TableCell>
             </TableRow>
@@ -93,13 +161,15 @@ export default function Empleados() {
         </TableBody>
       </Table>
 
-      {editingEmployee && (
+      {
+      editingEmployee && (
         <EditEmployeeDialog
           employee={editingEmployee}
-          onEditEmployee={handleEditEmployee}
+          onSave={handleSaveEdit}
           onClose={() => setEditingEmployee(null)}
         />
-      )}
+      )
+      }
     </div>
   )
 }

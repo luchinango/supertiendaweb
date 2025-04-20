@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from "app/components/ui/button"
 import {
   Dialog,
@@ -10,44 +10,30 @@ import {
 } from "app/components/ui/dialog"
 import { Input } from "app/components/ui/input"
 import { Label } from "app/components/ui/label"
-
-interface Employee {
-  id: number
-  name: string
-  position: string
-  salary: number
-  startDate: string
-}
+import EmployeeDto from '../types/EmployeeDto'
 
 interface EditEmployeeDialogProps {
-  employee: Employee
-  onEditEmployee: (employee: Employee) => void
-  onClose: () => void
+  employee: EmployeeDto
+  onSave: (updated: EmployeeDto) => void;
+  onClose: () => void;
 }
 
-export function EditEmployeeDialog({ employee, onEditEmployee, onClose }: EditEmployeeDialogProps) {
-  const [name, setName] = useState(employee.name)
-  const [position, setPosition] = useState(employee.position)
-  const [salary, setSalary] = useState(employee.salary.toString())
-  const [startDate, setStartDate] = useState(employee.startDate)
+export function EditEmployeeDialog({ employee, onSave, onClose }: EditEmployeeDialogProps) {
+  const [formData, setFormData] = useState<EmployeeDto>({ ...employee });
+ 
 
-  useEffect(() => {
-    setName(employee.name)
-    setPosition(employee.position)
-    setSalary(employee.salary.toString())
-    setStartDate(employee.startDate)
-  }, [employee])
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'salary' ? Number(value) : value,
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onEditEmployee({
-      ...employee,
-      name,
-      position,
-      salary: parseFloat(salary),
-      startDate,
-    })
-  }
+    e.preventDefault();
+    onSave(formData);
+  };
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -57,11 +43,20 @@ export function EditEmployeeDialog({ employee, onEditEmployee, onClose }: EditEm
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-name">Nombre completo</Label>
+            <Label htmlFor="edit-firstName">Nombres</Label>
             <Input
-              id="edit-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="edit-firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-lastName">Apellidos</Label>
+            <Input
+              id="edit-lastName"
+              value={formData.lastName}
+              onChange={handleChange}
               required
             />
           </div>
@@ -69,8 +64,8 @@ export function EditEmployeeDialog({ employee, onEditEmployee, onClose }: EditEm
             <Label htmlFor="edit-position">Cargo</Label>
             <Input
               id="edit-position"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
+              value={formData.position}
+              onChange={handleChange}
               required
             />
           </div>
@@ -79,8 +74,8 @@ export function EditEmployeeDialog({ employee, onEditEmployee, onClose }: EditEm
             <Input
               id="edit-salary"
               type="number"
-              value={salary}
-              onChange={(e) => setSalary(e.target.value)}
+              value={formData.salary}
+              onChange={handleChange}
               required
             />
           </div>
@@ -89,8 +84,8 @@ export function EditEmployeeDialog({ employee, onEditEmployee, onClose }: EditEm
             <Input
               id="edit-startDate"
               type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              value={formData.startDate}
+              onChange={handleChange}
               required
             />
           </div>
@@ -103,4 +98,3 @@ export function EditEmployeeDialog({ employee, onEditEmployee, onClose }: EditEm
     </Dialog>
   )
 }
-

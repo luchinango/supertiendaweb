@@ -1,0 +1,396 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma/client"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model audit_cash_registers {
+  id               Int            @id @default(autoincrement())
+  cash_register_id Int
+  action           String         @db.VarChar(50)
+  action_date      DateTime       @default(now()) @db.Timestamp(6)
+  user_id          Int
+  details          String?
+  cash_registers   cash_registers @relation(fields: [cash_register_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model business {
+  id               Int            @id @default(autoincrement())
+  name             String         @db.VarChar(100)
+  description      String?
+  address          String?
+  tax_id           String         @db.VarChar(50)
+  business_type_id Int
+  status           String         @default("active") @db.VarChar(20)
+  created_at       DateTime?      @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?      @default(now()) @db.Timestamp(6)
+  business_types   business_types @relation(fields: [business_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model business_org_chart {
+  id                       Int                  @id @default(autoincrement())
+  business_id              Int
+  user_id                  Int
+  position                 String               @db.VarChar(100)
+  parent_position_id       Int?
+  created_at               DateTime?            @default(now()) @db.Timestamp(6)
+  businesses               businesses           @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  business_org_chart       business_org_chart?  @relation("business_org_chartTobusiness_org_chart", fields: [parent_position_id], references: [id], onUpdate: NoAction)
+  other_business_org_chart business_org_chart[] @relation("business_org_chartTobusiness_org_chart")
+  users                    users                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model business_products {
+  id           Int        @id @default(autoincrement())
+  business_id  Int
+  product_id   Int
+  custom_price Decimal?   @db.Decimal(10, 2)
+  actual_stock Int        @default(0)
+  created_at   DateTime?  @default(now()) @db.Timestamp(6)
+  businesses   businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products     products   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([business_id, product_id], map: "business_products_unique")
+}
+
+model business_types {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique @db.VarChar(50)
+  business business[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model business_users {
+  id               Int        @id @default(autoincrement())
+  user_id          Int
+  business_id      Int
+  business_role_id Int
+  created_at       DateTime?  @default(now()) @db.Timestamp(6)
+  status           String     @default("active") @db.VarChar(20)
+  businesses       businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles            roles      @relation(fields: [business_role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, business_id], map: "business_users_unique")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model businesses {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(100)
+  description        String?
+  address            String?
+  tax_id             String?              @unique @db.VarChar(20)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?            @default(now()) @db.Timestamp(6)
+  status             String               @default("active") @db.VarChar(20)
+  business_org_chart business_org_chart[]
+  business_products  business_products[]
+  business_users     business_users[]
+}
+
+model cart {
+  id           Int            @id @default(autoincrement())
+  customer_id  Int?
+  created_at   DateTime?      @default(now()) @db.Timestamp(6)
+  customers    customers?     @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cart_items   cart_items[]
+  transactions transactions[]
+}
+
+model cart_items {
+  id            Int       @id @default(autoincrement())
+  cart_id       Int?
+  product_id    Int?
+  quantity      Int
+  price_at_time Decimal   @db.Decimal(10, 2)
+  cart          cart?     @relation(fields: [cart_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  products      products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cash_registers {
+  id                   Int                    @id @default(autoincrement())
+  user_id              Int?
+  opening_amount       Decimal                @db.Decimal(10, 2)
+  closing_amount       Decimal                @db.Decimal(10, 2)
+  opening_date         DateTime?              @default(now()) @db.Timestamptz(6)
+  closing_date         DateTime?              @db.Timestamptz(6)
+  notes                String?
+  status               String                 @default("abierta") @db.VarChar(20)
+  audit_cash_registers audit_cash_registers[]
+  users                users?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model categories {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique @db.VarChar(50)
+  description String?
+  is_active   Boolean    @default(true)
+  products    products[]
+}
+
+model consignment_items {
+  id                 Int           @id @default(autoincrement())
+  consignment_id     Int?
+  product_id         Int?
+  quantity_delivered Int
+  quantity_sold      Int           @default(0)
+  price_at_time      Decimal       @db.Decimal(10, 2)
+  created_at         DateTime?     @default(now()) @db.Timestamp(6)
+  quantity_sent      Int           @default(0)
+  quantity_returned  Int           @default(0)
+  consignments       consignments? @relation(fields: [consignment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  products           products?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model consignments {
+  id                Int                 @id @default(autoincrement())
+  supplier_id       Int?
+  start_date        DateTime            @db.Date
+  end_date          DateTime            @db.Date
+  total_value       Decimal             @db.Decimal(10, 2)
+  sold_value        Decimal             @default(0.00) @db.Decimal(10, 2)
+  status            String              @default("active") @db.VarChar(20)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?           @default(now()) @db.Timestamp(6)
+  user_id           Int
+  consignment_items consignment_items[]
+  suppliers         suppliers?          @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users             users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model credits {
+  id           Int        @id @default(autoincrement())
+  customer_id  Int?       @unique
+  balance      Decimal    @default(0.00) @db.Decimal(10, 2)
+  created_at   DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at   DateTime?  @default(now()) @db.Timestamp(6)
+  credit_limit Decimal?   @db.Decimal(10, 0)
+  status       String?    @db.VarChar(30)
+  customers    customers? @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model customers {
+  id             Int            @id @default(autoincrement())
+  first_name     String         @db.VarChar(50)
+  last_name      String         @db.VarChar(50)
+  address        String?
+  phone          String?        @db.VarChar(20)
+  company_name   String?        @db.VarChar(100)
+  tax_id         String?        @unique @db.VarChar(20)
+  email          String?        @unique @db.VarChar(100)
+  status         String?        @db.VarChar(10)
+  credit_balance Decimal?       @default(0) @db.Decimal(10, 2)
+  cart           cart[]
+  credits        credits?
+  transactions   transactions[]
+}
+
+model debt_payments {
+  id             Int             @id @default(autoincrement())
+  debt_id        Int?
+  amount         Decimal         @db.Decimal(10, 2)
+  created_at     DateTime?       @default(now()) @db.Timestamp(6)
+  supplier_debts supplier_debts? @relation(fields: [debt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model employees {
+  first_name   String    @db.VarChar
+  last_name    String?   @default("") @db.VarChar
+  position     String?   @default("") @db.VarChar
+  salary       BigInt    @default(0)
+  start_date   DateTime  @db.Date
+  status       String    @db.VarChar
+  id           Int       @id(map: "employees_pk") @default(autoincrement())
+  user_id      Int?      @unique
+  gender       String    @default("") @db.VarChar(20)
+  birth_date   DateTime? @db.Date
+  email        String    @default("") @db.VarChar(100)
+  address      String    @default("") @db.VarChar(100)
+  mobile_phone String    @default("") @db.VarChar(20)
+  users        users?    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_employee_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model kardex {
+  id             Int       @id @default(autoincrement())
+  product_id     Int
+  movement_type  String    @db.VarChar(50)
+  quantity       Int
+  unit_price     Decimal?  @db.Decimal(10, 2)
+  movement_date  DateTime? @default(now()) @db.Timestamp(6)
+  reference_id   Int?
+  reference_type String?   @db.VarChar(50)
+  stock_after    Int
+  products       products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model mermas {
+  id             Int       @id @default(autoincrement())
+  product_id     Int?
+  quantity       Int
+  type           String    @db.VarChar(20)
+  date           DateTime  @db.Date
+  value          Decimal   @db.Decimal(10, 2)
+  responsible_id Int?
+  observations   String?
+  is_automated   Boolean?  @default(false)
+  kardex_id      Int?
+  products       products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model products {
+  id                   Int                    @id @default(autoincrement())
+  supplier_id          Int?
+  name                 String                 @db.VarChar(100)
+  price                Decimal                @db.Decimal(10, 2)
+  description          String?
+  purchase_price       Decimal?               @default(0.00) @db.Decimal(10, 2)
+  sale_price           Decimal?               @default(0.00) @db.Decimal(10, 2)
+  sku                  String?                @db.VarChar(50)
+  barcode              String?                @unique @db.VarChar(50)
+  brand                String?                @db.VarChar(50)
+  unit                 String?                @db.VarChar(20)
+  min_stock            Int                    @default(0)
+  max_stock            Int?                   @default(0)
+  actual_stock         Int                    @default(0)
+  expiration_date      DateTime?              @db.Date
+  image                String?
+  category_id          Int?
+  status               String?                @db.VarChar(10)
+  shelf_life_days      Int?
+  is_organic           Boolean                @default(false)
+  alert_sent           Boolean?               @default(false)
+  business_products    business_products[]
+  cart_items           cart_items[]
+  consignment_items    consignment_items[]
+  kardex               kardex[]
+  mermas               mermas[]
+  categories           categories?            @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  suppliers            suppliers?             @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchase_order_items purchase_order_items[]
+  purchase_orders      purchase_orders[]
+  transaction_items    transaction_items[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model purchase_order_items {
+  id                Int             @id @default(autoincrement())
+  purchase_order_id Int
+  product_id        Int
+  quantity          Int
+  unit_price        Decimal         @db.Decimal(10, 2)
+  products          products        @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+  purchase_orders   purchase_orders @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model purchase_orders {
+  id                   Int                    @id @default(autoincrement())
+  product_id           Int?
+  supplier_id          Int?
+  quantity             Int
+  order_date           DateTime?              @default(now()) @db.Timestamp(6)
+  status               String?                @default("pending") @db.VarChar(20)
+  payment_type         String?                @default("cash") @db.VarChar(20)
+  total_amount         Decimal?               @db.Decimal(10, 2)
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  purchase_order_items purchase_order_items[]
+  products             products?              @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  suppliers            suppliers?             @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model roles {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique @db.VarChar(50)
+  description    String?
+  parent_role_id Int?
+  business_users business_users[]
+  users          users[]
+}
+
+model supplier_debts {
+  id               Int             @id @default(autoincrement())
+  supplier_id      Int?
+  amount           Decimal         @db.Decimal(10, 2)
+  remaining_amount Decimal?        @db.Decimal(10, 2)
+  created_at       DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?       @default(now()) @db.Timestamp(6)
+  user_id          Int?
+  debt_payments    debt_payments[]
+  suppliers        suppliers?      @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model suppliers {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(100)
+  contact         String?           @db.VarChar(100)
+  phone           String?           @db.VarChar(20)
+  email           String?           @db.VarChar(100)
+  company_name    String            @default("") @db.VarChar(100)
+  tax_id          String?           @unique @db.VarChar(20)
+  address         String?
+  supplier_type   String?           @db.VarChar(50)
+  status          String?           @default("active") @db.VarChar(20)
+  consignments    consignments[]
+  products        products[]
+  purchase_orders purchase_orders[]
+  supplier_debts  supplier_debts[]
+}
+
+model transaction_items {
+  id             Int           @id @default(autoincrement())
+  transaction_id Int?
+  product_id     Int?
+  quantity       Int
+  price_at_sale  Decimal       @db.Decimal
+  products       products?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transactions   transactions? @relation(fields: [transaction_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transactions {
+  id                Int                 @id @default(autoincrement())
+  customer_id       Int
+  user_id           Int
+  amount            Decimal             @db.Decimal(10, 2)
+  type              String              @db.VarChar(10)
+  reference         String?             @db.VarChar(250)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  notes             String?
+  cart_id           Int?
+  transaction_items transaction_items[]
+  cart              cart?               @relation(fields: [cart_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_carrt_id_fkey")
+  customers         customers           @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users             users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id                   Int                    @id @default(autoincrement())
+  username             String                 @unique @db.VarChar(50)
+  password             String                 @db.VarChar(255)
+  role_id              Int
+  parent_user_id       Int?
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  status               String?                @default("active") @db.VarChar(20)
+  audit_cash_registers audit_cash_registers[]
+  business_org_chart   business_org_chart[]
+  business_users       business_users[]
+  cash_registers       cash_registers[]
+  consignments         consignments[]
+  employees            employees?
+  supplier_debts       supplier_debts[]
+  transactions         transactions[]
+  roles                roles                  @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
