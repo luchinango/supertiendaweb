@@ -114,6 +114,14 @@
   animation: slide-in-from-right 0.3s ease-out forwards;
 }
 
+@keyframes slide-out-to-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+.animate-slide-out-to-right {
+  animation: slide-out-to-right 0.3s ease-out forwards;
+}
+
 /* Scrollbar styles for webkit browsers */
 ::-webkit-scrollbar {
   width: 8px;

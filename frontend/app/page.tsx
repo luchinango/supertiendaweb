@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import useSWR from 'swr'
 
 // Función para hacer fetch de los datos
@@ -18,13 +18,22 @@ function DashboardCard({
   title: string
   value: number | string
 }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   // Función para parsear y formatear el valor
   const parseAndFormatValue = (val: number | string): string => {
-    let num = typeof val === 'number' ? val : Number(val.replace("Bs.", "").trim())
+    if (val === undefined || val === null) return ""
+    if (typeof val === "number") {
+      return mounted ? `Bs. ${val.toLocaleString('es-BO')}` : String(val)
+    }
+    const cleaned = val.replace("Bs.", "").trim()
+    const num = Number(cleaned)
     if (isNaN(num)) return String(val)
-    return typeof val === 'string' && val.trim().startsWith("Bs.")
-      ? `Bs. ${num.toLocaleString('es-BO')}`
-      : num.toLocaleString('es-BO')
+    if (val.trim().startsWith("Bs.")) {
+      return mounted ? `Bs. ${num.toLocaleString('es-BO')}` : String(num)
+    }
+    return mounted ? num.toLocaleString('es-BO') : String(num)
   }
 
   return (
@@ -55,7 +64,7 @@ function DashboardCard({
 
 export default function Home() {
   // Usa la URL del endpoint según corresponda, por ejemplo, vía variable de entorno
-  const { data, error } = useSWR('http://localhost:5000/api/reports', fetcher)
+  const { data, error } = useSWR('/api/reports', fetcher)
 
   if (error) return <div>Error al cargar los datos.</div>
   if (!data) return <div>Cargando...</div>

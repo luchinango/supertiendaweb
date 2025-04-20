@@ -1,13 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Download, Grid2X2, Plus } from "lucide-react"
+import { Search, Download, Grid2X2, Plus, ChevronDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CategoriesDialog } from "../components/CategoriesDialog"
 import { ProductFormWrapper } from "../components/ProductFormWrapper"
 import { useProductForm } from "../context/ProductFormContext"
+import { AddProductPanel } from "../components/AddProductPanel"
+import { DownloadReportPanel } from "../components/DownloadReportPanel"
+import { ProductDetailPanel } from "../components/ProductDetailPanel"
+import { EditProductPanel } from "../components/EditProductPanel"
 
 interface Product {
   id: number
@@ -16,7 +20,8 @@ interface Product {
   costo: number
   stock: number
   categoria: string
-  imagen: string
+  imagen?: string
+  barcode?: string
   ganancia: number
   gananciaPercent: number
 }
@@ -28,10 +33,11 @@ const productosFicticios: Product[] = [
     precio: 14,
     costo: 12.6,
     stock: 6,
-    categoria: "Snacks",
+    categoria: "Productos para cocina",
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
     ganancia: 1.4,
     gananciaPercent: 10,
+    barcode: "PP-ACTIIPIMA -91",
   },
   {
     id: 2,
@@ -61,7 +67,16 @@ const productosFicticios: Product[] = [
 export default function Inventario() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showCategories, setShowCategories] = useState(false)
+  const [showAddProduct, setShowAddProduct] = useState(false)
+  const [showDownloadReport, setShowDownloadReport] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [showProductDetail, setShowProductDetail] = useState(false)
+  const [showEditProduct, setShowEditProduct] = useState(false)
   const { openProductForm } = useProductForm()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const filteredProducts = productosFicticios.filter((product) =>
     product.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -75,6 +90,28 @@ export default function Inventario() {
     return num.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product)
+    setShowProductDetail(true)
+  }
+
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product)
+    setShowProductDetail(false)
+    setShowEditProduct(true)
+  }
+
+  const handleDeleteProduct = (product: Product) => {
+    // Implement delete functionality
+    console.log("Delete product:", product)
+    setShowProductDetail(false)
+  }
+
+  const handleSaveProduct = (product: Product) => {
+    // Implement save functionality
+    console.log("Save product:", product)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -84,10 +121,17 @@ export default function Inventario() {
             <Grid2X2 className="h-4 w-4" />
             Categorías
           </Button>
-          <Button variant="default" onClick={openProductForm} className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]">
-            <Plus className="h-4 w-4" />
-            Agregar productos
-          </Button>
+          <div className="relative">
+            <Button
+              variant="default"
+              onClick={() => setShowAddProduct(true)}
+              className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]"
+            >
+              <Plus className="h-4 w-4" />
+              Agregar productos
+              <ChevronDown className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -113,7 +157,7 @@ export default function Inventario() {
           </SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" onClick={() => setShowDownloadReport(true)}>
           <Download className="h-4 w-4" />
           Descargar reporte
         </Button>
@@ -158,7 +202,9 @@ export default function Inventario() {
           </div>
           <div>
             <p className="text-sm text-gray-600">Costo total de inventario</p>
-            <p className="text-2xl font-semibold text-green-600">Bs {formatNumber(totalInventoryCost)}</p>
+            <p className="text-2xl font-semibold text-green-600">
+              Bs {mounted ? formatNumber(totalInventoryCost) : totalInventoryCost}
+            </p>
           </div>
         </div>
       </div>
@@ -175,7 +221,11 @@ export default function Inventario() {
 
         <div className="divide-y">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="grid grid-cols-[1fr_200px_200px_200px_200px] gap-4 p-4 items-center">
+            <div
+              key={product.id}
+              className="grid grid-cols-[1fr_200px_200px_200px_200px] gap-4 p-4 items-center hover:bg-gray-50 cursor-pointer"
+              onClick={() => handleProductClick(product)}
+            >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center">
                   <span className="text-xs text-gray-500">P</span>
@@ -210,7 +260,23 @@ export default function Inventario() {
         </div>
       </div>
 
+      {/* Sliding panels */}
       <CategoriesDialog open={showCategories} onOpenChange={setShowCategories} />
+      <AddProductPanel open={showAddProduct} onOpenChange={setShowAddProduct} />
+      <DownloadReportPanel open={showDownloadReport} onOpenChange={setShowDownloadReport} />
+      <ProductDetailPanel
+        open={showProductDetail}
+        onOpenChange={setShowProductDetail}
+        product={selectedProduct}
+        onEdit={handleEditProduct}
+        onDelete={handleDeleteProduct}
+      />
+      <EditProductPanel
+        open={showEditProduct}
+        onOpenChange={setShowEditProduct}
+        product={selectedProduct}
+        onSave={handleSaveProduct}
+      />
       <ProductFormWrapper />
     </div>
   )
