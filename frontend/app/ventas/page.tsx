@@ -10,6 +10,8 @@ import { CashRegisterManager } from "../components/CashRegisterManager"
 import { SalesFormManager } from "../components/SalesFormManager"
 import { ShoppingCart } from "../components/ShoppingCart"
 import { useCart } from "../context/CartContext"
+import { useExpenseForm } from "../context/ExpenseFormContext";
+import { ExpenseFormManager } from "../components/ExpenseFormManager";
 
 export default function VentasPage() {
   const [selectedCategory, setSelectedCategory] = useState("Todos")
@@ -19,6 +21,7 @@ export default function VentasPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const { openProductForm } = useProductForm()
   const { addItem, items } = useCart()
+  const { openExpenseForm } = useExpenseForm();
 
   // Cargar categorías desde el endpoint
   useEffect(() => {
@@ -50,12 +53,12 @@ export default function VentasPage() {
     fetchProducts()
   }, [])
 
-  // Filtrar productos por categoría y búsqueda
-  const filteredProducts = products.filter((product) => {
-    const matchCategory = selectedCategory === "Todos" || product.category === selectedCategory
-    const matchSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchCategory && matchSearch
-  })
+  // Filtrado por categoría y búsqueda
+  const filteredProducts = products.filter(
+    (product) =>
+      (selectedCategory === "Todos" || product.category === selectedCategory) &&
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="flex h-full">
@@ -78,9 +81,8 @@ export default function VentasPage() {
               </div>
               <CashRegisterManager />
               <SalesFormManager />
-              <Button variant="default" className="bg-red-500 hover:bg-red-600">
-                Nuevo gasto
-              </Button>
+
+              <ExpenseFormManager />
             </div>
           </div>
 
@@ -143,7 +145,7 @@ export default function VentasPage() {
                       )}
                       <div className="flex justify-center mb-2">
                         <img
-                          src={product.image || "/placeholder.svg"}
+                          src={product.image ? product.image : "/images/placeholder.svg"}
                           alt={product.name}
                           className="h-24 w-24 object-contain"
                         />
@@ -164,6 +166,8 @@ export default function VentasPage() {
                 })
               )}
             </div>
+            <img src="/images/placeholder.svg" alt="Placeholder" />
+            <img src="/images/retail-checkout.png" alt="Retail Checkout" />
           </div>
 
           {/* Panel lateral derecho - Carrito */}

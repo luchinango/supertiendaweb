@@ -26,7 +26,7 @@ export function ShoppingCart() {
       {items.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
           <div className="mb-4">
-            <img src="/retail-checkout.png" alt="Barcode Scanner" className="h-32 w-32 object-contain" />
+            <img src="/images/retail-checkout.png" alt="Barcode Scanner" className="h-32 w-32 object-contain" />
           </div>
           <h3 className="text-lg font-medium text-center">
             Agrega productos rápidamente usando tu lector de código de barras

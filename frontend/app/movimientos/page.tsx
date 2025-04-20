@@ -143,8 +143,10 @@ export default function MovimientosPage() {
           <Button variant="outline" onClick={() => setIsCashRegisterOpen(!isCashRegisterOpen)}>
             {isCashRegisterOpen ? "Cerrar caja" : "Abrir caja"}
           </Button>
-          <NewSaleDialog />
-          <NewExpenseDialog />
+          <Button variant="outline" className="gap-2 ml-auto">
+              <Download className="h-4 w-4" />
+              Descargar reporte
+            </Button>
         </div>
       </div>
 
@@ -223,11 +225,6 @@ export default function MovimientosPage() {
                 className="pl-8"
               />
             </div>
-
-            <Button variant="outline" className="gap-2 ml-auto">
-              <Download className="h-4 w-4" />
-              Descargar reporte
-            </Button>
           </div>
 
           <div className="rounded-md border">
