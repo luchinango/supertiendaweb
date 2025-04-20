@@ -1,7 +1,15 @@
 import React from "react";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Sidebar } from './components/Sidebar';
+import { Inter } from "next/font/google";
+import { Sidebar } from "./components/Sidebar";
+import { ProductFormProvider } from "./context/ProductFormContext";
+import { CashRegisterProvider } from "./context/CashRegisterContext";
+import { SalesFormProvider } from "./context/SalesFormContext";
+import { CartProvider } from "./context/CartContext";
+import { GlobalProductForm } from "./components/GlobalProductForm";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "SuperTienda Web",
@@ -14,21 +22,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <head>
-        <title>SuperTienda</title>
-      </head>
-      <body style={{ margin: 0, padding: 0 }}>
-        <div style={{ display: 'flex' }}>
-          <Sidebar />
-          <main style={{ 
-            flex: 1, 
-            backgroundColor: '#F8F9FB',
-            padding: '32px'
-          }}>
-            {children}
-          </main>
-        </div>
+    <html lang="en">
+      <body className={`${inter.className} bg-gray-100 m-0 p-0`}>
+        <ProductFormProvider>
+          <CashRegisterProvider>
+            <SalesFormProvider>
+              <CartProvider>
+                <div className="flex h-screen">
+                  <Sidebar />
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
+                      {children}
+                    </main>
+                  </div>
+                  <GlobalProductForm />
+                </div>
+              </CartProvider>
+            </SalesFormProvider>
+          </CashRegisterProvider>
+        </ProductFormProvider>
       </body>
     </html>
   );

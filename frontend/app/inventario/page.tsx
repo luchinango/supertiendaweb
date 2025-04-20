@@ -3,10 +3,11 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Download, Grid2X2 } from "lucide-react"
+import { Search, Download, Grid2X2, Plus } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CategoriesDialog } from "../components/CategoriesDialog"
-import { AddProductDialog } from "../components/AddProductDialog"
+import { ProductFormWrapper } from "../components/ProductFormWrapper"
+import { useProductForm } from "../context/ProductFormContext"
 
 interface Product {
   id: number
@@ -54,100 +55,13 @@ const productosFicticios: Product[] = [
     ganancia: 2.5,
     gananciaPercent: 25,
   },
-  {
-    id: 4,
-    nombre: "Adayo Shampoo de 1l",
-    precio: 16,
-    costo: 13.5,
-    stock: 7,
-    categoria: "Cuidado Personal",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 2.5,
-    gananciaPercent: 16,
-  },
-  {
-    id: 5,
-    nombre: "Agua Para Vida 2lt",
-    precio: 6,
-    costo: 4.5,
-    stock: 3,
-    categoria: "Bebidas",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 1.5,
-    gananciaPercent: 25,
-  },
-  {
-    id: 6,
-    nombre: "Agua Para Vida S/G 3lt",
-    precio: 7,
-    costo: 6,
-    stock: 3,
-    categoria: "Bebidas",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 1,
-    gananciaPercent: 14,
-  },
-  {
-    id: 7,
-    nombre: "Aguai Azucar Blanca de 1kg",
-    precio: 7,
-    costo: 5.87,
-    stock: 42,
-    categoria: "Abarrotes",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 1.13,
-    gananciaPercent: 16,
-  },
-  {
-    id: 8,
-    nombre: "Aguai Azucar Blanca de 5kg",
-    precio: 32,
-    costo: 28.5,
-    stock: 5,
-    categoria: "Abarrotes",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 3.5,
-    gananciaPercent: 11,
-  },
-  {
-    id: 9,
-    nombre: "Ají Amarillo Dulce 20 gr.",
-    precio: 2.5,
-    costo: 2,
-    stock: 6,
-    categoria: "Condimentos",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 0.5,
-    gananciaPercent: 20,
-  },
-  {
-    id: 10,
-    nombre: "Ají Rojo Dulce 20 gr.",
-    precio: 3,
-    costo: 2.2,
-    stock: 10,
-    categoria: "Condimentos",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 0.8,
-    gananciaPercent: 27,
-  },
-  {
-    id: 11,
-    nombre: "Ajinomen Sopa instantanea en sached 80g",
-    precio: 6,
-    costo: 5.04,
-    stock: 72,
-    categoria: "Abarrotes",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 0.96,
-    gananciaPercent: 16,
-  },
+  // More products...
 ]
 
 export default function Inventario() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showCategories, setShowCategories] = useState(false)
-  const [showAddProduct, setShowAddProduct] = useState(false)
+  const { openProductForm } = useProductForm()
 
   const filteredProducts = productosFicticios.filter((product) =>
     product.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -170,11 +84,8 @@ export default function Inventario() {
             <Grid2X2 className="h-4 w-4" />
             Categorías
           </Button>
-          <Button
-            variant="default"
-            onClick={() => setShowAddProduct(true)}
-            className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]"
-          >
+          <Button variant="default" onClick={openProductForm} className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]">
+            <Plus className="h-4 w-4" />
             Agregar productos
           </Button>
         </div>
@@ -300,7 +211,7 @@ export default function Inventario() {
       </div>
 
       <CategoriesDialog open={showCategories} onOpenChange={setShowCategories} />
-      <AddProductDialog open={showAddProduct} onOpenChange={setShowAddProduct} />
+      <ProductFormWrapper />
     </div>
   )
 }

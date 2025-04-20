@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "app/components/ui/button"
-import { Input } from "app/components/ui/input"
-import { Card, CardContent } from "app/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
-import { Search, Download, LayoutGrid, Plus } from "lucide-react"
-import { CategoriesDialog } from "app/components/CategoriesDialog"
-import { AddProductDialog } from "app/components/AddProductDialog"
-import useSWR from "swr"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search, Download, Grid2X2, Plus } from "lucide-react"
+import { CategoriesDialog } from "../components/CategoriesDialog"
+import { ProductFormWrapper } from "../components/ProductFormWrapper"
+import { useProductForm } from "../context/ProductFormContext"
 
 interface Product {
   id: number
@@ -55,60 +55,25 @@ const productosFicticios: Product[] = [
   // Add more sample products as needed
 ]
 
-function useProductos() {
-  const fetcher = (url: string) =>
-    fetch(url, {
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      }
-    })
-    .then((res) => {
-      if (!res.ok) throw new Error("Network response was not ok")
-      return res.json()
-    })
-    .then((data) =>
-      data.map((p: any) => ({
-        id: p.id,
-        nombre: p.name,
-        precio: p.price,
-        stock: p.actual_stock,
-        categoria: p.category_id,
-        imagen: "/placeholder.svg"
-      }))
-    )
-
-  const { data, error, isLoading } = useSWR("http://127.0.0.1:5000/api/products", fetcher)
-  return { productos: data, error, isLoading }
-}
-
 export default function Inventario() {
-  const { productos, error, isLoading } = useProductos()
   const [searchTerm, setSearchTerm] = useState("")
   const [showCategories, setShowCategories] = useState(false)
-  const [showAddProduct, setShowAddProduct] = useState(false)
+  const { openProductForm } = useProductForm()
 
-  const filteredProducts = (productos || []).filter((product: Product) =>
-    product.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = productosFicticios.filter((product) =>
+    product.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
   )
-
-  if (isLoading) return <div>Cargando...</div>
-  if (error) return <div>Error al cargar productos</div>
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-medium text-[#1e1e1e]">Inventario</h1>
         <div className="flex items-center gap-4">
-          <Button variant={'outline'} onClick={() => setShowCategories(true)} className="gap-2">
-            <LayoutGrid className="h-4 w-4" />
+          <Button variant="outline" onClick={() => setShowCategories(true)} className="gap-2">
+            <Grid2X2 className="h-4 w-4" />
             Categorías
           </Button>
-          <Button
-            variant="default"
-            onClick={() => setShowAddProduct(true)}
-            className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]"
-          >
+          <Button variant="default" onClick={openProductForm} className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]">
             <Plus className="h-4 w-4" />
             Agregar productos
           </Button>
@@ -137,7 +102,7 @@ export default function Inventario() {
           </SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button variant={'outline'} className="gap-2">
+        <Button variant="outline" className="gap-2">
           <Download className="h-4 w-4" />
           Descargar reporte
         </Button>
@@ -188,7 +153,7 @@ export default function Inventario() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-        {filteredProducts.map((product: Product): JSX.Element => (
+        {filteredProducts.map((product) => (
           <Card key={product.id} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="aspect-square relative bg-gray-50">
@@ -214,11 +179,22 @@ export default function Inventario() {
             </CardContent>
           </Card>
         ))}
+        <div
+          className="border rounded-lg p-4 flex flex-col items-center justify-center h-64 cursor-pointer hover:bg-gray-50"
+          onClick={openProductForm}
+        >
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <Plus className="h-6 w-6" />
+          </div>
+          <div className="text-center">
+            <p className="font-medium">Crear</p>
+            <p>producto</p>
+          </div>
+        </div>
       </div>
 
       <CategoriesDialog open={showCategories} onOpenChange={setShowCategories} />
-      <AddProductDialog open={showAddProduct} onOpenChange={setShowAddProduct} />
+      <ProductFormWrapper />
     </div>
   )
 }
-

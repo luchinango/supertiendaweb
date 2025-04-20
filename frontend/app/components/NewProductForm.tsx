@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useProductForm } from "@/app/context/ProductFormContext"
 
 interface NewProductFormProps {
-  isOpen: boolean
-  onClose: () => void
   onSubmit: (productData: any) => void
 }
 
-export function NewProductForm({ isOpen, onClose, onSubmit }: NewProductFormProps) {
+export function NewProductForm({ onSubmit }: NewProductFormProps) {
+  const { isProductFormOpen, closeProductForm } = useProductForm()
   const [productData, setProductData] = useState({
     barcode: "",
     name: "",
@@ -30,21 +30,22 @@ export function NewProductForm({ isOpen, onClose, onSubmit }: NewProductFormProp
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(productData)
+    closeProductForm()
   }
 
-  if (!isOpen) return null
+  if (!isProductFormOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Overlay with blur effect */}
-      <div className="absolute inset-0 bg-black/15 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/15 backdrop-blur-[2px]" onClick={closeProductForm} />
 
       {/* Form panel */}
       <div className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-xl animate-slide-in-from-right">
         <div className="p-6 flex flex-col h-full">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">Nuevo Producto</h2>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={closeProductForm} className="rounded-full h-8 w-8">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -116,7 +117,7 @@ export function NewProductForm({ isOpen, onClose, onSubmit }: NewProductFormProp
             <div className="bg-blue-50 p-4 rounded-md flex items-start gap-3">
               <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-blue-700">
-                Podrás llenar cantidades y costos en la sección <span className="font-medium">&quot;Inventario&quot;</span>
+                Podrás llenar cantidades y costos en la sección <span className="font-medium">"Inventario"</span>
               </p>
             </div>
 
