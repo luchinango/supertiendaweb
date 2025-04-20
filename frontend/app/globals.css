@@ -113,3 +113,36 @@
 .animate-slide-in-from-right {
   animation: slide-in-from-right 0.3s ease-out forwards;
 }
+
+/* Scrollbar styles for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.badge-danger {
+  background-color: #fee2e2; /* Tailwind's bg-red-100 */
+  color: #991b1b; /* Tailwind's text-red-800 */
+}
+
+.btn,
+.card {
+  transition: all 150ms;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  max-width: 28rem; /* Equivalent to max-w-md */
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Equivalent to shadow-xl */
+  z-index: 50;
+  animation: slide-in-from-right 0.3s ease-out forwards;
+}
