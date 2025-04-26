@@ -125,7 +125,7 @@ export default function Inventario() {
             <Button
               variant="default"
               onClick={() => setShowAddProduct(true)}
-              className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]"
+              className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e] text-white"
             >
               <Plus className="h-4 w-4" />
               Agregar productos
@@ -136,7 +136,7 @@ export default function Inventario() {
       </div>
 
       <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 max-w-sm bg-white">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar producto..."
@@ -146,10 +146,10 @@ export default function Inventario() {
           />
         </div>
         <Select>
-          <SelectTrigger className="w-[240px]">
+          <SelectTrigger className="w-[240px] bg-white">
             <SelectValue placeholder="Ver todas las categorías" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value="all">Ver todas las categorías</SelectItem>
             <SelectItem value="snacks">Snacks</SelectItem>
             <SelectItem value="abarrotes">Abarrotes</SelectItem>
@@ -211,11 +211,12 @@ export default function Inventario() {
 
       {/* Tabla de productos */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="grid grid-cols-[1fr_200px_200px_200px_200px] gap-4 p-4 border-b border-gray-200 bg-gray-50">
+        <div className="grid grid-cols-[1fr_200px_200px_200px_200px_160px] gap-4 p-4 border-b border-gray-200 bg-gray-50">
           <div className="font-medium text-gray-600">Producto</div>
           <div className="font-medium text-gray-600 text-right">Precio</div>
           <div className="font-medium text-gray-600 text-right">Costo</div>
           <div className="font-medium text-gray-600 text-right">Cantidad disponible</div>
+          <div className="font-medium text-gray-600 text-right">Stock mínimo</div>
           <div className="font-medium text-gray-600 text-right">Ganancia</div>
         </div>
 
@@ -223,7 +224,7 @@ export default function Inventario() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="grid grid-cols-[1fr_200px_200px_200px_200px] gap-4 p-4 items-center hover:bg-gray-50 cursor-pointer"
+              className="grid grid-cols-[1fr_200px_200px_200px_200px_160px] gap-4 p-4 items-center hover:bg-gray-50 cursor-pointer"
               onClick={() => handleProductClick(product)}
             >
               <div className="flex items-center gap-3">
@@ -240,6 +241,10 @@ export default function Inventario() {
               </div>
               <div className="text-right">
                 <Input value={product.stock.toString()} className="text-right" readOnly />
+              </div>
+              <div className="text-right">
+                {/* Puedes reemplazar 5 por el valor real de stock mínimo si lo tienes en tu modelo */}
+                <Input value={"5"} className="text-right" readOnly />
               </div>
               <div className="text-right flex items-center justify-end">
                 <span className="mr-2">Bs {product.ganancia}</span>
@@ -263,7 +268,7 @@ export default function Inventario() {
       {/* Sliding panels */}
       <CategoriesDialog open={showCategories} onOpenChange={setShowCategories} />
       <AddProductPanel open={showAddProduct} onOpenChange={setShowAddProduct} />
-      <DownloadReportPanel open={showDownloadReport} onOpenChange={setShowDownloadReport} />
+      <DownloadReportPanel open={showDownloadReport} onOpenChange={setShowDownloadReport} type="inventario" />
       <ProductDetailPanel
         open={showProductDetail}
         onOpenChange={setShowProductDetail}

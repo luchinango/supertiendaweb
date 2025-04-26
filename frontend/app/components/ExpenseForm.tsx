@@ -364,7 +364,7 @@ export function ExpenseForm() {
           <div className="border-t border-green-500 -mx-6 mb-6"></div>
 
           <div className="flex-1 space-y-6">
-            <p className="text-sm text-gray-500">Los campos marcados con asterisco (*) son obligatorios</p>
+            <p className="text-sm text-gray-500 ">Los campos marcados con asterisco (*) son obligatorios</p>
 
             {/* Payment Type Toggle */}
             <div className="grid grid-cols-2 gap-2">
@@ -372,7 +372,7 @@ export function ExpenseForm() {
                 type="button"
                 variant={!isDebt ? "default" : "outline"}
                 onClick={() => setIsDebt(false)}
-                className={!isDebt ? "bg-green-600 hover:bg-green-700" : ""}
+                className={!isDebt ? "bg-green-600 hover:bg-green-700 text-white" : ""}
               >
                 Pagada
               </Button>
@@ -380,7 +380,7 @@ export function ExpenseForm() {
                 type="button"
                 variant={isDebt ? "default" : "outline"}
                 onClick={() => setIsDebt(true)}
-                className={isDebt ? "bg-red-600 hover:bg-red-700" : ""}
+                className={isDebt ? "bg-red-600 hover:bg-red-700 text-white" : ""}
               >
                 En deuda
               </Button>
@@ -746,7 +746,7 @@ export function ExpenseForm() {
           {/* Bottom section with create expense button */}
           <div className="mt-6">
             <Button
-              className="w-full bg-gray-800 hover:bg-gray-700"
+              className="w-full bg-gray-800 hover:bg-gray-700 text-white"
               onClick={handleCreateExpense}
               disabled={!selectedCategory || !value || (isDebt && !selectedSupplier)}
             >

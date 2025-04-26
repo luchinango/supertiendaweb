@@ -1,67 +1,47 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "app/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "app/components/ui/dialog"
-import { Input } from "app/components/ui/input"
-import { Label } from "app/components/ui/label"
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Plus } from 'lucide-react'
-import EmployeeDto from '../types/EmployeeDto'
 
 interface NewEmployeeDialogProps {
-  onAddEmployee: (employee: EmployeeDto) => void
+  onAddEmployee: (employee: {
+    name: string
+    position: string
+    salary: number
+    startDate: string
+  }) => void
 }
 
 export function NewEmployeeDialog({ onAddEmployee }: NewEmployeeDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+  const [name, setName] = useState('')
   const [position, setPosition] = useState('')
   const [salary, setSalary] = useState('')
   const [startDate, setStartDate] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
-    const payload = {
-      firstName,
-      lastName,
+    onAddEmployee({
+      name,
       position,
       salary: parseFloat(salary),
       startDate,
-    }
-
-    fetch('/api/employees/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
     })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Error al agregar el empleado')
-      }
-      return response.json()
-    })
-    .then((data: EmployeeDto) => {
-      onAddEmployee(data)
-      setIsOpen(false)
-      setFirstName('')
-      setLastName('')
-      setPosition('')
-      setSalary('')
-      setStartDate('')
-    })
-    .catch((error) => {
-      console.error('Error:', error)
-    })
+    setIsOpen(false)
+    setName('')
+    setPosition('')
+    setSalary('')
+    setStartDate('')
   }
 
   return (
@@ -78,20 +58,11 @@ export function NewEmployeeDialog({ onAddEmployee }: NewEmployeeDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombres</Label>
+            <Label htmlFor="name">Nombre completo</Label>
             <Input
-              id="firstName"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="name">Apellidos</Label>
-            <Input
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
@@ -130,4 +101,3 @@ export function NewEmployeeDialog({ onAddEmployee }: NewEmployeeDialogProps) {
     </Dialog>
   )
 }
-

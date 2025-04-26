@@ -9,7 +9,7 @@ export function SalesFormManager() {
 
   return (
     <>
-      <Button onClick={openSalesForm} className="bg-green-600 hover:bg-green-700">
+      <Button onClick={openSalesForm} className="bg-green-600 hover:bg-green-700 text-white">
         Nueva venta
       </Button>
       <SalesForm />

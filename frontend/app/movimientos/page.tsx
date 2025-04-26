@@ -488,11 +488,17 @@ export default function MovimientosPage() {
       </div>
 
       <Tabs defaultValue="transacciones" value={activeMainTab} onValueChange={setActiveMainTab} className="mb-6">
-        <TabsList className="bg-gray-800 text-white w-full">
-          <TabsTrigger value="transacciones" className="flex-1 data-[state=active]:bg-gray-700">
+        <TabsList className="bg-white text-black w-full">
+          <TabsTrigger
+            value="transacciones"
+            className="flex-1 bg-white text-black data-[state=active]:bg-gray-800 data-[state=active]:text-white"
+          >
             Transacciones
           </TabsTrigger>
-          <TabsTrigger value="cierres" className="flex-1 data-[state=active]:bg-gray-700">
+          <TabsTrigger
+            value="cierres"
+            className="flex-1 bg-white text-black data-[state=active]:bg-gray-800 data-[state=active]:text-white"
+          >
             Cierres de caja
           </TabsTrigger>
         </TabsList>
@@ -513,7 +519,7 @@ export default function MovimientosPage() {
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0">
+              <PopoverContent className="w-[200px] p-0 bg-white">
                 <div className="py-1">
                   {timePeriods.map((period) => (
                     <div
@@ -538,7 +544,7 @@ export default function MovimientosPage() {
                   {formattedDateRange}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 bg-white" align="start">
                 <div className="p-3">
                   <div className="flex justify-between items-center mb-2">
                     <button
@@ -791,7 +797,7 @@ export default function MovimientosPage() {
                   {formattedDateRange}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 bg-white" align="start">
                 <div className="p-3">
                   <div className="flex justify-between items-center mb-2">
                     <button

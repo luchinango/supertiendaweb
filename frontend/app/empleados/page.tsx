@@ -1,176 +1,129 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from "app/components/ui/button"
-import { Input } from "app/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "app/components/ui/table"
-import { Search, Plus, Pencil, Eye, Trash2, UserPlus } from 'lucide-react'
-import { NewEmployeeDialog } from '../components/NewEmployeeDialog'
-import { EditEmployeeDialog } from '../components/EditEmployeeDialog'
-import useSWR from "swr"
-import EmployeeDto from '../types/EmployeeDto'
-import { useEmployees } from "../hooks/useEmployees";
-import toast from 'react-hot-toast';
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { ChevronRight } from "lucide-react"
+import { NewEmployeePanel } from "../components/NewEmployeePanel"
+import { EditEmployeePanel } from "../components/EditEmployeePanel"
+import { PermissionsDialog } from "../components/PermissionsDialog"
+import type { Employee } from "../types/Employee"
+
+const sampleEmployees: Employee[] = [
+  { id: 1, name: "Jamil Estrada", phone: "+59163349336", role: "Propietario", status: "Activo" },
+  { id: 2, name: "Marisol", phone: "+59175774230", role: "Administrador", status: "Activo" },
+  { id: 3, name: "Luis", phone: "+59172944911", role: "Administrador", status: "Activo" },
+  { id: 4, name: "Melvy", phone: "+59171065562", role: "Administrador", status: "Activo" },
+  { id: 5, name: "Sergio", phone: "+59175463817", role: "Vendedor", status: "Activo" },
+]
 
 export default function Empleados() {
-  const { employees, error, isLoading, mutate , editEmployee } = useEmployees()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [editingEmployee, setEditingEmployee] = useState<EmployeeDto | null>(null);
+  const [employees] = useState<Employee[]>(sampleEmployees)
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+  const [showNewEmployee, setShowNewEmployee] = useState(false)
+  const [showPermissions, setShowPermissions] = useState(false)
+  const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null)
 
-  const filteredEmployees: EmployeeDto[] = employees.filter((employee: EmployeeDto) =>
-    employee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.position.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const handleAddEmployee = (newEmployee: EmployeeDto) => {
-    mutate();
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "Propietario":
+        return "bg-blue-100 text-blue-800"
+      case "Administrador":
+        return "bg-green-100 text-green-800"
+      case "Vendedor":
+        return "bg-blue-100 text-blue-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
   }
 
-  const handleSaveEdit = async (updatedEmployee: EmployeeDto) => {
-    await editEmployee(updatedEmployee.id, updatedEmployee);
-    setEditingEmployee(null);
-  };
+  const handleEditClick = (employee: Employee) => {
+    setEditingEmployee(employee)
+  }
 
-  const handleCreateUser = async (employee: EmployeeDto) => {
-    try {
-      const response = await fetch('/api/users/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          employeeId: employee.id,
-          email: `${employee.firstName.toLowerCase()}.${employee.lastName.toLowerCase()}@empresa.com`,
-          initialPassword: 'TempPassword123',
-          role: 'employee'
-        })
-      });
-  
-      if (!response.ok) throw new Error('Error al crear usuario');
-      
-      mutate(employees.map(emp => 
-        emp.id === employee.id ? { ...emp, hasUser: true } : emp
-      ));
-  
-      toast.success('Usuario creado exitosamente');
-    } catch (error) {
-      toast.error('Error al crear usuario');
-      console.error(error);
-    }
-  };
-
-
-  const handleDelete = async (id: Number) => {
-    if (!confirm('¿Está seguro de eliminar este empleado?')) return;
-    
-    try {
-      await fetch(`/api/employees/${id}`, { method: 'DELETE' });
-      mutate(employees.filter(emp => emp.id !== id));
-      toast.success('Empleado eliminado');
-    } catch (error) {
-      toast.error('Error al eliminar empleado');
-      console.error(error);
-    }
-  };
+  const handleNewEmployee = () => {
+    setShowNewEmployee(true)
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center ">
         <h1 className="text-2xl font-bold">Empleados</h1>
-        <NewEmployeeDialog onAddEmployee={handleAddEmployee} />
+        <Button onClick={handleNewEmployee} className="bg-gray-900 hover:bg-gray-800 text-white ">
+          + Crear empleado
+        </Button>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar empleado..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
+      <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="grid grid-cols-5 gap-4 p-4 border-b bg-gray-50">
+          <div className="font-medium text-gray-600">Nombre del empleador</div>
+          <div className="font-medium text-gray-600">Celular</div>
+          <div className="font-medium text-gray-600">Rol</div>
+          <div className="font-medium text-gray-600">Estado</div>
+          <div className="font-medium text-gray-600">Acciones</div>
+        </div>
+
+        <div className="divide-y">
+          {employees.map((employee) => (
+            <div key={employee.id} className="grid grid-cols-5 gap-4 p-4 items-center">
+              <div>{employee.name}</div>
+              <div>{employee.phone}</div>
+              <div>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
+                    employee.role,
+                  )}`}
+                >
+                  {employee.role}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="inline-flex items-center">
+                  <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                  {employee.status}
+                </span>
+              </div>
+              <div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+                  onClick={() => handleEditClick(employee)}
+                >
+                  Editar
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Cargo</TableHead>
-            <TableHead>Salario</TableHead>
-            <TableHead>Fecha de Inicio</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredEmployees.map((employee) => (
-            <TableRow key={employee.id}>
-              <TableCell>{employee.firstName}</TableCell>
-              <TableCell>{employee.position}</TableCell>
-              <TableCell>Bs {employee.salary}</TableCell>
-              <TableCell>{new Date(employee.startDate).toLocaleDateString()}</TableCell>
-              <TableCell className="flex space-x-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-gray-100 cursor-pointer transition-colors"
-                  onClick={() => setEditingEmployee(employee)}
-                  title="Editar"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleCreateUser(employee)}
-                  title="Crear usuario"
-                  //</TableCell>disabled={employee.hasUser}
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  //onClick={() => viewEmployeeDetails(employee.id)}
-                  title="Ver detalles"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(employee.id)}
-                  title="Eliminar"
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {
-      editingEmployee && (
-        <EditEmployeeDialog
-          employee={editingEmployee}
-          onSave={handleSaveEdit}
-          onClose={() => setEditingEmployee(null)}
+      {showNewEmployee && (
+        <NewEmployeePanel
+          open={showNewEmployee}
+          onOpenChange={setShowNewEmployee}
+          onShowPermissions={(employee: Employee) => {
+            setCurrentEmployee(employee)
+            setShowPermissions(true)
+          }}
         />
-      )
-      }
+      )}
+
+      {editingEmployee && (
+        <EditEmployeePanel
+          employee={editingEmployee}
+          open={!!editingEmployee}
+          onOpenChange={() => setEditingEmployee(null)}
+          onShowPermissions={(employee: Employee) => {
+            setCurrentEmployee(employee)
+            setShowPermissions(true)
+          }}
+        />
+      )}
+
+      {showPermissions && currentEmployee && (
+        <PermissionsDialog open={showPermissions} onOpenChange={setShowPermissions} employee={currentEmployee} />
+      )}
     </div>
   )
 }
-

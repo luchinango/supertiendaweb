@@ -97,12 +97,12 @@ export function SalesForm() {
             <p className="text-sm text-gray-500">Los campos marcados con asterisco (*) son obligatorios</p>
 
             {/* Payment Type Toggle */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 text-">
               <Button
                 type="button"
                 variant={!isCredit ? "default" : "outline"}
                 onClick={() => setIsCredit(false)}
-                className={!isCredit ? "bg-green-600 hover:bg-green-700" : ""}
+                className={!isCredit ? "bg-green-600 hover:bg-green-700 text-white" : ""}
               >
                 Pagada
               </Button>
@@ -110,7 +110,7 @@ export function SalesForm() {
                 type="button"
                 variant={isCredit ? "default" : "outline"}
                 onClick={() => setIsCredit(true)}
-                className={isCredit ? "bg-red-600 hover:bg-red-700" : ""}
+                className={isCredit ? "bg-red-600 hover:bg-red-700 text-white" : ""}
               >
                 A crédito
               </Button>

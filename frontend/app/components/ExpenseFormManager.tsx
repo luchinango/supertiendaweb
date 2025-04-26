@@ -9,7 +9,7 @@ export function ExpenseFormManager() {
 
   return (
     <>
-      <Button onClick={openExpenseForm} className="bg-red-600 hover:bg-red-700">
+      <Button onClick={openExpenseForm} className="bg-red-600 hover:bg-red-700 text-white">
         Nuevo gasto
       </Button>
       <ExpenseForm />

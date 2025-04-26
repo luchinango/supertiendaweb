@@ -81,7 +81,6 @@ export default function VentasPage() {
               </div>
               <CashRegisterManager />
               <SalesFormManager />
-
               <ExpenseFormManager />
             </div>
           </div>

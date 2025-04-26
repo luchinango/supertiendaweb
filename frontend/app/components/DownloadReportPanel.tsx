@@ -8,40 +8,41 @@ export interface DownloadReportPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectReport?: (reportType: string) => void;
+  type?: "inventario" | "mermas";
 }
 
-export function DownloadReportPanel({ open, onOpenChange }: DownloadReportPanelProps) {
+export function DownloadReportPanel({ open, onOpenChange, type = "inventario", onSelectReport }: DownloadReportPanelProps) {
+  const title = type === "mermas" ? "Reporte de mermas" : "Reporte de inventario";
+  const pdfLabel = type === "mermas"
+    ? "Descargar reporte de mermas en PDF"
+    : "Descargar reporte de inventario en PDF";
+  const excelLabel = type === "mermas"
+    ? "Descargar reporte de mermas en Excel"
+    : "Descargar reporte de inventario en Excel";
+
   return (
-    <div
-      className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
-      aria-modal={open}
-      role="dialog"
-    >
+    <div className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-modal={open} role="dialog">
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/15 backdrop-blur-[2px] transition-opacity duration-300 ${
-          open ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 bg-black/15 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={() => onOpenChange(false)}
       />
-
       {/* Sidebar */}
-      <div
-        className={`absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl transition-transform duration-300 ease-in-out ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
+      <div className={`absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b p-4">
-            <h2 className="text-xl font-semibold">Reporte de inventario</h2>
+            <h2 className="text-xl font-semibold">{title}</h2>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="rounded-full h-8 w-8">
               <X className="h-4 w-4" />
             </Button>
           </div>
-
           <div className="flex-1 overflow-auto p-4">
             <div className="space-y-4">
-              <Button variant="outline" className="w-full justify-start gap-3 py-6">
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3 py-6"
+                onClick={() => onSelectReport?.(type === "mermas" ? "pdf-mermas" : "pdf-inventario")}
+              >
                 <svg
                   width="24"
                   height="24"
@@ -56,11 +57,14 @@ export function DownloadReportPanel({ open, onOpenChange }: DownloadReportPanelP
                   <path d="M9 13h6" />
                 </svg>
                 <div className="text-left">
-                  <div className="font-medium">Descargar reporte de inventario en PDF</div>
+                  <div className="font-medium">{pdfLabel}</div>
                 </div>
               </Button>
-
-              <Button variant="outline" className="w-full justify-start gap-3 py-6">
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3 py-6"
+                onClick={() => onSelectReport?.(type === "mermas" ? "excel-mermas" : "excel-inventario")}
+              >
                 <svg
                   width="24"
                   height="24"
@@ -77,7 +81,7 @@ export function DownloadReportPanel({ open, onOpenChange }: DownloadReportPanelP
                   <path d="M14 17h2" />
                 </svg>
                 <div className="text-left">
-                  <div className="font-medium">Descargar reporte de inventario en Excel</div>
+                  <div className="font-medium">{excelLabel}</div>
                 </div>
               </Button>
             </div>

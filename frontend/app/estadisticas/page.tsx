@@ -233,7 +233,7 @@ export default function EstadisticasPage() {
           </button>
 
           {showCalendar && (
-            <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-10">
+            <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-10 w-[340px]">
               <div className="p-4">
                 <div className="flex justify-between items-center mb-4">
                   <button className="p-1">&lt;</button>

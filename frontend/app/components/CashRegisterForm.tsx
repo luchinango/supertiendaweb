@@ -114,7 +114,7 @@ export function CashRegisterForm() {
             </div>
 
             <div className="mt-auto pt-6">
-              <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-700">
+              <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-700 text-white">
                 Empezar turno
               </Button>
             </div>

@@ -11,7 +11,7 @@ export function CashRegisterManager() {
   return (
     <>
       {registerStatus === "closed" && (
-        <Button onClick={openCashRegisterForm} className="bg-gray-800 hover:bg-gray-700">
+        <Button onClick={openCashRegisterForm} className="bg-gray-800 hover:bg-gray-700 text-white">
           Abrir caja
         </Button>
       )}

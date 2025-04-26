@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Download, Plus, AlertTriangle, Ban, PackageX } from "lucide-react"
 import { RegisterLossPanel } from "../components/RegisterLossPanel"
+import { DownloadReportPanel } from "../components/DownloadReportPanel"
 
 interface ProductLoss {
   id: number
@@ -54,6 +55,7 @@ export default function Mermas() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState("todos")
   const [showRegisterLoss, setShowRegisterLoss] = useState(false)
+  const [showDownloadReport, setShowDownloadReport] = useState(false)
 
   const filteredLosses = losses.filter(
     (loss) =>
@@ -130,14 +132,18 @@ export default function Mermas() {
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por tipo" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value="todos">Todos</SelectItem>
             <SelectItem value="vencido">Vencidos</SelectItem>
             <SelectItem value="dañado">Dañados</SelectItem>
             <SelectItem value="perdido">Perdidos</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" className="gap-2">
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => setShowDownloadReport(true)}
+        >
           <Download className="h-4 w-4" />
           Descargar reporte
         </Button>
@@ -190,6 +196,8 @@ export default function Mermas() {
           setLosses([...losses, { id: losses.length + 1, ...newLoss }])
         }}
       />
+
+      <DownloadReportPanel open={showDownloadReport} onOpenChange={setShowDownloadReport} type="mermas" />
     </div>
   )
 }
