@@ -7,9 +7,11 @@ interface ExpenseDetailPanelProps {
   isOpen: boolean
   onClose: () => void
   expense: any
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
-export function ExpenseDetailPanel({ isOpen, onClose, expense }: ExpenseDetailPanelProps) {
+export function ExpenseDetailPanel({ isOpen, onClose, expense, onEdit, onDelete }: ExpenseDetailPanelProps) {
   if (!isOpen) return null
 
   return (
@@ -158,11 +160,15 @@ export function ExpenseDetailPanel({ isOpen, onClose, expense }: ExpenseDetailPa
               <FileText className="h-5 w-5 mb-1" />
               <span className="text-xs">Comprobante</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center py-4">
+            <Button variant="outline" className="flex flex-col items-center py-4" onClick={onEdit}>
               <Edit className="h-5 w-5 mb-1" />
               <span className="text-xs">Editar</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center py-4 text-red-500 hover:text-red-600">
+            <Button
+              variant="outline"
+              className="flex flex-col items-center py-4 text-red-500 hover:text-red-600"
+              onClick={onDelete}
+            >
               <Trash className="h-5 w-5 mb-1" />
               <span className="text-xs">Eliminar</span>
             </Button>

@@ -80,13 +80,13 @@ export function RegisterLossPanel({ open, onOpenChange, onRegister }: RegisterLo
 
         <div className="flex-1 overflow-y-auto p-4">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2 ">
               <Label htmlFor="producto">Producto</Label>
               <Select value={producto} onValueChange={setProducto} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar producto" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="ACT II Pipoca Man-tequilla 91g">ACT II Pipoca Man-tequilla 91g</SelectItem>
                   <SelectItem value="Aguai Azucar Blanca de 1kg">Aguai Azucar Blanca de 1kg</SelectItem>
                   <SelectItem value="Ajinomen Sopa Instantanea">Ajinomen Sopa Instantanea</SelectItem>
@@ -126,7 +126,7 @@ export function RegisterLossPanel({ open, onOpenChange, onRegister }: RegisterLo
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="vencido">Vencido</SelectItem>
                   <SelectItem value="dañado">Dañado</SelectItem>
                   <SelectItem value="perdido">Perdido</SelectItem>
@@ -145,7 +145,7 @@ export function RegisterLossPanel({ open, onOpenChange, onRegister }: RegisterLo
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar responsable" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="Juan Pérez">Juan Pérez</SelectItem>
                   <SelectItem value="María García">María García</SelectItem>
                   <SelectItem value="Carlos López">Carlos López</SelectItem>
@@ -171,7 +171,12 @@ export function RegisterLossPanel({ open, onOpenChange, onRegister }: RegisterLo
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSubmit}>Registrar merma</Button>
+            <Button
+              className="bg-black text-white hover:bg-gray-900"
+              onClick={handleSubmit}
+            >
+              Registrar merma
+            </Button>
           </div>
         </div>
       </div>

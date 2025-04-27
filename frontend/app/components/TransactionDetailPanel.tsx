@@ -1,15 +1,23 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { X, Printer, FileText, Edit, Trash } from "lucide-react"
+import { X, Printer, FileText, Edit, Trash, Calendar, CreditCard, User, TrendingUp } from "lucide-react"
 
 interface TransactionDetailPanelProps {
   isOpen: boolean
   onClose: () => void
   transaction: any
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
-export function TransactionDetailPanel({ isOpen, onClose, transaction }: TransactionDetailPanelProps) {
+export function TransactionDetailPanel({
+  isOpen,
+  onClose,
+  transaction,
+  onEdit,
+  onDelete,
+}: TransactionDetailPanelProps) {
   if (!isOpen) return null
 
   return (
@@ -34,9 +42,8 @@ export function TransactionDetailPanel({ isOpen, onClose, transaction }: Transac
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="16" />
-                <line x1="8" y1="12" x2="16" y2="12" />
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <line x1="6" y1="12" x2="18" y2="12" />
               </svg>
             </div>
             <h2 className="text-xl font-bold">Detalle de la venta</h2>
@@ -49,7 +56,7 @@ export function TransactionDetailPanel({ isOpen, onClose, transaction }: Transac
 
           <div className="flex-1 space-y-6">
             <div>
-              <h3 className="text-lg font-medium">{transaction.concept}</h3>
+              <h3 className="text-lg font-medium line-clamp-2">{transaction.concept}</h3>
               <p className="text-sm text-gray-500">Transacción #{transaction.transactionId}</p>
             </div>
 
@@ -65,84 +72,24 @@ export function TransactionDetailPanel({ isOpen, onClose, transaction }: Transac
 
             <div className="space-y-3">
               <div className="flex items-center">
-                <svg
-                  className="h-5 w-5 text-gray-400 mr-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
+                <Calendar className="h-5 w-5 text-gray-400 mr-2" />
                 <div className="text-sm text-gray-500">Fecha y hora</div>
                 <div className="ml-auto">{transaction.date}</div>
               </div>
               <div className="flex items-center">
-                <svg
-                  className="h-5 w-5 text-gray-400 mr-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <line x1="6" y1="12" x2="18" y2="12" />
-                </svg>
+                <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
                 <div className="text-sm text-gray-500">Método de pago</div>
                 <div className="ml-auto">{transaction.paymentMethod}</div>
               </div>
               <div className="flex items-center">
-                <svg
-                  className="h-5 w-5 text-gray-400 mr-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                  <polyline points="16 7 22 7 22 13" />
-                </svg>
-                <div className="text-sm text-gray-500">Ganancia</div>
-                <div className="ml-auto text-green-600">Bs {transaction.profit}</div>
-              </div>
-              <div className="flex items-center">
-                <svg
-                  className="h-5 w-5 text-gray-400 mr-2"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <User className="h-5 w-5 text-gray-400 mr-2" />
                 <div className="text-sm text-gray-500">Cliente</div>
                 <div className="ml-auto">-</div>
+              </div>
+              <div className="flex items-center">
+                <TrendingUp className="h-5 w-5 text-gray-400 mr-2" />
+                <div className="text-sm text-gray-500">Ganancia</div>
+                <div className="ml-auto text-green-600">Bs {transaction.profit}</div>
               </div>
             </div>
 
@@ -179,11 +126,15 @@ export function TransactionDetailPanel({ isOpen, onClose, transaction }: Transac
               <FileText className="h-5 w-5 mb-1" />
               <span className="text-xs">Comprobante</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center py-4">
+            <Button variant="outline" className="flex flex-col items-center py-4" onClick={onEdit}>
               <Edit className="h-5 w-5 mb-1" />
               <span className="text-xs">Editar</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center py-4 text-red-500 hover:text-red-600">
+            <Button
+              variant="outline"
+              className="flex flex-col items-center py-4 text-red-500 hover:text-red-600"
+              onClick={onDelete}
+            >
               <Trash className="h-5 w-5 mb-1" />
               <span className="text-xs">Eliminar</span>
             </Button>

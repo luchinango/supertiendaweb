@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,6 +19,8 @@ import { ReportDebtsPanel } from "../components/ReportDebtsPanel"
 import { DownloadReportPanel } from "../components/DownloadReportPanel"
 import { CashRegisterManager } from "../components/CashRegisterManager"
 import { CashRegisterDetailPanel } from "../components/CashRegisterDetailPanel"
+import { EditSalePanel } from "../components/EditSalePanel"
+import EditExpensePanel from "../components/EditExpensePanel"
 
 // Sample data for transactions
 const transactions = [
@@ -366,16 +368,15 @@ const cashRegisterClosings = [
   },
 ]
 
-export default function MovimientosPage() {
-  // --- Opciones de periodo ---
-  const timePeriods = [
-    { id: "diario", name: "Diario" },
-    { id: "semanal", name: "Semanal" },
-    { id: "mensual", name: "Mensual" },
-    { id: "personalizado", name: "Rango personalizado" },
-  ]
+// Time period options
+const timePeriods = [
+  { id: "diario", name: "Diario" },
+  { id: "semanal", name: "Semanal" },
+  { id: "mensual", name: "Mensual" },
+  { id: "anual", name: "Anual" },
+]
 
-  // --- Estados ---
+export default function MovimientosPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [selectedTimePeriod, setSelectedTimePeriod] = useState(timePeriods[1])
   const [showTimePeriodDropdown, setShowTimePeriodDropdown] = useState(false)
@@ -390,6 +391,12 @@ export default function MovimientosPage() {
   const [showExpenseDetail, setShowExpenseDetail] = useState(false)
   const [selectedCashRegister, setSelectedCashRegister] = useState<any | null>(null)
   const [showCashRegisterDetail, setShowCashRegisterDetail] = useState(false)
+
+  // Edit panels states
+  const [showEditSale, setShowEditSale] = useState(false)
+  const [showEditExpense, setShowEditExpense] = useState(false)
+  const [isEditExpensePanelOpen, setIsEditExpensePanelOpen] = useState(false)
+  const [selectedExpenseForEdit, setSelectedExpenseForEdit] = useState<any>(null)
 
   // Report states
   const [showDownloadReportPanel, setShowDownloadReportPanel] = useState(false)
@@ -406,12 +413,6 @@ export default function MovimientosPage() {
   const [showEmployeesModal, setShowEmployeesModal] = useState(false)
   const [showClientsModal, setShowClientsModal] = useState(false)
   const [showSuppliersModal, setShowSuppliersModal] = useState(false)
-
-  // Estado para saber si ya está montado en el cliente
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Calculate week range based on selected date
   const weekStart = startOfWeek(date, { weekStartsOn: 1 }) // Start on Monday
@@ -443,15 +444,46 @@ export default function MovimientosPage() {
     setShowCashRegisterDetail(true)
   }
 
-  // Filter transactions based on search term and active tab
-  const filteredTransactions = transactions
-    .filter((transaction) => transaction.concept.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter((transaction) => activeTab === "ingresos")
+  // Handle edit transaction
+  const handleEditTransaction = () => {
+    setShowTransactionDetail(false)
+    setTimeout(() => setShowEditSale(true), 300)
+  }
 
-  // Filter expenses based on search term and active tab
-  const filteredExpenses = expenses
-    .filter((expense) => expense.concept.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter((expense) => activeTab === "egresos")
+  // Handle edit expense
+  const handleEditExpense = (expense: any) => {
+    setSelectedExpenseForEdit(expense)
+    setIsEditExpensePanelOpen(true)
+    setShowExpenseDetail(false)
+  }
+
+  // Handle delete transaction
+  const handleDeleteTransaction = () => {
+    // Aquí iría la lógica para eliminar la transacción
+    setShowTransactionDetail(false)
+  }
+
+  // Handle delete expense
+  const handleDeleteExpense = () => {
+    // Aquí iría la lógica para eliminar el gasto
+    setShowExpenseDetail(false)
+  }
+
+  // Handle save edit transaction
+  const handleSaveEditTransaction = (updatedTransaction: any) => {
+    // Aquí iría la lógica para guardar los cambios de la transacción
+    setSelectedTransaction(updatedTransaction)
+    setShowEditSale(false)
+    setTimeout(() => setShowTransactionDetail(true), 300)
+  }
+
+  // Handle save edit expense
+  const handleSaveEditExpense = (updatedExpense: any) => {
+    // Aquí iría la lógica para guardar los cambios del gasto
+    setSelectedTransaction(updatedExpense)
+    setShowEditExpense(false)
+    setTimeout(() => setShowExpenseDetail(true), 300)
+  }
 
   // Handle download report click
   const handleDownloadReportClick = () => {
@@ -471,8 +503,15 @@ export default function MovimientosPage() {
     }, 300) // Wait for the panel to slide out before showing the new panel
   }
 
-  // Usa este condicional para evitar renderizar el calendario y fechas hasta que esté montado
-  if (!mounted) return null
+  // Filter transactions based on search term and active tab
+  const filteredTransactions = transactions
+    .filter((transaction) => transaction.concept.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((transaction) => activeTab === "ingresos")
+
+  // Filter expenses based on search term and active tab
+  const filteredExpenses = expenses
+    .filter((expense) => expense.concept.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((expense) => activeTab === "egresos")
 
   return (
     <div className="p-4 relative">
@@ -488,17 +527,11 @@ export default function MovimientosPage() {
       </div>
 
       <Tabs defaultValue="transacciones" value={activeMainTab} onValueChange={setActiveMainTab} className="mb-6">
-        <TabsList className="bg-white text-black w-full">
-          <TabsTrigger
-            value="transacciones"
-            className="flex-1 bg-white text-black data-[state=active]:bg-gray-800 data-[state=active]:text-white"
-          >
+        <TabsList className="bg-gray-800 text-white w-full">
+          <TabsTrigger value="transacciones" className="flex-1 data-[state=active]:bg-gray-700">
             Transacciones
           </TabsTrigger>
-          <TabsTrigger
-            value="cierres"
-            className="flex-1 bg-white text-black data-[state=active]:bg-gray-800 data-[state=active]:text-white"
-          >
+          <TabsTrigger value="cierres" className="flex-1 data-[state=active]:bg-gray-700">
             Cierres de caja
           </TabsTrigger>
         </TabsList>
@@ -519,7 +552,7 @@ export default function MovimientosPage() {
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0 bg-white">
+              <PopoverContent className="w-[200px] p-0">
                 <div className="py-1">
                   {timePeriods.map((period) => (
                     <div
@@ -544,7 +577,7 @@ export default function MovimientosPage() {
                   {formattedDateRange}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white" align="start">
+              <PopoverContent className="w-auto p-0" align="start">
                 <div className="p-3">
                   <div className="flex justify-between items-center mb-2">
                     <button
@@ -651,25 +684,19 @@ export default function MovimientosPage() {
               <div className="text-sm text-gray-600 mb-1">Balance</div>
               <div className="text-xl font-bold text-gray-800">
                 {balance < 0 ? "-" : ""}Bs{" "}
-                {mounted
-                  ? Math.abs(balance).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  : Math.abs(balance)}
+                {Math.abs(balance).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
               <div className="text-sm text-gray-600 mb-1">Ventas totales</div>
               <div className="text-xl font-bold text-green-600">
-                Bs {mounted
-                  ? totalSales.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  : totalSales}
+                Bs {totalSales.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
             <div className="bg-red-50 p-4 rounded-lg border border-red-100">
               <div className="text-sm text-gray-600 mb-1">Gastos totales</div>
               <div className="text-xl font-bold text-red-600">
-                Bs {mounted
-                  ? totalExpenses.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  : totalExpenses}
+                Bs {totalExpenses.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
           </div>
@@ -797,7 +824,7 @@ export default function MovimientosPage() {
                   {formattedDateRange}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white" align="start">
+              <PopoverContent className="w-auto p-0" align="start">
                 <div className="p-3">
                   <div className="flex justify-between items-center mb-2">
                     <button
@@ -978,6 +1005,8 @@ export default function MovimientosPage() {
           isOpen={showTransactionDetail}
           onClose={() => setShowTransactionDetail(false)}
           transaction={selectedTransaction}
+          onEdit={handleEditTransaction}
+          onDelete={handleDeleteTransaction}
         />
       )}
 
@@ -987,6 +1016,8 @@ export default function MovimientosPage() {
           isOpen={showExpenseDetail}
           onClose={() => setShowExpenseDetail(false)}
           expense={selectedTransaction}
+          onEdit={() => handleEditExpense(selectedTransaction)}
+          onDelete={handleDeleteExpense}
         />
       )}
 
@@ -1010,12 +1041,24 @@ export default function MovimientosPage() {
       <ReportBalancePanel isOpen={showBalanceReport} onClose={() => setShowBalanceReport(false)} />
 
       <ReportDebtsPanel isOpen={showDebtsReport} onClose={() => setShowDebtsReport(false)} />
+
+      {/* Agregar el componente EditSalePanel al final del componente, justo antes del cierre del div principal */}
+      {selectedTransaction && selectedTransaction.type === "income" && (
+        <EditSalePanel
+          isOpen={showEditSale}
+          onClose={() => setShowEditSale(false)}
+          transaction={selectedTransaction}
+          onSave={handleSaveEditTransaction}
+        />
+      )}
+
+      {selectedExpenseForEdit && (
+        <EditExpensePanel
+          isOpen={isEditExpensePanelOpen}
+          onClose={() => setIsEditExpensePanelOpen(false)}
+          expense={selectedExpenseForEdit}
+        />
+      )}
     </div>
   )
-}
-
-export interface DownloadReportPanelProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSelectReport?: (reportType: string) => void; // Added this property
 }

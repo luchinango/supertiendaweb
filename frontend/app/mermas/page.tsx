@@ -73,7 +73,10 @@ export default function Mermas() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Mermas</h1>
-        <Button onClick={() => setShowRegisterLoss(true)} className="gap-2">
+        <Button
+          onClick={() => setShowRegisterLoss(true)}
+          className="gap-2 bg-black text-white hover:bg-gray-900"
+        >
           <Plus className="h-4 w-4" />
           Registrar merma
         </Button>

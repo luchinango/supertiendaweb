@@ -43,7 +43,7 @@ export function NewProductForm({ onSubmit }: NewProductFormProps) {
       {/* Form panel */}
       <div className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-xl animate-slide-in-from-right">
         <div className="p-6 flex flex-col h-full">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center text-whitemb-6">
             <h2 className="text-xl font-bold">Nuevo Producto</h2>
             <Button variant="ghost" size="icon" onClick={closeProductForm} className="rounded-full h-8 w-8">
               <X className="h-4 w-4" />
@@ -122,7 +122,7 @@ export function NewProductForm({ onSubmit }: NewProductFormProps) {
             </div>
 
             <div className="mt-auto pt-6">
-              <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-700">
+              <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-700 text-white">
                 Agregar producto
               </Button>
             </div>
