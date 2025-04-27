@@ -3,12 +3,17 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, MoreVertical } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { NewClientPanel } from "../components/NewClientPanel"
 import { EditClientPanel } from "../components/EditClientPanel"
 import { ClientesOverlay } from "../components/ClientesOverlay"
+import { MoreVertical } from "lucide-react"
 
 interface Client {
   id: number
@@ -16,42 +21,47 @@ interface Client {
   phone: string
   initials: string
   hasDebt: boolean
-  debtAmount?: number
+  debtAmount: number
 }
 
-// Simulación de historial de compras con tipo de pago
-const samplePurchases = [
-  { id: 1, clientId: 1, date: "2024-04-01", amount: 120, items: 5, paymentType: "Contado" },
-  { id: 2, clientId: 1, date: "2024-04-10", amount: 80, items: 3, paymentType: "Crédito" },
-  { id: 3, clientId: 2, date: "2024-04-20", amount: 200, items: 8, paymentType: "Contado" },
-  { id: 4, clientId: 1, date: "2024-05-02", amount: 150, items: 6, paymentType: "Contado" },
-  { id: 5, clientId: 3, date: "2024-05-15", amount: 90, items: 2, paymentType: "Crédito" },
-]
-
-const initialClients: Client[] = [
-  {
-    id: 1,
-    name: "Luis Alberto Martínez Barrientos",
-    phone: "+591 72944911",
-    initials: "LA",
-    hasDebt: false,
-    debtAmount: 0,
-  },
+const initialClients = [
+  { id: 1, name: "Luis Alberto Martínez Barrientos", phone: "+591 72944911", initials: "LA", hasDebt: true, debtAmount: 120 },
   { id: 2, name: "Mateo", phone: "+591 75454698", initials: "M", hasDebt: false, debtAmount: 0 },
-  { id: 3, name: "SOCODEVI", phone: "+591 69258592", initials: "S", hasDebt: false, debtAmount: 0 },
+  { id: 3, name: "SOCODEVI", phone: "+591 69258592", initials: "S", hasDebt: true, debtAmount: 50 },
   { id: 4, name: "Telma", phone: "+591 70000000", initials: "T", hasDebt: false, debtAmount: 0 },
   { id: 5, name: "TODITO", phone: "+591 71111111", initials: "T", hasDebt: false, debtAmount: 0 },
 ]
 
+const sampleClientPurchases = [
+  { id: 1, clientId: 1, date: "2025-04-20", amount: 350, items: 5, paymentType: "Contado" }, // 7 días
+  { id: 2, clientId: 2, date: "2025-03-01", amount: 200, items: 3, paymentType: "Crédito" }, // 2 meses
+  { id: 3, clientId: 3, date: "2024-06-01", amount: 90, items: 2, paymentType: "Contado" }, // 11 meses
+  // ...más compras
+]
+
+function getLastPurchaseStatus(lastPurchase: string | null): { label: string; color: string } {
+  if (!lastPurchase) {
+    return { label: "Sin compras", color: "text-gray-400" }
+  }
+  const now = new Date()
+  const last = new Date(lastPurchase)
+  const diffMonths = (now.getFullYear() - last.getFullYear()) * 12 + (now.getMonth() - last.getMonth())
+  const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffMonths < 1) return { label: `${diffDays} días`, color: "text-green-600 font-bold" }
+  if (diffMonths === 1) return { label: "1 mes", color: "text-orange-500 font-bold" }
+  if (diffMonths === 2) return { label: "2 meses", color: "text-red-600 font-bold" }
+  return { label: `${diffMonths} meses`, color: "text-red-600 font-bold" }
+}
+
 export default function Clientes() {
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [searchTerm, setSearchTerm] = useState("")
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
-  const [showNewClient, setShowNewClient] = useState(false)
-  const [showClientsDialog, setShowClientsDialog] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [showKardex, setShowKardex] = useState(false)
+  const [showNewClient, setShowNewClient] = useState(false)
   const [kardexStart, setKardexStart] = useState("")
+  const [showClientsDialog, setShowClientsDialog] = useState(false)
   const [kardexEnd, setKardexEnd] = useState("")
   const [filterStart, setFilterStart] = useState("")
   const [filterEnd, setFilterEnd] = useState("")
@@ -60,8 +70,7 @@ export default function Clientes() {
     (client) => client.name.toLowerCase().includes(searchTerm.toLowerCase()) || client.phone.includes(searchTerm),
   )
 
-  // Filtrar compras por fechas para la pantalla principal
-  const filteredPurchasesMain = samplePurchases.filter((purchase) => {
+  const filteredPurchasesMain = sampleClientPurchases.filter((purchase) => {
     const purchaseDate = new Date(purchase.date)
     const start = filterStart ? new Date(filterStart) : null
     const end = filterEnd ? new Date(filterEnd) : null
@@ -70,8 +79,7 @@ export default function Clientes() {
     return true
   })
 
-  // Filtrar compras por fechas
-  const filteredPurchases = samplePurchases.filter((purchase) => {
+  const filteredPurchases = sampleClientPurchases.filter((purchase) => {
     const purchaseDate = new Date(purchase.date)
     const start = kardexStart ? new Date(kardexStart) : null
     const end = kardexEnd ? new Date(kardexEnd) : null
@@ -113,10 +121,21 @@ export default function Clientes() {
       </div>
 
       <div className="space-y-2">
+        <div className="flex items-center gap-3 pl-16 pr-4">
+          <div className="flex-1" />
+          <div className="grid grid-cols-3 gap-6 min-w-[420px] w-[420px]">
+            <div className="text-sm text-right min-w-[120px] font-semibold">Total comprado</div>
+            <div className="text-sm text-right min-w-[120px] font-semibold">Deuda total</div>
+            <div className="text-sm text-right min-w-[120px] font-semibold">Última compra</div>
+          </div>
+        </div>
         {filteredClients.map((client) => {
-          // Total comprado por cliente en el rango de fechas
           const clientPurchases = filteredPurchasesMain.filter(p => p.clientId === client.id)
           const totalComprado = clientPurchases.reduce((sum, p) => sum + p.amount, 0)
+          const lastPurchase = clientPurchases
+            .map(p => p.date)
+            .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null
+          const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
 
           return (
             <div
@@ -136,31 +155,31 @@ export default function Clientes() {
                   <div className="text-sm text-muted-foreground">{client.phone}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
-                {/* Total comprado */}
-                <div className="text-sm text-right">
-                  <div className="font-medium">Total comprado</div>
+              <div className="grid grid-cols-3 gap-6 min-w-[420px] w-[420px]">
+                <div className="text-sm text-right min-w-[120px]">
                   <div className="text-blue-700 font-semibold">Bs {totalComprado}</div>
                 </div>
-                {/* Deuda */}
-                <div className="text-sm text-right">
-                  <div className="font-medium">Deuda total</div>
+                <div className="text-sm text-right min-w-[120px]">
                   <div className="text-muted-foreground">
                     {client.hasDebt && client.debtAmount ? `Bs ${client.debtAmount}` : "Sin deuda"}
                   </div>
                 </div>
-                {/* Menú */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setEditingClient(client)}>Editar cliente</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="text-sm text-right min-w-[120px]">
+                  <div className={lastPurchaseStatus.color}>{lastPurchaseStatus.label}</div>
+                </div>
               </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-white">
+                  <DropdownMenuItem onClick={() => setEditingClient(client)}>
+                    Editar cliente
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )
         })}
@@ -170,7 +189,6 @@ export default function Clientes() {
         Crear cliente
       </Button>
 
-      {/* Use the improved ClientesOverlay component */}
       <ClientesOverlay open={showClientsDialog} onOpenChange={setShowClientsDialog} />
 
       <NewClientPanel
@@ -218,12 +236,10 @@ export default function Clientes() {
 
       {selectedClient && showKardex && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/25 backdrop-blur-[2px] z-40"
             onClick={() => setShowKardex(false)}
           />
-          {/* Drawer */}
           <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 transition-transform duration-300 animate-slide-in-from-right flex flex-col">
             <div className="flex items-center justify-between border-b p-4">
               <h2 className="text-xl font-semibold">Kardex de {selectedClient.name}</h2>
@@ -233,7 +249,6 @@ export default function Clientes() {
               </Button>
             </div>
             <div className="p-4 flex-1 flex flex-col gap-4 overflow-auto">
-              {/* Filtros de fecha */}
               <div className="flex gap-2 items-end">
                 <div>
                   <label className="block text-xs mb-1">Desde</label>
@@ -254,7 +269,6 @@ export default function Clientes() {
                   />
                 </div>
               </div>
-              {/* Resumen de compras */}
               <div className="bg-gray-50 rounded-lg p-3 flex flex-col gap-2">
                 <div className="font-medium">
                   Total de compras: <span className="text-blue-700">{totalPurchases}</span>
@@ -263,7 +277,6 @@ export default function Clientes() {
                   Monto total: <span className="text-green-700">Bs {totalAmount}</span>
                 </div>
               </div>
-              {/* Resumen de deuda y tipo de última compra */}
               <div className="bg-yellow-50 rounded-lg p-3 flex flex-col gap-2 border border-yellow-200">
                 <div className="font-medium flex items-center gap-2">
                   Deuda actual:
@@ -273,11 +286,10 @@ export default function Clientes() {
                     <span className="text-green-700 font-semibold">Sin deuda</span>
                   )}
                 </div>
-                {/* Tipo de la última compra */}
                 <div className="text-xs text-gray-700">
                   Última compra:&nbsp;
                   {(() => {
-                    const clientPurchases = samplePurchases
+                    const clientPurchases = sampleClientPurchases
                       .filter(p => p.clientId === selectedClient.id)
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     if (clientPurchases.length === 0) return "Sin compras"
@@ -285,7 +297,6 @@ export default function Clientes() {
                   })()}
                 </div>
               </div>
-              {/* Historial de compras */}
               <div>
                 <div className="font-semibold mb-2">Historial de compras</div>
                 <div className="space-y-2">
