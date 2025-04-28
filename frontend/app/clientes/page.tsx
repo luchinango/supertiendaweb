@@ -65,6 +65,7 @@ export default function Clientes() {
   const [kardexEnd, setKardexEnd] = useState("")
   const [filterStart, setFilterStart] = useState("")
   const [filterEnd, setFilterEnd] = useState("")
+  const [activeTab, setActiveTab] = useState<"clientes" | "proveedores">("clientes")
 
   const filteredClients = clients.filter(
     (client) => client.name.toLowerCase().includes(searchTerm.toLowerCase()) || client.phone.includes(searchTerm),
@@ -93,6 +94,36 @@ export default function Clientes() {
 
   return (
     <div className="space-y-6">
+      {/* Tabs */}
+      <div className="flex gap-2">
+        <Button
+          className={`rounded px-4 py-2 border ${activeTab === "proveedores"
+            ? "bg-black text-white"
+            : "bg-white text-black border-gray-300 hover:bg-gray-100"
+          }`}
+          onClick={() => setActiveTab("proveedores")}
+        >
+          Proveedores
+        </Button>
+        <Button
+          className={`rounded px-4 py-2 border ${activeTab === "clientes"
+            ? "bg-black text-white"
+            : "bg-white text-black border-gray-300 hover:bg-gray-100"
+          }`}
+          onClick={() => setActiveTab("clientes")}
+        >
+          Clientes
+        </Button>
+      </div>
+
+      {/* Botón +Nuevo crédito */}
+      <Button
+        className="bg-black text-white rounded px-4 py-2"
+        onClick={() => {/* lógica para nuevo crédito */}}
+      >
+        +Nuevo crédito
+      </Button>
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <h1 className="text-2xl font-bold">Clientes</h1>
         <div className="flex gap-2 items-end">
@@ -116,7 +147,12 @@ export default function Clientes() {
             className="w-36"
             placeholder="Hasta"
           />
-          <Button onClick={() => setShowClientsDialog(true)}>Ver clientes</Button>
+          <Button
+            className="bg-black text-white border border-gray-300 hover:bg-gray-100"
+            onClick={() => setShowClientsDialog(true)}
+          >
+            Ver clientes
+          </Button>
         </div>
       </div>
 
@@ -146,7 +182,7 @@ export default function Clientes() {
                 setShowKardex(true)
               }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-1">
                 <Avatar className="h-8 w-8 bg-gray-200">
                   <AvatarFallback>{client.initials}</AvatarFallback>
                 </Avatar>
@@ -154,6 +190,21 @@ export default function Clientes() {
                   <div className="font-medium">{client.name}</div>
                   <div className="text-sm text-muted-foreground">{client.phone}</div>
                 </div>
+              </div>
+              {/* Botón de editar alineado a la derecha del nombre */}
+              <div className="flex items-center justify-end min-w-[48px] mr-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={e => {
+                    e.stopPropagation();
+                    setEditingClient(client);
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V17h4" />
+                  </svg>
+                </Button>
               </div>
               <div className="grid grid-cols-3 gap-6 min-w-[420px] w-[420px]">
                 <div className="text-sm text-right min-w-[120px]">
@@ -168,24 +219,15 @@ export default function Clientes() {
                   <div className={lastPurchaseStatus.color}>{lastPurchaseStatus.label}</div>
                 </div>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white">
-                  <DropdownMenuItem onClick={() => setEditingClient(client)}>
-                    Editar cliente
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           )
         })}
       </div>
 
-      <Button className="w-full" onClick={() => setShowNewClient(true)}>
+      <Button
+        className="bg-black text-white border"
+        onClick={() => setShowNewClient(true)}
+      >
         Crear cliente
       </Button>
 

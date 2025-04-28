@@ -110,7 +110,12 @@ export default function Proveedores() {
             className="w-36"
             placeholder="Hasta"
           />
-          <Button onClick={() => setShowSuppliersDialog(true)}>Ver proveedores</Button>
+          <Button
+            className="bg-black text-white border border-gray-300 hover:bg-gray-100"
+            onClick={() => setShowSuppliersDialog(true)}
+          >
+            Ver proveedores
+          </Button>
         </div>
       </div>
 
@@ -179,7 +184,10 @@ export default function Proveedores() {
           );
         })}
       </div>
-      <Button className="w-full" onClick={() => setShowNewSupplier(true)}>
+      <Button
+        className="w-full bg-black text-white border border-gray-300 hover:bg-gray-100"
+        onClick={() => setShowNewSupplier(true)}
+      >
         Crear proveedor
       </Button>
 
@@ -188,23 +196,6 @@ export default function Proveedores() {
         open={showSuppliersDialog}
         onOpenChange={setShowSuppliersDialog}
         suppliers={suppliers}
-      />
-
-      <NewSupplierDialog
-        open={showNewSupplier}
-        onOpenChange={setShowNewSupplier}
-        onAdd={(newSupplier: { name: string; phone: string; contact: string; email: string }) => {
-          const initials = newSupplier.name
-            .split(" ")
-            .map((word) => word[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
-          setSuppliers([
-            ...suppliers,
-            { id: suppliers.length + 1, ...newSupplier, initials, hasDebt: false, debtAmount: 0 },
-          ]);
-        }}
       />
 
       {editingSupplier && (
@@ -329,6 +320,46 @@ export default function Proveedores() {
               <div className="mt-4 text-xs text-gray-400">
                 Usa este historial para controlar compras y deudas con proveedores.
               </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Panel lateral para crear proveedor */}
+      {showNewSupplier && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/25 backdrop-blur-[2px] z-40"
+            onClick={() => setShowNewSupplier(false)}
+          />
+          {/* Drawer */}
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 transition-transform duration-300 animate-slide-in-from-right flex flex-col">
+            <div className="flex items-center justify-between border-b p-4">
+              <h2 className="text-xl font-semibold">Crear proveedor</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowNewSupplier(false)}>
+                <span className="sr-only">Cerrar</span>
+                ×
+              </Button>
+            </div>
+            <div className="p-4 flex-1 flex flex-col gap-4 overflow-auto">
+              <NewSupplierDialog
+                open={showNewSupplier}
+                onOpenChange={setShowNewSupplier}
+                onAdd={(newSupplier: { name: string; phone: string; contact: string; email: string }) => {
+                  const initials = newSupplier.name
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2);
+                  setSuppliers([
+                    ...suppliers,
+                    { id: suppliers.length + 1, ...newSupplier, initials, hasDebt: false, debtAmount: 0 },
+                  ]);
+                  setShowNewSupplier(false);
+                }}
+              />
             </div>
           </div>
         </>

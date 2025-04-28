@@ -37,7 +37,6 @@ export function NewSupplierDialog({ open, onOpenChange, onAdd }: NewSupplierDial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Crear proveedor</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -77,7 +76,7 @@ export function NewSupplierDialog({ open, onOpenChange, onAdd }: NewSupplierDial
               required
             />
           </div>
-          <Button type="submit" className="w-full bg-[#1e293b] hover:bg-[#334155]">
+          <Button type="submit" className="w-full bg-[#1e293b] hover:bg-[#334155] text-white">
             Crear proveedor
           </Button>
         </form>

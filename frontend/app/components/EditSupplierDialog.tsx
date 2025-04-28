@@ -54,7 +54,7 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onEdit }: Edi
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-name">Nombre del proveedor</Label>
+            <Label htmlFor="edit-name">Nombre del proveedors</Label>
             <Input
               id="edit-name"
               value={name}

@@ -235,8 +235,18 @@ export default function Creditos() {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Créditos</h1>
           <TabsList>
-            <TabsTrigger value="suppliers">Proveedores</TabsTrigger>
-            <TabsTrigger value="clients">Clientes</TabsTrigger>
+            <TabsTrigger
+              value="suppliers"
+              className="data-[state=active]:bg-black data-[state=active]:text-white bg-white text-black border border-gray-300 data-[state=active]:border-black"
+            >
+              Proveedores
+            </TabsTrigger>
+            <TabsTrigger
+              value="clients"
+              className="data-[state=active]:bg-black data-[state=active]:text-white bg-white text-black border border-gray-300 data-[state=active]:border-black"
+            >
+              Clientes
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -244,7 +254,10 @@ export default function Creditos() {
         <TabsContent value="suppliers" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Créditos a Proveedores</h2>
-            <NewCreditDialog onAddCredit={handleAddSupplierCredit} />
+            <Button className="gap-2 bg-black text-white hover:bg-gray-900">
+              <Plus className="h-4 w-4" />
+              Nuevo crédito de proveedor
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -288,7 +301,7 @@ export default function Creditos() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="comision">Comisión</SelectItem>
                 <SelectItem value="concesion">Concesión</SelectItem>
@@ -381,9 +394,12 @@ export default function Creditos() {
         <TabsContent value="clients" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Créditos a Clientes</h2>
-            <Button className="gap-2" onClick={() => setIsNewClientCreditOpen(true)}>
+            <Button
+              className="gap-2 bg-black text-white hover:bg-gray-900"
+              onClick={() => setIsNewClientCreditOpen(true)}
+            >
               <Plus className="h-4 w-4" />
-              Nuevo crédito
+              Nuevo crédito para cliente
             </Button>
           </div>
 
@@ -428,7 +444,7 @@ export default function Creditos() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="pendiente">Pendiente</SelectItem>
                 <SelectItem value="pagado">Pagado</SelectItem>
@@ -438,7 +454,7 @@ export default function Creditos() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filtrar por método" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="efectivo">Efectivo</SelectItem>
                 <SelectItem value="qr">QR</SelectItem>
@@ -531,11 +547,30 @@ export default function Creditos() {
 
       {/* Diálogos y paneles */}
       {editingSupplierCredit && (
-        <EditCreditDialog
-          credit={editingSupplierCredit}
-          onEditCredit={(credit) => handleEditSupplierCredit(credit as SupplierCredit)}
-          onClose={() => setEditingSupplierCredit(null)}
-        />
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/25 backdrop-blur-[2px] z-40"
+            onClick={() => setEditingSupplierCredit(null)}
+          />
+          {/* Drawer */}
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 transition-transform duration-300 animate-slide-in-from-right flex flex-col">
+            <div className="flex items-center justify-between border-b p-4">
+              <h2 className="text-xl font-semibold">Editar crédito de proveedor</h2>
+              <Button variant="ghost" size="icon" onClick={() => setEditingSupplierCredit(null)}>
+                <span className="sr-only">Cerrar</span>
+                ×
+              </Button>
+            </div>
+            <div className="p-4 flex-1 flex flex-col gap-4 overflow-auto">
+              <EditCreditDialog
+                credit={editingSupplierCredit}
+                onEditCredit={(credit) => handleEditSupplierCredit(credit as SupplierCredit)}
+                onClose={() => setEditingSupplierCredit(null)}
+              />
+            </div>
+          </div>
+        </>
       )}
 
       {/* Panel para nuevo crédito de cliente */}
