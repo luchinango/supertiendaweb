@@ -39,7 +39,7 @@ export function NewClientDialog({ open, onOpenChange, onAdd }: NewClientDialogPr
             <Label htmlFor="phone">Teléfono</Label>
             <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
           </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full text-white">
             Crear cliente
           </Button>
         </form>

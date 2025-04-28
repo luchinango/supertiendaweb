@@ -111,7 +111,7 @@ export default function Proveedores() {
             placeholder="Hasta"
           />
           <Button
-            className="bg-black text-white border border-gray-300 hover:bg-gray-100"
+            className="bg-black text-white border border-gray-300"
             onClick={() => setShowSuppliersDialog(true)}
           >
             Ver proveedores
@@ -185,7 +185,7 @@ export default function Proveedores() {
         })}
       </div>
       <Button
-        className="w-full bg-black text-white border border-gray-300 hover:bg-gray-100"
+        className="w-full bg-black text-white border border-gray-300"
         onClick={() => setShowNewSupplier(true)}
       >
         Crear proveedor

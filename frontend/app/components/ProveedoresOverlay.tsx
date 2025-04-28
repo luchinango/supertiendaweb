@@ -112,7 +112,7 @@ export function ProveedoresOverlay({ open, onOpenChange, suppliers: initialSuppl
             ))}
           </div>
           <div className="p-4 border-t mt-auto">
-            <Button className="w-full bg-[#1e293b] hover:bg-[#334155]" onClick={() => setShowNewSupplier(true)}>
+            <Button className="w-full bg-[#1e293b] text-white" onClick={() => setShowNewSupplier(true)}>
               Crear proveedor
             </Button>
           </div>

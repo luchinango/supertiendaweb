@@ -1,5 +1,8 @@
 "use client"
 
+import type React from "react"
+import type { Business } from "../types/Business"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,34 +12,29 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Card } from "@/components/ui/card"
-import { Upload } from "lucide-react"
-
-// Importamos la interfaz que ya creaste en NewBusinessDialog
-import { NewBusinessDialog, BusinessFormData } from "../components/NewBusinessDialog"
-// Si usas un BusinessSwitcher, impórtalo también:
+import { PenLine } from "lucide-react"
+import { NewBusinessDialog, type BusinessFormData } from "../components/NewBusinessDialog"
 import { BusinessSwitcher } from "../components/BusinessSwitcher"
-import { Business } from "../types"
 
 export default function Configuraciones() {
-  // Ejemplo de lista de negocios con uno por defecto
-  const [businesses, setBusinesses] = useState<Business[]>([{
-    id: "1",
-    name: "Todito",
-    type: "minimercado",
-    address: "Av. Hernando Siles 601",
-    city: "Sucre",
-    phone: "63349336",
-    email: "jamil2.estrada@gmail.com",
-    document: "5676916019",
-  }])
+  const [businesses, setBusinesses] = useState<Business[]>([
+    {
+      id: "1",
+      name: "Todito",
+      type: "minimercado", // debe ser uno de los valores permitidos
+      address: "Av. Hernando Siles 601",
+      city: "Sucre",
+      phone: "63349336",
+      email: "jamil2.estrada@gmail.com",
+      document: "5676916019",
+    },
+  ])
 
-  // Si quieres un selector (o switcher) de negocios actual:
-  const [currentBusinessId, setCurrentBusinessId] = useState("1")
-
-  const currentBusiness = businesses.find(b => b.id === currentBusinessId) || businesses[0]
-
+  const [currentBusinessId, setCurrentBusinessId] = useState<string>("1")
   const [showNewBusiness, setShowNewBusiness] = useState(false)
   const [logo, setLogo] = useState<string | null>(null)
+
+  const currentBusiness = businesses.find((b) => b.id === currentBusinessId) || businesses[0]
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -44,25 +42,26 @@ export default function Configuraciones() {
       const reader = new FileReader()
       reader.onloadend = () => {
         setLogo(reader.result as string)
-        // Actualiza el negocio actual con el nuevo logo
-        setBusinesses(businesses.map(b =>
-          b.id === currentBusinessId ? { ...b, logo: reader.result as string } : b
-        ))
+        // Update the current business with the new logo
+        setBusinesses(
+          businesses.map((business) =>
+            business.id === currentBusinessId ? { ...business, logo: reader.result as string } : business,
+          ),
+        )
       }
       reader.readAsDataURL(file)
     }
   }
 
   const handleAddBusiness = (formData: BusinessFormData) => {
-    // Asegúrate de que formData tenga todos los campos (type, address, phone, etc)
     const newBusiness: Business = {
       id: (businesses.length + 1).toString(),
       ...formData,
+      type: formData.type as "minimercado" | "supermercado" | "tienda",
     }
     setBusinesses([...businesses, newBusiness])
   }
 
-  // Método para cambiar de negocio si tienes un BusinessSwitcher
   const handleBusinessChange = (business: Business) => {
     setCurrentBusinessId(business.id)
   }
@@ -82,32 +81,57 @@ export default function Configuraciones() {
         <TabsContent value="general" className="space-y-4">
           <Card className="p-6">
             <div className="grid gap-6">
-              <div className="flex justify-center items-center gap-4">
-                <div className="relative">
-                  <div className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                    {logo ? (
-                      <img src={logo || "/placeholder.svg"} alt="Logo" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="text-6xl font-bold text-gray-300">{currentBusiness.name.charAt(0)}</div>
-                    )}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                      {currentBusiness.logo ? (
+                        <img
+                          src={currentBusiness.logo || "/placeholder.svg"}
+                          alt="Logo"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-5xl font-bold text-gray-300">{currentBusiness.name.charAt(0)}</div>
+                      )}
+                    </div>
+                    <label
+                      htmlFor="logo-upload"
+                      className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary/90"
+                    >
+                      <PenLine className="h-4 w-4" />
+                    </label>
+                    <input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                    />
                   </div>
-                  <label
-                    htmlFor="logo-upload"
-                    className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary/90"
-                  >
-                    <Upload className="h-4 w-4" />
-                  </label>
-                  <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                  <div>
+                    <h2 className="text-xl font-semibold">{currentBusiness.name}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {currentBusiness.type === "minimercado"
+                        ? "Minimercado (1 caja registradora)"
+                        : currentBusiness.type}
+                    </p>
+                  </div>
                 </div>
-                <Button variant="outline" onClick={() => setShowNewBusiness(true)} className="h-10">
-                  Agregar otro negocio
-                </Button>
+                <div className="w-full md:w-auto">
+                  <BusinessSwitcher
+                    businesses={businesses}
+                    currentBusiness={currentBusiness}
+                    onBusinessChange={handleBusinessChange}
+                    onAddBusiness={() => setShowNewBusiness(true)}
+                  />
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="business-type">Tipo de negocio *</Label>
-                  <Select value={currentBusiness.type} onValueChange={(value) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, type: value } : b))}>
+                  <Select value={currentBusiness.type} disabled>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar tipo de negocio" />
                     </SelectTrigger>
@@ -119,58 +143,42 @@ export default function Configuraciones() {
                   </Select>
                 </div>
 
-                <div className="w-full md:w-auto">
-                  <BusinessSwitcher
-                    businesses={businesses}
-                    currentBusiness={currentBusiness}
-                    onBusinessChange={handleBusinessChange}
-                    onAddBusiness={() => setShowNewBusiness(true)}
-                  />
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="business-name">Nombre del negocio *</Label>
-                  <Input id="business-name" value={currentBusiness.name} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, name: e.target.value } : b))} />
+                  <Input id="business-name" value={currentBusiness.name} readOnly />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="address">Dirección del negocio</Label>
-                  <Input id="address" value={currentBusiness.address} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, address: e.target.value } : b))} />
+                  <Input id="address" value={currentBusiness.address} readOnly />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="city">Ciudad donde se ubica el negocio</Label>
-                  <Input id="city" value={currentBusiness.city} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, city: e.target.value } : b))} />
+                  <Input id="city" value={currentBusiness.city} readOnly />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Número de celular</Label>
                   <div className="flex">
-                    <Select defaultValue="591">
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue placeholder="Código" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="591">+591</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      id="phone"
-                      value={currentBusiness.phone}
-                      onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, phone: e.target.value } : b))}
-                      className="flex-1 ml-2"
-                    />
+                    <div className="flex items-center justify-center w-[100px] border border-input rounded-l-md bg-background px-3">
+                      <div className="flex items-center gap-2">
+                        <img src="/flag-bolivia.svg" alt="Bolivia" className="h-4 w-6" />
+                        <span className="text-sm">+591</span>
+                      </div>
+                    </div>
+                    <Input id="phone" value={currentBusiness.phone} readOnly className="flex-1 rounded-l-none" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Correo electrónico</Label>
-                  <Input id="email" type="email" value={currentBusiness.email} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, email: e.target.value } : b))} />
+                  <Input id="email" type="email" value={currentBusiness.email} readOnly />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="document">Documento</Label>
-                  <Input id="document" value={currentBusiness.document} onChange={(e) => setBusinesses(businesses.map(b => b.id === currentBusinessId ? { ...b, document: e.target.value } : b))} />
+                  <Input id="document" value={currentBusiness.document} readOnly />
                 </div>
               </div>
 
@@ -284,11 +292,8 @@ export default function Configuraciones() {
           </Card>
         </TabsContent>
       </Tabs>
-      <NewBusinessDialog
-        open={showNewBusiness}
-        onOpenChange={setShowNewBusiness}
-        onSubmit={handleAddBusiness}
-      />
+
+      <NewBusinessDialog open={showNewBusiness} onOpenChange={setShowNewBusiness} onSubmit={handleAddBusiness} />
     </div>
   )
 }

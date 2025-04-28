@@ -67,7 +67,7 @@ export function NewClientPanel({ open, onOpenChange, onAdd }: NewClientPanelProp
 
           {/* Footer */}
           <div className="p-4 border-t mt-auto">
-            <Button onClick={handleSubmit} className="w-full bg-[#1e293b] hover:bg-[#334155]">
+            <Button onClick={handleSubmit} className="w-full bg-[#1e293b] text-white hover:bg-[#334155]">
               Crear cliente
             </Button>
           </div>

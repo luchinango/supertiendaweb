@@ -15,8 +15,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Business } from "../types"
-
+import type { Business } from "../types/Business"
 
 interface BusinessSwitcherProps {
   businesses: Business[]

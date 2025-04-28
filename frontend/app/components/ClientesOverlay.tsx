@@ -125,7 +125,7 @@ export function ClientesOverlay({ open, onOpenChange }: ClientesOverlayProps) {
             ))}
           </div>
           <div className="p-4 border-t mt-auto">
-            <Button className="w-full bg-[#1e293b] hover:bg-[#334155]" onClick={() => setShowNewClient(true)}>
+            <Button className="w-full bg-[#1e293b] text-white hover:bg-[#334155]" onClick={() => setShowNewClient(true)}>
               Crear cliente
             </Button>
           </div>

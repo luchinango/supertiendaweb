@@ -94,35 +94,8 @@ export default function Clientes() {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <div className="flex gap-2">
-        <Button
-          className={`rounded px-4 py-2 border ${activeTab === "proveedores"
-            ? "bg-black text-white"
-            : "bg-white text-black border-gray-300 hover:bg-gray-100"
-          }`}
-          onClick={() => setActiveTab("proveedores")}
-        >
-          Proveedores
-        </Button>
-        <Button
-          className={`rounded px-4 py-2 border ${activeTab === "clientes"
-            ? "bg-black text-white"
-            : "bg-white text-black border-gray-300 hover:bg-gray-100"
-          }`}
-          onClick={() => setActiveTab("clientes")}
-        >
-          Clientes
-        </Button>
-      </div>
+ 
 
-      {/* Botón +Nuevo crédito */}
-      <Button
-        className="bg-black text-white rounded px-4 py-2"
-        onClick={() => {/* lógica para nuevo crédito */}}
-      >
-        +Nuevo crédito
-      </Button>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <h1 className="text-2xl font-bold">Clientes</h1>
