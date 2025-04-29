@@ -1,7 +1,14 @@
 generator client {
   provider      = "prisma-client-js"
-  output        = "../generated/prisma/client"
+  output        = "../node_modules/.prisma/client"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+generator jsonSchema {
+  provider                 = "prisma-json-schema-generator"
+  output                   = "./schemas"
+  includeRequiredFields    = "true"
+  keepRelationScalarFields = "true"
 }
 
 datasource db {
@@ -9,219 +16,302 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model audit_cash_registers {
-  id               Int            @id @default(autoincrement())
-  cash_register_id Int
-  action           String         @db.VarChar(50)
-  action_date      DateTime       @default(now()) @db.Timestamp(6)
-  user_id          Int
-  details          String?
-  cash_registers   cash_registers @relation(fields: [cash_register_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users            users          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNSPECIFIED
 }
 
-model business {
-  id               Int            @id @default(autoincrement())
-  name             String         @db.VarChar(100)
-  description      String?
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+  RETIRED
+}
+
+enum BusinessUserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum BusinessStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  LOCKED
+  PASSWORD_RESET
+  DELETED
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  action     String   @db.VarChar(50)
+  entity     String   @db.VarChar(50)
+  entity_id  Int
+  old_values Json?
+  new_values Json?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  user_id    Int
+  ip_address String?  @db.VarChar(45)
+  user       User     @relation(fields: [user_id], references: [id])
+
+  @@index([entity, entity_id])
+  @@index([created_at])
+  @@map("audit_logs")
+}
+
+model AuditCashRegister {
+  id             Int          @id @default(autoincrement()) @map("id")
+  cashRegisterId Int          @map("cash_register_id")
+  action         String       @map("action") @db.VarChar(50)
+  actionDate     DateTime     @default(now()) @map("action_date") @db.Timestamp(6)
+  userId         Int          @map("user_id")
+  details        String?      @map("details")
+  cashRegister   CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user           User         @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("audit_cash_registers")
+}
+
+model Business {
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(100)
+  legal_name       String?            @db.VarChar(150)
+  description      String?            @db.Text()
+  tax_id           String?            @unique @db.VarChar(20)
+  email            String?            @db.VarChar(100)
+  phone            String?            @db.VarChar(20)
   address          String?
-  tax_id           String         @db.VarChar(50)
-  business_type_id Int
-  status           String         @default("active") @db.VarChar(20)
-  created_at       DateTime?      @default(now()) @db.Timestamp(6)
-  updated_at       DateTime?      @default(now()) @db.Timestamp(6)
-  business_types   business_types @relation(fields: [business_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  logo_url         String?
+  website          String?
+  timezone         String             @default("UTC-4") @db.VarChar(50)
+  currency         String             @default("BOB") @db.VarChar(3)
+  status           BusinessStatus     @default(ACTIVE)
+  type_id          Int
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  created_by       Int
+  updated_by       Int
+  type             BusinessType       @relation(fields: [type_id], references: [id])
+  //creator   User              @relation("BusinessCreatedBy", fields: [created_by], references: [id])
+  //updater   User              @relation("BusinessUpdatedBy", fields: [updated_by], references: [id])
+  products         BusinessProduct[]
+  BusinessOrgChart BusinessOrgChart[]
+  //BusinessUser     BusinessUser[]
+
+  @@map("businesses")
 }
 
-model business_org_chart {
-  id                       Int                  @id @default(autoincrement())
-  business_id              Int
-  user_id                  Int
-  position                 String               @db.VarChar(100)
-  parent_position_id       Int?
-  created_at               DateTime?            @default(now()) @db.Timestamp(6)
-  businesses               businesses           @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  business_org_chart       business_org_chart?  @relation("business_org_chartTobusiness_org_chart", fields: [parent_position_id], references: [id], onUpdate: NoAction)
-  other_business_org_chart business_org_chart[] @relation("business_org_chartTobusiness_org_chart")
-  users                    users                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model BusinessOrgChart {
+  id               Int                @id @default(autoincrement()) @map("id")
+  businessId       Int                @map("business_id")
+  userId           Int                @map("user_id")
+  position         String             @map("position") @db.VarChar(100)
+  parentPositionId Int?               @map("parent_position_id")
+  createdAt        DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  business         Business           @relation(fields: [businessId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  parent           BusinessOrgChart?  @relation("OrgChartHierarchy", fields: [parentPositionId], references: [id], onUpdate: NoAction)
+  childrens        BusinessOrgChart[] @relation("OrgChartHierarchy")
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("business_org_chart")
 }
 
-model business_products {
-  id           Int        @id @default(autoincrement())
-  business_id  Int
-  product_id   Int
-  custom_price Decimal?   @db.Decimal(10, 2)
-  actual_stock Int        @default(0)
-  created_at   DateTime?  @default(now()) @db.Timestamp(6)
-  businesses   businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  products     products   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model BusinessProduct {
+  id          Int       @id @default(autoincrement()) @map("id")
+  businessId  Int       @map("business_id")
+  productId   Int       @map("product_id")
+  customPrice Decimal?  @map("custom_price") @db.Decimal(10, 2)
+  actualStock Int       @default(0) @map("actual_stock")
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([business_id, product_id], map: "business_products_unique")
+  @@unique([businessId, productId])
+  @@map("business_products")
 }
 
-model business_types {
-  id       Int        @id @default(autoincrement())
-  name     String     @unique @db.VarChar(50)
-  business business[]
+model BusinessType {
+  id         Int        @id @default(autoincrement())
+  code       String     @default("") @db.VarChar(10)
+  name       String     @default("") @db.VarChar(50)
+  businesses Business[]
+
+  @@map("business_types")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model business_users {
-  id               Int        @id @default(autoincrement())
-  user_id          Int
-  business_id      Int
-  business_role_id Int
-  created_at       DateTime?  @default(now()) @db.Timestamp(6)
-  status           String     @default("active") @db.VarChar(20)
-  businesses       businesses @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  roles            roles      @relation(fields: [business_role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users            users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+/**
+ * model BusinessUser {
+ * id             Int       @id @default(autoincrement()) @map("id")
+ * userId         Int       @map("user_id")
+ * businessId     Int       @map("business_id")
+ * businessRoleId Int       @map("business_role_id")
+ * createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+ * status         String    @default("active") @map("status") @db.VarChar(20)
+ * business       Business  @relation(fields: [businessId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+ * role           Role      @relation(fields: [businessRoleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+ * user           User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+ * @@unique([userId, businessId], map: "business_users_unique")
+ * @@map("business_users")
+ * }
+ */
 
-  @@unique([user_id, business_id], map: "business_users_unique")
+model Cart {
+  id           Int           @id @default(autoincrement())
+  customer_id  Int
+  created_at   DateTime?     @default(now()) @db.Timestamp(6)
+  customer     Customer?     @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cartItems    CartItem[]
+  transactions Transaction[]
+
+  @@map("carts")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model businesses {
-  id                 Int                  @id @default(autoincrement())
-  name               String               @db.VarChar(100)
-  description        String?
-  address            String?
-  tax_id             String?              @unique @db.VarChar(20)
-  created_at         DateTime?            @default(now()) @db.Timestamp(6)
-  updated_at         DateTime?            @default(now()) @db.Timestamp(6)
-  status             String               @default("active") @db.VarChar(20)
-  business_org_chart business_org_chart[]
-  business_products  business_products[]
-  business_users     business_users[]
-}
-
-model cart {
-  id           Int            @id @default(autoincrement())
-  customer_id  Int?
-  created_at   DateTime?      @default(now()) @db.Timestamp(6)
-  customers    customers?     @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  cart_items   cart_items[]
-  transactions transactions[]
-}
-
-model cart_items {
-  id            Int       @id @default(autoincrement())
+model CartItem {
+  id            Int      @id @default(autoincrement())
   cart_id       Int?
   product_id    Int?
   quantity      Int
-  price_at_time Decimal   @db.Decimal(10, 2)
-  cart          cart?     @relation(fields: [cart_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  products      products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  price_at_time Decimal  @db.Decimal(10, 2)
+  cart          Cart?    @relation(fields: [cart_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  products      Product? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("cart_items")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model cash_registers {
-  id                   Int                    @id @default(autoincrement())
+model CashRegister {
+  id                   Int                 @id @default(autoincrement())
   user_id              Int?
-  opening_amount       Decimal                @db.Decimal(10, 2)
-  closing_amount       Decimal                @db.Decimal(10, 2)
-  opening_date         DateTime?              @default(now()) @db.Timestamptz(6)
-  closing_date         DateTime?              @db.Timestamptz(6)
+  opening_amount       Decimal             @db.Decimal(10, 2)
+  closing_amount       Decimal             @db.Decimal(10, 2)
+  opening_date         DateTime?           @default(now()) @db.Timestamptz(6)
+  closing_date         DateTime?           @db.Timestamptz(6)
   notes                String?
-  status               String                 @default("abierta") @db.VarChar(20)
-  audit_cash_registers audit_cash_registers[]
-  users                users?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status               String              @default("abierta") @db.VarChar(20)
+  audit_cash_registers AuditCashRegister[]
+  user                 User?               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("cash_registers")
 }
 
-model categories {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique @db.VarChar(50)
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique @db.VarChar(50)
   description String?
-  is_active   Boolean    @default(true)
-  products    products[]
+  is_active   Boolean   @default(true)
+  products    Product[]
+
+  @@map("categories")
 }
 
-model consignment_items {
-  id                 Int           @id @default(autoincrement())
+model ConsignmentItem {
+  id                 Int          @id @default(autoincrement())
   consignment_id     Int?
   product_id         Int?
   quantity_delivered Int
-  quantity_sold      Int           @default(0)
-  price_at_time      Decimal       @db.Decimal(10, 2)
-  created_at         DateTime?     @default(now()) @db.Timestamp(6)
-  quantity_sent      Int           @default(0)
-  quantity_returned  Int           @default(0)
-  consignments       consignments? @relation(fields: [consignment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  products           products?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quantity_sold      Int          @default(0)
+  price_at_time      Decimal      @db.Decimal(10, 2)
+  created_at         DateTime?    @default(now()) @db.Timestamp(6)
+  quantity_sent      Int          @default(0)
+  quantity_returned  Int          @default(0)
+  consignment        Consignment? @relation(fields: [consignment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product            Product?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("consignment_items")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model consignments {
-  id                Int                 @id @default(autoincrement())
+model Consignment {
+  id                Int               @id @default(autoincrement())
   supplier_id       Int?
-  start_date        DateTime            @db.Date
-  end_date          DateTime            @db.Date
-  total_value       Decimal             @db.Decimal(10, 2)
-  sold_value        Decimal             @default(0.00) @db.Decimal(10, 2)
-  status            String              @default("active") @db.VarChar(20)
-  created_at        DateTime?           @default(now()) @db.Timestamp(6)
-  updated_at        DateTime?           @default(now()) @db.Timestamp(6)
+  start_date        DateTime          @db.Date
+  end_date          DateTime          @db.Date
+  total_value       Decimal           @db.Decimal(10, 2)
+  sold_value        Decimal           @default(0.00) @db.Decimal(10, 2)
+  status            String            @default("active") @db.VarChar(20)
+  created_at        DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?         @default(now()) @db.Timestamp(6)
   user_id           Int
-  consignment_items consignment_items[]
-  suppliers         suppliers?          @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users             users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  consignment_items ConsignmentItem[]
+  supplier          Supplier?         @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user              User?             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("consignments")
 }
 
-model credits {
-  id           Int        @id @default(autoincrement())
-  customer_id  Int?       @unique
-  balance      Decimal    @default(0.00) @db.Decimal(10, 2)
-  created_at   DateTime?  @default(now()) @db.Timestamp(6)
-  updated_at   DateTime?  @default(now()) @db.Timestamp(6)
-  credit_limit Decimal?   @db.Decimal(10, 0)
-  status       String?    @db.VarChar(30)
-  customers    customers? @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model Credit {
+  id           Int       @id @default(autoincrement())
+  customer_id  Int?      @unique
+  balance      Decimal   @default(0.00) @db.Decimal(10, 2)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @default(now()) @db.Timestamp(6)
+  credit_limit Decimal?  @db.Decimal(10, 0)
+  status       String?   @db.VarChar(30)
+  customer     Customer? @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("credits")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model customers {
-  id             Int            @id @default(autoincrement())
-  first_name     String         @db.VarChar(50)
-  last_name      String         @db.VarChar(50)
+model Customer {
+  id             Int           @id @default(autoincrement())
+  first_name     String        @db.VarChar(50)
+  last_name      String        @db.VarChar(50)
   address        String?
-  phone          String?        @db.VarChar(20)
-  company_name   String?        @db.VarChar(100)
-  tax_id         String?        @unique @db.VarChar(20)
-  email          String?        @unique @db.VarChar(100)
-  status         String?        @db.VarChar(10)
-  credit_balance Decimal?       @default(0) @db.Decimal(10, 2)
-  cart           cart[]
-  credits        credits?
-  transactions   transactions[]
+  phone          String?       @db.VarChar(20)
+  company_name   String?       @db.VarChar(100)
+  tax_id         String?       @unique @db.VarChar(20)
+  email          String?       @unique @db.VarChar(100)
+  status         String?       @db.VarChar(10)
+  credit_balance Decimal?      @default(0) @db.Decimal(10, 2)
+  carts          Cart[]
+  credit         Credit?
+  transactions   Transaction[]
+
+  @@map("customers")
 }
 
-model debt_payments {
-  id             Int             @id @default(autoincrement())
-  debt_id        Int?
-  amount         Decimal         @db.Decimal(10, 2)
-  created_at     DateTime?       @default(now()) @db.Timestamp(6)
-  supplier_debts supplier_debts? @relation(fields: [debt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model DebtPayment {
+  id            Int           @id @default(autoincrement())
+  debt_id       Int?
+  amount        Decimal       @db.Decimal(10, 2)
+  created_at    DateTime?     @default(now()) @db.Timestamp(6)
+  supplier_debt SupplierDebt? @relation(fields: [debt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("debt_payments")
 }
 
-model employees {
+model Employee {
+  id           Int       @id @default(autoincrement())
   first_name   String    @db.VarChar
   last_name    String?   @default("") @db.VarChar
   position     String?   @default("") @db.VarChar
-  salary       BigInt    @default(0)
+  salary       Int       @default(0)
   start_date   DateTime  @db.Date
   status       String    @db.VarChar
-  id           Int       @id(map: "employees_pk") @default(autoincrement())
   user_id      Int?      @unique
   gender       String    @default("") @db.VarChar(20)
   birth_date   DateTime? @db.Date
   email        String    @default("") @db.VarChar(100)
   address      String    @default("") @db.VarChar(100)
   mobile_phone String    @default("") @db.VarChar(20)
-  users        users?    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_employee_user")
+  user         User?     @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@map("employees")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model kardex {
+model Kardex {
   id             Int       @id @default(autoincrement())
   product_id     Int
   movement_type  String    @db.VarChar(50)
@@ -231,166 +321,228 @@ model kardex {
   reference_id   Int?
   reference_type String?   @db.VarChar(50)
   stock_after    Int
-  products       products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product        Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("kardex")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model mermas {
-  id             Int       @id @default(autoincrement())
+model Merma {
+  id             Int      @id @default(autoincrement())
   product_id     Int?
   quantity       Int
-  type           String    @db.VarChar(20)
-  date           DateTime  @db.Date
-  value          Decimal   @db.Decimal(10, 2)
+  type           String   @db.VarChar(20)
+  date           DateTime @db.Date
+  value          Decimal  @db.Decimal(10, 2)
   responsible_id Int?
   observations   String?
-  is_automated   Boolean?  @default(false)
+  is_automated   Boolean? @default(false)
   kardex_id      Int?
-  products       products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product        Product? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("mermas")
 }
 
-model products {
-  id                   Int                    @id @default(autoincrement())
-  supplier_id          Int?
-  name                 String                 @db.VarChar(100)
-  price                Decimal                @db.Decimal(10, 2)
-  description          String?
-  purchase_price       Decimal?               @default(0.00) @db.Decimal(10, 2)
-  sale_price           Decimal?               @default(0.00) @db.Decimal(10, 2)
-  sku                  String?                @db.VarChar(50)
-  barcode              String?                @unique @db.VarChar(50)
-  brand                String?                @db.VarChar(50)
-  unit                 String?                @db.VarChar(20)
-  min_stock            Int                    @default(0)
-  max_stock            Int?                   @default(0)
-  actual_stock         Int                    @default(0)
-  expiration_date      DateTime?              @db.Date
-  image                String?
-  category_id          Int?
-  status               String?                @db.VarChar(10)
-  shelf_life_days      Int?
-  is_organic           Boolean                @default(false)
-  alert_sent           Boolean?               @default(false)
-  business_products    business_products[]
-  cart_items           cart_items[]
-  consignment_items    consignment_items[]
-  kardex               kardex[]
-  mermas               mermas[]
-  categories           categories?            @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  suppliers            suppliers?             @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  purchase_order_items purchase_order_items[]
-  purchase_orders      purchase_orders[]
-  transaction_items    transaction_items[]
+model Product {
+  id              Int       @id @default(autoincrement())
+  supplier_id     Int?
+  name            String    @db.VarChar(100)
+  price           Decimal   @db.Decimal(10, 2)
+  cost            Decimal   @db.Decimal(10, 2)
+  description     String?
+  purchase_price  Decimal?  @default(0.00) @db.Decimal(10, 2)
+  sale_price      Decimal?  @default(0.00) @db.Decimal(10, 2)
+  sku             String?   @db.VarChar(50)
+  barcode         String?   @unique @db.VarChar(50)
+  brand           String?   @db.VarChar(50)
+  unit            String?   @db.VarChar(20)
+  min_stock       Int       @default(0)
+  max_stock       Int       @default(0)
+  stock           Int       @default(0)
+  expiration_date DateTime? @db.Date
+  image           String?
+  category_id     Int?
+  status          String?   @db.VarChar(10)
+  shelf_life_days Int?
+  is_organic      Boolean   @default(false)
+  alert_sent      Boolean?  @default(false)
+
+  // Auditoría y Soft Delete
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+  deleted_by Int?
+
+  business_products    BusinessProduct[]
+  cart_items           CartItem[]
+  consignment_items    ConsignmentItem[]
+  kardex               Kardex[]
+  mermas               Merma[]
+  category             Category?           @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  supplier             Supplier?           @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  purchase_order_items PurchaseOrderItem[]
+  purchase_orders      PurchaseOrder[]
+  transaction_items    TransactionItem[]
+
+  @@map("products")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model purchase_order_items {
-  id                Int             @id @default(autoincrement())
+model PurchaseOrderItem {
+  id                Int     @id @default(autoincrement())
   purchase_order_id Int
   product_id        Int
   quantity          Int
-  unit_price        Decimal         @db.Decimal(10, 2)
-  products          products        @relation(fields: [product_id], references: [id], onUpdate: NoAction)
-  purchase_orders   purchase_orders @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unit_price        Decimal @db.Decimal(10, 2)
+
+  product        Product       @relation(fields: [product_id], references: [id])
+  purchase_order PurchaseOrder @relation(fields: [purchase_order_id], references: [id])
+
+  @@map("purchase_order_items")
 }
 
-model purchase_orders {
-  id                   Int                    @id @default(autoincrement())
+model PurchaseOrder {
+  id                   Int                 @id @default(autoincrement())
   product_id           Int?
   supplier_id          Int?
   quantity             Int
-  order_date           DateTime?              @default(now()) @db.Timestamp(6)
-  status               String?                @default("pending") @db.VarChar(20)
-  payment_type         String?                @default("cash") @db.VarChar(20)
-  total_amount         Decimal?               @db.Decimal(10, 2)
-  created_at           DateTime?              @default(now()) @db.Timestamp(6)
-  purchase_order_items purchase_order_items[]
-  products             products?              @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  suppliers            suppliers?             @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_date           DateTime?           @default(now()) @db.Timestamp(6)
+  status               String?             @default("pending") @db.VarChar(20)
+  payment_type         String?             @default("cash") @db.VarChar(20)
+  total_amount         Decimal?            @db.Decimal(10, 2)
+  created_at           DateTime?           @default(now()) @db.Timestamp(6)
+  purchase_order_items PurchaseOrderItem[]
+  product              Product?            @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  supplier             Supplier?           @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("purchase_orders")
 }
 
-model roles {
+model Role {
   id             Int              @id @default(autoincrement())
-  name           String           @unique @db.VarChar(50)
-  description    String?
-  parent_role_id Int?
-  business_users business_users[]
-  users          users[]
+  code           String           @default("") @map("code") @db.VarChar(50)
+  name           String           @map("name") @db.VarChar(100)
+  users          User[]
+  //businessUser BusinessUser[]
+  RolePermission RolePermission[]
+
+  @@map("roles")
 }
 
-model supplier_debts {
-  id               Int             @id @default(autoincrement())
+model Permission {
+  id          Int      @id @default(autoincrement()) @map("id")
+  code        String   @unique @map("code") @db.VarChar(50)
+  name        String   @map("name") @db.VarChar(100)
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  rolePermissions RolePermission[]
+
+  @@index([code])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int      @id @default(autoincrement()) @map("id")
+  roleId       Int      @map("role_id")
+  permissionId Int      @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model SupplierDebt {
+  id               Int           @id @default(autoincrement())
   supplier_id      Int?
-  amount           Decimal         @db.Decimal(10, 2)
-  remaining_amount Decimal?        @db.Decimal(10, 2)
-  created_at       DateTime?       @default(now()) @db.Timestamp(6)
-  updated_at       DateTime?       @default(now()) @db.Timestamp(6)
+  amount           Decimal       @db.Decimal(10, 2)
+  remaining_amount Decimal?      @db.Decimal(10, 2)
+  created_at       DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?     @default(now()) @db.Timestamp(6)
   user_id          Int?
-  debt_payments    debt_payments[]
-  suppliers        suppliers?      @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users            users?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  debt_payments    DebtPayment[]
+  supplier         Supplier?     @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user             User?         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("supplier_debts")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model suppliers {
-  id              Int               @id @default(autoincrement())
-  name            String            @db.VarChar(100)
-  contact         String?           @db.VarChar(100)
-  phone           String?           @db.VarChar(20)
-  email           String?           @db.VarChar(100)
-  company_name    String            @default("") @db.VarChar(100)
-  tax_id          String?           @unique @db.VarChar(20)
+model Supplier {
+  id              Int             @id @default(autoincrement())
+  name            String          @db.VarChar(100)
+  contact         String?         @db.VarChar(100)
+  phone           String?         @db.VarChar(20)
+  email           String?         @db.VarChar(100)
+  company_name    String          @default("") @db.VarChar(100)
+  tax_id          String?         @unique @db.VarChar(20)
   address         String?
-  supplier_type   String?           @db.VarChar(50)
-  status          String?           @default("active") @db.VarChar(20)
-  consignments    consignments[]
-  products        products[]
-  purchase_orders purchase_orders[]
-  supplier_debts  supplier_debts[]
+  supplier_type   String?         @db.VarChar(50)
+  status          String?         @default("active") @db.VarChar(20)
+  consignments    Consignment[]
+  products        Product[]
+  purchase_orders PurchaseOrder[]
+  supplier_debts  SupplierDebt[]
+
+  @@map("suppliers")
 }
 
-model transaction_items {
-  id             Int           @id @default(autoincrement())
+model TransactionItem {
+  id             Int          @id @default(autoincrement())
   transaction_id Int?
   product_id     Int?
   quantity       Int
-  price_at_sale  Decimal       @db.Decimal
-  products       products?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  transactions   transactions? @relation(fields: [transaction_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  price_at_sale  Decimal      @db.Decimal
+  products       Product?     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transactions   Transaction? @relation(fields: [transaction_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("transaction_items")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model transactions {
-  id                Int                 @id @default(autoincrement())
-  customer_id       Int
-  user_id           Int
-  amount            Decimal             @db.Decimal(10, 2)
-  type              String              @db.VarChar(10)
-  reference         String?             @db.VarChar(250)
-  created_at        DateTime?           @default(now()) @db.Timestamp(6)
-  notes             String?
-  cart_id           Int?
-  transaction_items transaction_items[]
-  cart              cart?               @relation(fields: [cart_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_carrt_id_fkey")
-  customers         customers           @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users             users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model Transaction {
+  id          Int       @id @default(autoincrement())
+  customer_id Int
+  user_id     Int
+  amount      Decimal   @db.Decimal(10, 2)
+  type        String    @db.VarChar(10)
+  reference   String?   @db.VarChar(250)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  notes       String?
+  cart_id     Int?
+
+  customer         Customer          @relation(fields: [customer_id], references: [id])
+  user             User              @relation(fields: [user_id], references: [id])
+  cart             Cart?             @relation(fields: [cart_id], references: [id])
+  transactionItems TransactionItem[]
+
+  @@map("transactions")
 }
 
-model users {
-  id                   Int                    @id @default(autoincrement())
-  username             String                 @unique @db.VarChar(50)
-  password             String                 @db.VarChar(255)
+model User {
+  id                   Int                 @id @default(autoincrement())
+  username             String              @unique @db.VarChar(50)
+  password             String              @default("") @db.VarChar(255)
+  password_hash        String              @default("") @db.VarChar(255)
+  avatar_url           String?
+  last_login           DateTime?           @db.Timestamptz(6)
+  last_ip              String?             @db.VarChar(45)
+  is_active            Boolean             @default(true)
+  must_change_password Boolean             @default(true)
   role_id              Int
-  parent_user_id       Int?
-  created_at           DateTime?              @default(now()) @db.Timestamp(6)
-  status               String?                @default("active") @db.VarChar(20)
-  audit_cash_registers audit_cash_registers[]
-  business_org_chart   business_org_chart[]
-  business_users       business_users[]
-  cash_registers       cash_registers[]
-  consignments         consignments[]
-  employees            employees?
-  supplier_debts       supplier_debts[]
-  transactions         transactions[]
-  roles                roles                  @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status               UserStatus          @default(ACTIVE) @map("status")
+  created_at           DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime            @default(now()) @db.Timestamptz(6)
+  role                 Role                @relation(fields: [role_id], references: [id])
+  employee             Employee?
+  auditLogs            AuditLog[]
+  transactions         Transaction[]
+  supplierDebts        SupplierDebt[]
+  Consignments         Consignment[]
+  CashRegisters        CashRegister[]
+  BusinessOrgCharts    BusinessOrgChart[]
+  auditCashRegisters   AuditCashRegister[]
+  //BusinessUser         BusinessUser[]
+
+  @@index([role_id])
+  @@map("users")
 }

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-// Tipos basados en user.ts
+// Tipos basados en user.ts.bk
 interface UserResponse {
   id: number;
   username: string;
@@ -75,7 +75,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Funciones específicas para user.ts
+// Funciones específicas para user.ts.bk
 export const loginUser = async (email: string, password: string): Promise<ApiResponse<{ token: string }>> => {
   return await api.post('/api/users/login', { email, password }).then((res: AxiosResponse) => res.data);
 };

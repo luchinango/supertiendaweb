@@ -1,38 +1,11 @@
 import express, { Request, Response, NextFunction, Application} from 'express';
 import cors from 'cors';
-import cron from 'node-cron';
-import axios from 'axios';
 import dotenv from 'dotenv';
-import { generateToken, requireAdmin } from './middleware/auth';
-import { User as UserModel } from './models/user';
-import swaggerUi from 'swagger-ui-express';
-import swaggerSpec from "./swagger";
-import * as yaml from 'js-yaml';
-import { readFileSync } from 'fs';
+import app from './app'
+import swaggerDocs from './config/swagger'
 
-// Cargar variables de entorno desde .env
 dotenv.config();
 
-import userRoutes from './routes/user';
-import customerRoutes from './routes/customers';
-import supplierRoutes from './routes/suppliers';
-import productRoutes from './routes/products';
-import salesControlRouter from './routes/salesControl';
-import cartRoutes from './routes/cart';
-import purchaseOrderRoutes from './routes/purchaseOrders';
-import transactionsRouter from './routes/transactions';
-import mermasRouter from './routes/mermas';
-import creditRoutes from './services/creditService';
-import kardexRouter from './routes/kardex';
-import perishablesRouter from './routes/perishables';
-import reportRoutes from './routes/reports';
-import alarmRoutes from './routes/alarms';
-import categoriesRouter from './routes/categories';
-import cashRegistersRouter from './routes/cashRegisters';
-import businessRoutes from './routes/business';
-import inventoryReportRoutes from './routes/inventoryReports';
-import movimientosRouter from './routes/movimientosRouter';
-import employeesRouter from './routes/employeesRouter';
 
 // Definición de la interfaz User
 export interface User {
@@ -44,8 +17,6 @@ export interface User {
   first_name: string;
   last_name: string;
 }
-
-const app = express();
 
 // Configuración de CORS
 app.use(cors({
@@ -60,6 +31,8 @@ app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); */
 
 // Ruta raíz para verificar el estado del servidor
+
+/*
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Backend funcionando', timestamp: new Date() });
 });
@@ -68,6 +41,7 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/api/admin', requireAdmin, (req, res) => {
   res.json({ message: 'Acceso para admin concedido' });
 });
+*/
 
 // Cargar el archivo YAML
 // const swaggerDocument = yaml.load(readFileSync('./docs/openapi.yaml', 'utf8')) as swaggerUi.JsonObject;
@@ -76,27 +50,7 @@ app.get('/api/admin', requireAdmin, (req, res) => {
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Registro de rutas
-app.use('/api/users', userRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/customers', transactionsRouter); // Para /api/customers/:customerId/transactions
-app.use('/api/suppliers', supplierRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/sales-control', salesControlRouter);
-app.use('/api/cart', cartRoutes);
-app.use('/api/purchase-orders', purchaseOrderRoutes);
-app.use('/api/transactions', transactionsRouter);
-app.use('/api/mermas', mermasRouter);
-app.use('/api/credits', creditRoutes);
-app.use('/api', kardexRouter);
-app.use('/api/perishables', perishablesRouter);
-app.use('/api/reports', reportRoutes);
-app.use('/api/alarms', alarmRoutes);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/cash-registers', cashRegistersRouter);
-app.use('/api/business', businessRoutes);
-app.use('/api/inventory-report', inventoryReportRoutes);
-app.use('/api/movimientos', movimientosRouter); // Para /api/movimientos/:movimientoId
-app.use('/api/employees', employeesRouter);
+
 
 // Depuración: Listar todas las rutas registradas
 // app._router.stack.forEach((middleware: any) => {
@@ -113,7 +67,7 @@ app.use('/api/employees', employeesRouter);
 //     });
 //   }
 // });
-
+/*
 // Tarea cron para productos vencidos (mermas)
 const checkExpiredProducts = async () => {
   try {
@@ -159,7 +113,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 // Iniciar el servidor
 const PORT: number = parseInt(process.env.PORT || '5000', 10);
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
   console.log(`Documentación Swagger en http://localhost:${PORT}/api-docs`);
@@ -179,3 +133,18 @@ app.listen(PORT, () => {
     console.log('Token de prueba generado:', token);
   }
 });
+*/
+
+const PORT: number = parseInt(process.env.PORT || '5000', 10);
+
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+  swaggerDocs(app, PORT)
+})
+
+process.on('unhandledRejection', (err: Error) => {
+  console.error('Unhandled Rejection:', err)
+  server.close(() => process.exit(1))
+})
+
+export default server

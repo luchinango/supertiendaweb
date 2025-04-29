@@ -41,3 +41,16 @@ Thumbs.db
 .idea/
 /backend/generated
 /backups
+/backend/prisma/generated
+
+backend/build_and_push.sh
+
+backend/notes.md
+
+temp
+
+seeders/
+
+backend/pnpm-lock.yaml
+
+backend/prisma/schemas/json-schema.json
