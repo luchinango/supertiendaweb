@@ -14,23 +14,9 @@ import { NewClientPanel } from "../../components/NewClientPanel"
 import { EditClientPanel } from "../../components/EditClientPanel"
 import { ClientesOverlay } from "../../components/ClientesOverlay"
 import { MoreVertical } from "lucide-react"
+import {Customer} from "@/types/Customer";
+import {useCustomers} from "@/hooks/useCustomers";
 
-interface Client {
-  id: number
-  name: string
-  phone: string
-  initials: string
-  hasDebt: boolean
-  debtAmount: number
-}
-
-const initialClients = [
-  { id: 1, name: "Luis Alberto Martínez Barrientos", phone: "+591 72944911", initials: "LA", hasDebt: true, debtAmount: 120 },
-  { id: 2, name: "Mateo", phone: "+591 75454698", initials: "M", hasDebt: false, debtAmount: 0 },
-  { id: 3, name: "SOCODEVI", phone: "+591 69258592", initials: "S", hasDebt: true, debtAmount: 50 },
-  { id: 4, name: "Telma", phone: "+591 70000000", initials: "T", hasDebt: false, debtAmount: 0 },
-  { id: 5, name: "TODITO", phone: "+591 71111111", initials: "T", hasDebt: false, debtAmount: 0 },
-]
 
 const sampleClientPurchases = [
   { id: 1, clientId: 1, date: "2025-04-20", amount: 350, items: 5, paymentType: "Contado" }, // 7 días
@@ -54,10 +40,10 @@ function getLastPurchaseStatus(lastPurchase: string | null): { label: string; co
 }
 
 export default function Clientes() {
-  const [clients, setClients] = useState<Client[]>(initialClients)
+  const {customers, isLoading, error, editCustomer, mutate} = useCustomers()
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [selectedClient, setSelectedClient] = useState<Customer | null>(null)
+  const [editingClient, setEditingClient] = useState<Customer | null>(null)
   const [showKardex, setShowKardex] = useState(false)
   const [showNewClient, setShowNewClient] = useState(false)
   const [kardexStart, setKardexStart] = useState("")
@@ -67,8 +53,8 @@ export default function Clientes() {
   const [filterEnd, setFilterEnd] = useState("")
   const [activeTab, setActiveTab] = useState<"clientes" | "proveedores">("clientes")
 
-  const filteredClients = clients.filter(
-    (client) => client.name.toLowerCase().includes(searchTerm.toLowerCase()) || client.phone.includes(searchTerm),
+  const filteredClients = customers.filter(
+    (customer) => customer.first_name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.phone?.includes(searchTerm),
   )
 
   const filteredPurchasesMain = sampleClientPurchases.filter((purchase) => {
@@ -157,10 +143,10 @@ export default function Clientes() {
             >
               <div className="flex items-center gap-3 flex-1">
                 <Avatar className="h-8 w-8 bg-gray-200">
-                  <AvatarFallback>{client.initials}</AvatarFallback>
+                  <AvatarFallback>{client.first_name}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-medium">{client.name}</div>
+                  <div className="font-medium">{client.first_name}</div>
                   <div className="text-sm text-muted-foreground">{client.phone}</div>
                 </div>
               </div>
@@ -185,7 +171,8 @@ export default function Clientes() {
                 </div>
                 <div className="text-sm text-right min-w-[120px]">
                   <div className="text-muted-foreground">
-                    {client.hasDebt && client.debtAmount ? `Bs ${client.debtAmount}` : "Sin deuda"}
+                    Sin Deuda
+                    {/*{client.hasDebt && client.debtAmount ? `Bs ${client.debtAmount}` : "Sin deuda"}*/}
                   </div>
                 </div>
                 <div className="text-sm text-right min-w-[120px]">
@@ -216,16 +203,17 @@ export default function Clientes() {
             .join("")
             .toUpperCase()
             .slice(0, 2)
-          setClients([...clients, { id: clients.length + 1, ...newClient, initials, hasDebt: false, debtAmount: 0 }])
+          // setClients([...clients, { id: clients.length + 1, ...newClient, initials, hasDebt: false, debtAmount: 0 }])
         }}
       />
 
       {editingClient && (
         <EditClientPanel
-          client={editingClient}
+          customer={editingClient}
           open={true}
           onOpenChange={() => setEditingClient(null)}
           onEdit={(updatedClient) => {
+            /*
             setClients(
               clients.map((c) =>
                 c.id === updatedClient.id
@@ -244,6 +232,7 @@ export default function Clientes() {
                   : c
               )
             )
+            */
             setEditingClient(null)
           }}
         />
@@ -257,7 +246,7 @@ export default function Clientes() {
           />
           <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 transition-transform duration-300 animate-slide-in-from-right flex flex-col">
             <div className="flex items-center justify-between border-b p-4">
-              <h2 className="text-xl font-semibold">Kardex de {selectedClient.name}</h2>
+              <h2 className="text-xl font-semibold">Kardex de {selectedClient.first_name}</h2>
               <Button variant="ghost" size="icon" onClick={() => setShowKardex(false)}>
                 <span className="sr-only">Cerrar</span>
                 ×
@@ -295,11 +284,12 @@ export default function Clientes() {
               <div className="bg-yellow-50 rounded-lg p-3 flex flex-col gap-2 border border-yellow-200">
                 <div className="font-medium flex items-center gap-2">
                   Deuda actual:
-                  {selectedClient.hasDebt && selectedClient.debtAmount && selectedClient.debtAmount > 0 ? (
+                    <span className="text-green-700 font-semibold">Sin deuda</span>
+                  {/*{selectedClient.hasDebt && selectedClient.debtAmount && selectedClient.debtAmount > 0 ? (
                     <span className="text-yellow-800 font-bold">Bs {selectedClient.debtAmount}</span>
                   ) : (
                     <span className="text-green-700 font-semibold">Sin deuda</span>
-                  )}
+                  )}*/}
                 </div>
                 <div className="text-xs text-gray-700">
                   Última compra:&nbsp;

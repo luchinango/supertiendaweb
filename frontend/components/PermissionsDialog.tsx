@@ -3,13 +3,12 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, ChevronUp, X } from "lucide-react"
-
-import EmployeeDto from "@/types/EmployeeDto";
+import {Employee} from "@/types/Employee";
 
 interface PermissionsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  employee: EmployeeDto
+  employee: Employee
 }
 
 interface PermissionSection {

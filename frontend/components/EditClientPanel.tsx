@@ -8,45 +8,53 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { X } from "lucide-react"
-
-interface Client {
-  id: number
-  name: string
-  phone: string
-  hasDebt: boolean
-  debtAmount?: number
-}
+import {Customer} from "@/types/Customer";
 
 interface EditClientPanelProps {
-  client: Client
+  customer: Customer
   open: boolean
   onOpenChange: (open: boolean) => void
-  onEdit: (client: Client) => void
+  onEdit: (client: Customer) => void
 }
 
-export function EditClientPanel({ client, open, onOpenChange, onEdit }: EditClientPanelProps) {
-  const [name, setName] = useState(client.name)
-  const [phone, setPhone] = useState(client.phone)
-  const [hasDebt, setHasDebt] = useState(client.hasDebt)
-  const [debtAmount, setDebtAmount] = useState(client.debtAmount?.toString() || "0")
+export function EditClientPanel({ customer, open, onOpenChange, onEdit }: EditClientPanelProps) {
+   const [firstName, setFirstName] = useState(customer.first_name)
+  const [lastName, setLastName] = useState(customer.last_name)
+  const [phone, setPhone] = useState(customer.phone || "")
+  const [email, setEmail] = useState(customer.email || "")
+  const [companyName, setCompanyName] = useState(customer.company_name || "")
+  const [taxId, setTaxId] = useState(customer.tax_id || "")
+  const [address, setAddress] = useState(customer.address || "")
+  const [status, setStatus] = useState(customer.status || "Activo")
+  const [hasDebt, setHasDebt] = useState(false)
+  const [debtAmount, setDebtAmount] = useState(0)
 
-  useEffect(() => {
+
+    useEffect(() => {
     if (open) {
-      setName(client.name)
-      setPhone(client.phone)
-      setHasDebt(client.hasDebt)
-      setDebtAmount(client.debtAmount?.toString() || "0")
+      setFirstName(customer.first_name)
+      setLastName(customer.last_name)
+      setPhone(customer.phone || "")
+      setEmail(customer.email || "")
+      setCompanyName(customer.company_name || "")
+      setTaxId(customer.tax_id || "")
+      setAddress(customer.address || "")
+      setStatus(customer.status || "Activo")
     }
-  }, [client, open])
+  }, [customer, open])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onEdit({
-      ...client,
-      name,
+       ...customer,
+      first_name: firstName,
+      last_name: lastName,
       phone,
-      hasDebt,
-      debtAmount: hasDebt ? Number.parseFloat(debtAmount) : 0,
+      email,
+      company_name: companyName,
+      tax_id: taxId,
+      address,
+      status,
     })
   }
 
@@ -80,7 +88,7 @@ export function EditClientPanel({ client, open, onOpenChange, onEdit }: EditClie
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nombre completo</Label>
-                <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} required />
+                <Input id="edit-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">Teléfono</Label>
@@ -101,7 +109,7 @@ export function EditClientPanel({ client, open, onOpenChange, onEdit }: EditClie
                     id="debt-amount"
                     type="number"
                     value={debtAmount}
-                    onChange={(e) => setDebtAmount(e.target.value)}
+                    onChange={(e) => setDebtAmount(Number(e.target.value))}
                     required
                   />
                 </div>

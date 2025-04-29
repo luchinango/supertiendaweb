@@ -4,14 +4,13 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, X } from "lucide-react"
-
-import EmployeeDto from "@/types/EmployeeDto";
+import {Employee} from "@/types/Employee";
 
 interface EditEmployeePanelProps {
-  employee: EmployeeDto
+  employee: Employee
   open: boolean
   onOpenChange: (open: boolean) => void
-  onShowPermissions: (employee: EmployeeDto) => void
+  onShowPermissions: (employee: Employee) => void
 }
 
 export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissions }: EditEmployeePanelProps) {
@@ -29,7 +28,7 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
   }, [employee])
 
   const handleSubmit = () => {
-    const updatedEmployee: EmployeeDto = {
+    const updatedEmployee: Employee = {
       ...employee,
       first_name,
       mobile_phone: `+591${phone}`,

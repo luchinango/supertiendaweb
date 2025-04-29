@@ -3,18 +3,18 @@
 import {useState} from "react"
 import {Button} from "@/components/ui/button"
 import {ChevronRight} from "lucide-react"
-import {NewEmployeePanel} from "../../components/NewEmployeePanel"
-import {EditEmployeePanel} from "../../components/EditEmployeePanel"
-import {PermissionsDialog} from "../../components/PermissionsDialog"
-import {useEmployees} from "../../hooks/useEmployees"
-import EmployeeDto from "@/types/EmployeeDto";
+import {NewEmployeePanel} from "@/components/NewEmployeePanel"
+import {EditEmployeePanel} from "@/components/EditEmployeePanel"
+import {PermissionsDialog} from "@/components/PermissionsDialog"
+import {useEmployees} from "@/hooks/useEmployees"
+import {Employee} from "@/types/Employee";
 
 export default function Empleados() {
   const {employees, isLoading, error, editEmployee, mutate} = useEmployees()
-  const [editingEmployee, setEditingEmployee] = useState<EmployeeDto | null>(null)
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [showNewEmployee, setShowNewEmployee] = useState(false)
   const [showPermissions, setShowPermissions] = useState(false)
-  const [currentEmployee, setCurrentEmployee] = useState<EmployeeDto | null>(null)
+  const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null)
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -29,7 +29,7 @@ export default function Empleados() {
     }
   }
 
-  const handleEditClick = (employee: EmployeeDto) => {
+  const handleEditClick = (employee: Employee) => {
     setEditingEmployee(employee)
   }
 
@@ -71,10 +71,10 @@ export default function Empleados() {
               <div>
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
-                    employee.position,
+                    employee.position || '',
                   )}`}
                 >
-                  {employee.position}
+                  {employee.position || ''}
                 </span>
               </div>
               <div className="flex items-center">
@@ -103,7 +103,7 @@ export default function Empleados() {
         <NewEmployeePanel
           open={showNewEmployee}
           onOpenChange={setShowNewEmployee}
-          onShowPermissions={(employee: EmployeeDto) => {
+          onShowPermissions={(employee: Employee) => {
             setCurrentEmployee(employee)
             setShowPermissions(true)
           }}
@@ -115,7 +115,7 @@ export default function Empleados() {
           employee={editingEmployee}
           open={!!editingEmployee}
           onOpenChange={() => setEditingEmployee(null)}
-          onShowPermissions={(employee: EmployeeDto) => {
+          onShowPermissions={(employee: Employee) => {
             setCurrentEmployee(employee)
             setShowPermissions(true)
           }}
