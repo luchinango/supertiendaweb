@@ -4,26 +4,33 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, X } from "lucide-react"
-import type { Employee } from "../types/Employee"
+import EmployeeDto from "../types/EmployeeDto";
 
 interface NewEmployeePanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onShowPermissions: (employee: Employee) => void
+  onShowPermissions: (employee: EmployeeDto) => void
 }
 
 export function NewEmployeePanel({ open, onOpenChange, onShowPermissions }: NewEmployeePanelProps) {
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
-  const [role, setRole] = useState<"Propietario" | "Administrador" | "Vendedor">("Administrador")
+  const [role, setRole] = useState("Administrador")
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
 
   const handleSubmit = () => {
-    const newEmployee: Employee = {
+    const newEmployee: EmployeeDto = {
       id: Date.now(), // or use a better unique id generator if needed
-      name,
-      phone,
-      role,
+      first_name: name,
+      last_name: "",
+      mobile_phone: phone,
+      salary: 0,
+      start_date: new Date().toISOString(),
+      gender: "M",
+      birth_date: "",
+      email: "",
+      address: "",
+      position: role,
       status: "Activo",
     }
     onShowPermissions(newEmployee)

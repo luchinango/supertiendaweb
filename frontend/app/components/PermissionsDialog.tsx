@@ -4,18 +4,12 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, ChevronUp, X } from "lucide-react"
 
-interface Employee {
-  id?: number
-  name: string
-  phone: string
-  role: "Propietario" | "Administrador" | "Vendedor"
-  status?: "Activo" | "Inactivo"
-}
+import EmployeeDto from "../types/EmployeeDto";
 
 interface PermissionsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  employee: Employee
+  employee: EmployeeDto
 }
 
 interface PermissionSection {

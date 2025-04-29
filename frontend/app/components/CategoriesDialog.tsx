@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import useSWR from "swr"
+import {useEffect, useState} from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChevronRight, Pencil, Plus, X } from "lucide-react"
@@ -8,29 +9,27 @@ import { ChevronRight, Pencil, Plus, X } from "lucide-react"
 interface Category {
   id: string
   name: string
-  count: number
+  description?: string
+  is_active: boolean
+  count?: number
 }
-
-const initialCategories: Category[] = [
-  { id: "accesorios-plastico", name: "Accesorios De Plastico Para Cocina", count: 45 },
-  { id: "accesorios-cocina", name: "Accesorios Para Cocina", count: 32 },
-  { id: "accesorios-hogar", name: "Accesorios Para El Hogar", count: 28 },
-  { id: "alcohol", name: "Alcohol", count: 12 },
-  { id: "alimentos-basicos", name: "Alimentos Basicos", count: 67 },
-  { id: "alimentos-animales", name: "Alimentos Para Animales", count: 23 },
-  { id: "ambientador", name: "Ambientador En Spray", count: 8 },
-  { id: "articulos-hogar", name: "Articulos Para El Hogar", count: 54 },
-]
 
 interface CategoriesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
 export function CategoriesDialog({ open, onOpenChange }: CategoriesDialogProps) {
-  const [categories, setCategories] = useState(initialCategories)
   const [showNewCategory, setShowNewCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
+
+  const {data: categories, error, isLoading} = useSWR<Category[]>(open ? `/api/categories` : null, fetcher)
+
+  if (isLoading) {
+    return <div className="p-4">Loading categories...</div>
+  }
 
   return (
     <div
@@ -85,6 +84,7 @@ export function CategoriesDialog({ open, onOpenChange }: CategoriesDialogProps) 
                     </Button>
                     <Button
                       onClick={() => {
+                        /*
                         if (newCategoryName.trim()) {
                           setCategories([
                             ...categories,
@@ -97,6 +97,7 @@ export function CategoriesDialog({ open, onOpenChange }: CategoriesDialogProps) 
                           setNewCategoryName("")
                           setShowNewCategory(false)
                         }
+                        */
                       }}
                     >
                       Crear categoría
@@ -106,7 +107,7 @@ export function CategoriesDialog({ open, onOpenChange }: CategoriesDialogProps) 
               )}
 
               <div className="space-y-1 mt-4">
-                {categories.map((category) => (
+                {categories?.map((category) => (
                   <div
                     key={category.id}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 group cursor-pointer"

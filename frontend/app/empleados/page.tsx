@@ -1,27 +1,20 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ChevronRight } from "lucide-react"
-import { NewEmployeePanel } from "../components/NewEmployeePanel"
-import { EditEmployeePanel } from "../components/EditEmployeePanel"
-import { PermissionsDialog } from "../components/PermissionsDialog"
-import type { Employee } from "../types/Employee"
-
-const sampleEmployees: Employee[] = [
-  { id: 1, name: "Jamil Estrada", phone: "+59163349336", role: "Propietario", status: "Activo" },
-  { id: 2, name: "Marisol", phone: "+59175774230", role: "Administrador", status: "Activo" },
-  { id: 3, name: "Luis", phone: "+59172944911", role: "Administrador", status: "Activo" },
-  { id: 4, name: "Melvy", phone: "+59171065562", role: "Administrador", status: "Activo" },
-  { id: 5, name: "Sergio", phone: "+59175463817", role: "Vendedor", status: "Activo" },
-]
+import {useState} from "react"
+import {Button} from "@/components/ui/button"
+import {ChevronRight} from "lucide-react"
+import {NewEmployeePanel} from "../components/NewEmployeePanel"
+import {EditEmployeePanel} from "../components/EditEmployeePanel"
+import {PermissionsDialog} from "../components/PermissionsDialog"
+import {useEmployees} from "../hooks/useEmployees"
+import EmployeeDto from "../types/EmployeeDto";
 
 export default function Empleados() {
-  const [employees] = useState<Employee[]>(sampleEmployees)
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+  const {employees, isLoading, error, editEmployee, mutate} = useEmployees()
+  const [editingEmployee, setEditingEmployee] = useState<EmployeeDto | null>(null)
   const [showNewEmployee, setShowNewEmployee] = useState(false)
   const [showPermissions, setShowPermissions] = useState(false)
-  const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null)
+  const [currentEmployee, setCurrentEmployee] = useState<EmployeeDto | null>(null)
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -36,12 +29,20 @@ export default function Empleados() {
     }
   }
 
-  const handleEditClick = (employee: Employee) => {
+  const handleEditClick = (employee: EmployeeDto) => {
     setEditingEmployee(employee)
   }
 
   const handleNewEmployee = () => {
     setShowNewEmployee(true)
+  }
+
+  if (isLoading) {
+    return <div className="p-4">Cargando empleados...</div>
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-500">Error cargando empleados.</div>
   }
 
   return (
@@ -65,15 +66,15 @@ export default function Empleados() {
         <div className="divide-y">
           {employees.map((employee) => (
             <div key={employee.id} className="grid grid-cols-5 gap-4 p-4 items-center">
-              <div>{employee.name}</div>
-              <div>{employee.phone}</div>
+              <div>{employee.first_name} {employee.last_name}</div>
+              <div>{employee.mobile_phone}</div>
               <div>
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
-                    employee.role,
+                    employee.position,
                   )}`}
                 >
-                  {employee.role}
+                  {employee.position}
                 </span>
               </div>
               <div className="flex items-center">
@@ -90,7 +91,7 @@ export default function Empleados() {
                   onClick={() => handleEditClick(employee)}
                 >
                   Editar
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4"/>
                 </Button>
               </div>
             </div>
@@ -102,7 +103,7 @@ export default function Empleados() {
         <NewEmployeePanel
           open={showNewEmployee}
           onOpenChange={setShowNewEmployee}
-          onShowPermissions={(employee: Employee) => {
+          onShowPermissions={(employee: EmployeeDto) => {
             setCurrentEmployee(employee)
             setShowPermissions(true)
           }}
@@ -114,7 +115,7 @@ export default function Empleados() {
           employee={editingEmployee}
           open={!!editingEmployee}
           onOpenChange={() => setEditingEmployee(null)}
-          onShowPermissions={(employee: Employee) => {
+          onShowPermissions={(employee: EmployeeDto) => {
             setCurrentEmployee(employee)
             setShowPermissions(true)
           }}
@@ -122,7 +123,7 @@ export default function Empleados() {
       )}
 
       {showPermissions && currentEmployee && (
-        <PermissionsDialog open={showPermissions} onOpenChange={setShowPermissions} employee={currentEmployee} />
+        <PermissionsDialog open={showPermissions} onOpenChange={setShowPermissions} employee={currentEmployee}/>
       )}
     </div>
   )

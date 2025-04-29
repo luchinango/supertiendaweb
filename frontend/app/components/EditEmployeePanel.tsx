@@ -5,41 +5,35 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, X } from "lucide-react"
 
-interface Employee {
-  id: number
-  name: string
-  phone: string
-  role: "Propietario" | "Administrador" | "Vendedor"
-  status: "Activo" | "Inactivo"
-}
+import EmployeeDto from "../types/EmployeeDto";
 
 interface EditEmployeePanelProps {
-  employee: Employee
+  employee: EmployeeDto
   open: boolean
   onOpenChange: (open: boolean) => void
-  onShowPermissions: (employee: Employee) => void
+  onShowPermissions: (employee: EmployeeDto) => void
 }
 
 export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissions }: EditEmployeePanelProps) {
-  const [name, setName] = useState(employee.name)
-  const [phone, setPhone] = useState(employee.phone.replace("+591", ""))
-  const [role, setRole] = useState<"Propietario" | "Administrador" | "Vendedor">(employee.role)
+  const [first_name, setFirstName] = useState(employee.first_name)
+  const [phone, setPhone] = useState(employee.mobile_phone.replace("+591", ""))
+  const [role, setRole] = useState(employee.position)
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
 
   useEffect(() => {
     if (employee) {
-      setName(employee.name)
-      setPhone(employee.phone.replace("+591", ""))
-      setRole(employee.role)
+      setFirstName(employee.first_name)
+      setPhone(employee.mobile_phone.replace("+591", ""))
+      setRole(employee.position)
     }
   }, [employee])
 
   const handleSubmit = () => {
-    const updatedEmployee: Employee = {
+    const updatedEmployee: EmployeeDto = {
       ...employee,
-      name,
-      phone: `+591${phone}`,
-      role,
+      first_name,
+      mobile_phone: `+591${phone}`,
+      position: role,
     }
     onShowPermissions(updatedEmployee)
   }
@@ -65,8 +59,8 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
             </label>
             <Input
               id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={first_name}
+              onChange={(e) => setFirstName(e.target.value)}
               placeholder="Escribe el nombre de tu empleado"
               className="w-full"
             />
@@ -146,7 +140,7 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
           <Button
             className="w-full bg-gray-900 hover:bg-gray-800"
             onClick={handleSubmit}
-            disabled={!name || !phone || phone.length < 8}
+            disabled={!first_name || !phone || phone.length < 8}
           >
             Guardar cambios
           </Button>

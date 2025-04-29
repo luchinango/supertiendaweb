@@ -54,3 +54,5 @@ seeders/
 backend/pnpm-lock.yaml
 
 backend/prisma/schemas/json-schema.json
+
+frontend/pnpm-lock.yaml

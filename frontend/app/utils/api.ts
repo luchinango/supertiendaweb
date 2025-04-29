@@ -11,6 +11,7 @@ export const swrFetcher = (url: string) =>
     return res.json();
   });
 
+/*
 export const fetchEmployees = async (url: string): Promise<EmployeeDto[]> => {
   const data = await swrFetcher(url);
   return data.map((p: any) => ({
@@ -23,6 +24,7 @@ export const fetchEmployees = async (url: string): Promise<EmployeeDto[]> => {
     imagen: "/placeholder.svg",
   }));
 };
+
 
 export const updateEmployee = async (
     id: Number,
@@ -46,10 +48,9 @@ export const updateEmployee = async (
     return response.json();
 };
 
-/*
-export const createFetcher = (headers?: Record<string, string>) => 
+export const createFetcher = (headers?: Record<string, string>) =>
     (url: string) => fetch(url, { headers }).then(res => res.json());
-  
+
   const { data } = useSWR("/api/secure-data", createFetcher({
     Authorization: "Bearer token123"
   }));

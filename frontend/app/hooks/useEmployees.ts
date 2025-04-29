@@ -1,11 +1,12 @@
 import EmployeeDto from "../types/EmployeeDto";
-import { fetchEmployees, updateEmployee } from "../utils/api";
 import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export function useEmployees() {
   const { data, error, isLoading, mutate } = useSWR<EmployeeDto[]>(
     "/api/employees",
-    fetchEmployees
+    fetcher
   );
 
   const editEmployee = async (id: Number, updatedData: Partial<EmployeeDto>) => {
