@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Download, Plus, AlertTriangle, Ban, PackageX } from "lucide-react"
-import { RegisterLossPanel } from "../components/RegisterLossPanel"
-import { DownloadReportPanel } from "../components/DownloadReportPanel"
+import { RegisterLossPanel } from "../../components/RegisterLossPanel"
+import { DownloadReportPanel } from "../../components/DownloadReportPanel"
 
 interface ProductLoss {
   id: number

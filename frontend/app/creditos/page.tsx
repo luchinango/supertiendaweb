@@ -8,12 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Plus, Pencil, Calendar, ArrowRight } from "lucide-react"
-import { NewCreditDialog } from "../components/NewCreditDialog"
-import { EditCreditDialog } from "../components/EditCreditDialog"
-import { NewClientCreditPanel } from "../components/NewClientCreditPanel"
-import { EditClientCreditPanel } from "../components/EditClientCreditPanel"
-import { RegisterPaymentPanel } from "../components/RegisterPaymentPanel"
-import { CreditHistoryPanel } from "../components/CreditHistoryPanel"
+import { NewCreditDialog } from "../../components/NewCreditDialog"
+import { EditCreditDialog } from "../../components/EditCreditDialog"
+import { NewClientCreditPanel } from "../../components/NewClientCreditPanel"
+import { EditClientCreditPanel } from "../../components/EditClientCreditPanel"
+import { RegisterPaymentPanel } from "../../components/RegisterPaymentPanel"
+import { CreditHistoryPanel } from "../../components/CreditHistoryPanel"
 
 // Tipos estrictos para créditos a proveedores y clientes
 type SupplierCreditStatus = "comision" | "concesion" | "pagado"

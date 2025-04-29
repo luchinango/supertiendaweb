@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { Business } from "../types/Business"
+import type { Business } from "@/types/Business"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -13,8 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Card } from "@/components/ui/card"
 import { PenLine } from "lucide-react"
-import { NewBusinessDialog, type BusinessFormData } from "../components/NewBusinessDialog"
-import { BusinessSwitcher } from "../components/BusinessSwitcher"
+import { NewBusinessDialog, type BusinessFormData } from "../../components/NewBusinessDialog"
+import { BusinessSwitcher } from "../../components/BusinessSwitcher"
 
 export default function Configuraciones() {
   const [businesses, setBusinesses] = useState<Business[]>([
@@ -163,7 +163,7 @@ export default function Configuraciones() {
                   <div className="flex">
                     <div className="flex items-center justify-center w-[100px] border border-input rounded-l-md bg-background px-3">
                       <div className="flex items-center gap-2">
-                        <img src="/flag-bolivia.svg" alt="Bolivia" className="h-4 w-6" />
+                        <img src="/images/flag-bolivia.svg" alt="Bolivia" className="h-4 w-6" />
                         <span className="text-sm">+591</span>
                       </div>
                     </div>

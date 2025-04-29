@@ -1,14 +1,14 @@
 import React from "react"
-import "./globals.css"
+import "../styles/globals.css"
 import type { Metadata } from "next"
 import { Inter, Roboto } from "next/font/google"
-import { Sidebar } from "./components/Sidebar"
-import { ProductFormProvider } from "./context/ProductFormContext"
-import { CashRegisterProvider } from "./context/CashRegisterContext"
-import { SalesFormProvider } from "./context/SalesFormContext"
-import { CartProvider } from "./context/CartContext"
-import { ExpenseFormProvider } from "./context/ExpenseFormContext"
-import { GlobalProductForm } from "./components/GlobalProductForm"
+import { Sidebar } from "../components/Sidebar"
+import { ProductFormProvider } from "../contexts/ProductFormContext"
+import { CashRegisterProvider } from "../contexts/CashRegisterContext"
+import { SalesFormProvider } from "../contexts/SalesFormContext"
+import { CartProvider } from "../contexts/CartContext"
+import { ExpenseFormProvider } from "../contexts/ExpenseFormContext"
+import { GlobalProductForm } from "../components/GlobalProductForm"
 
 const inter = Inter({ subsets: ["latin"] })
 const roboto = Roboto({ subsets: ["latin"], weight: "400" })

@@ -7,8 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertTriangle, Package, CreditCard, Calendar, ShoppingCart, XCircle, Check } from "lucide-react"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ProductRemovalPanel } from "../components/ProductRemovalPanel"
-import { CreatePromotionPanel } from "../components/CreatePromotionPanel"
+import { ProductRemovalPanel } from "../../components/ProductRemovalPanel"
+import { CreatePromotionPanel } from "../../components/CreatePromotionPanel"
 import { toast } from "@/components/ui/use-toast"
 
 interface Product {

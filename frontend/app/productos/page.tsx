@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Download, Grid2X2, Plus } from "lucide-react"
-import { CategoriesDialog } from "../components/CategoriesDialog"
-import { ProductFormWrapper } from "../components/ProductFormWrapper"
-import { useProductForm } from "../context/ProductFormContext"
+import { CategoriesDialog } from "../../components/CategoriesDialog"
+import { ProductFormWrapper } from "../../components/ProductFormWrapper"
+import { useProductForm } from "../../contexts/ProductFormContext"
 
 interface Product {
   id: number

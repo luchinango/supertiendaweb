@@ -11,10 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NewSupplierDialog } from "../components/NewSupplierDialog";
-import { EditSupplierDialog } from "../components/EditSupplierDialog";
-import { ProveedoresOverlay } from "../components/ProveedoresOverlay";
-import { Supplier } from "@/app/types";
+import { NewSupplierDialog } from "../../components/NewSupplierDialog";
+import { EditSupplierDialog } from "../../components/EditSupplierDialog";
+import { ProveedoresOverlay } from "../../components/ProveedoresOverlay";
+import { Supplier } from "@/types/types";
 
 const sampleSupplierPurchases = [
   { id: 1, supplierId: 1, date: "2025-04-20", amount: 1050, items: 10, paymentType: "Contado" }, // 7 días

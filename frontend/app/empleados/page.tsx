@@ -3,11 +3,11 @@
 import {useState} from "react"
 import {Button} from "@/components/ui/button"
 import {ChevronRight} from "lucide-react"
-import {NewEmployeePanel} from "../components/NewEmployeePanel"
-import {EditEmployeePanel} from "../components/EditEmployeePanel"
-import {PermissionsDialog} from "../components/PermissionsDialog"
-import {useEmployees} from "../hooks/useEmployees"
-import EmployeeDto from "../types/EmployeeDto";
+import {NewEmployeePanel} from "../../components/NewEmployeePanel"
+import {EditEmployeePanel} from "../../components/EditEmployeePanel"
+import {PermissionsDialog} from "../../components/PermissionsDialog"
+import {useEmployees} from "../../hooks/useEmployees"
+import EmployeeDto from "@/types/EmployeeDto";
 
 export default function Empleados() {
   const {employees, isLoading, error, editEmployee, mutate} = useEmployees()

@@ -3,7 +3,7 @@
 import * as React from "react"
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group"
 import { cn } from "@/lib/utils"
-import { toggleVariants } from "@/app/components/ui/toggle"
+import { toggleVariants } from "@/components/ui/toggle"
 
 type ToggleVariant = "default" | "outline" // Ajusta según tus variantes reales
 type ToggleSize = "default" | "sm" | "lg"  // Ajusta según tus tamaños reales
