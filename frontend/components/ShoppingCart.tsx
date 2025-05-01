@@ -47,7 +47,7 @@ export function ShoppingCart() {
                     <div className="flex items-center gap-3 mb-2">
                       <div className="h-10 w-10 bg-gray-100 rounded-md flex-shrink-0">
                         <img
-                          src={item.image || "/placeholder.svg?height=40&width=40"}
+                          src={item.image || "/placeholder.png?height=40&width=40"}
                           alt={item.name}
                           className="h-full w-full object-contain"
                         />

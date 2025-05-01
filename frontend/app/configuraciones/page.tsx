@@ -87,7 +87,7 @@ export default function Configuraciones() {
                     <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
                       {currentBusiness.logo ? (
                         <img
-                          src={currentBusiness.logo || "/placeholder.svg"}
+                          src={currentBusiness.logo || "/placeholder.png"}
                           alt="Logo"
                           className="w-full h-full object-cover"
                         />

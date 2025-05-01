@@ -21,7 +21,7 @@ export const fetchEmployees = async (url: string): Promise<EmployeeDto[]> => {
     position: p.position,
     salary: p.salary,
     startDate: p.start_date,
-    imagen: "/placeholder.svg",
+    imagen: "/placeholder.png",
   }));
 };
 

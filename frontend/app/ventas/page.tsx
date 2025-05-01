@@ -1,95 +1,33 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, Plus } from "lucide-react"
-import { ProductFormWrapper } from "../../components/ProductFormWrapper"
-import { useProductForm } from "../../contexts/ProductFormContext"
-import { CashRegisterManager } from "../../components/CashRegisterManager"
-import { SalesFormManager } from "../../components/SalesFormManager"
-import { ExpenseFormManager } from "../../components/ExpenseFormManager"
-import { ShoppingCart } from "../../components/ShoppingCart"
-import { useCart } from "../../contexts/CartContext"
-
-const categories = [
-  "Todos",
-  "Accesorios de Plástico para Cocina",
-  "Accesorios para Cocina",
-  "Accesorios para el Hogar",
-  "Alcohol",
-  "Alimentos Básicos",
-  "Alimentos para Animales",
-  "Ambientador en Spray",
-  "Artículos para",
-]
-
-const products = [
-  {
-    id: 1,
-    price: 14,
-    name: "ACT II Pipoca Mantequilla 91g",
-    stock: 6,
-    image: "/images/assorted-products-display.png",
-  },
-  {
-    id: 2,
-    price: 14,
-    name: "ACT II Pipoca Mantequilla Extra 91g",
-    stock: 7,
-    image: "/images/assorted-products-display.png", // <-- corregido
-  },
-  {
-    id: 3,
-    price: 10,
-    name: "Adayo Acondicionador de 500ml",
-    stock: 3,
-    image: "/images/assorted-products-display.png", // <-- corregido
-  },
-  {
-    id: 4,
-    price: 16,
-    name: "Adayo Shampoo de 1L",
-    stock: 7,
-    image: "/images/assorted-products-display.png",
-  },
-  {
-    id: 5,
-    price: 6,
-    name: "Agua Para Vida 2lt",
-    stock: 3,
-    image: "/images/assorted-products-display.png",
-  },
-  {
-    id: 6,
-    price: 7,
-    name: "Agua Para Vida S/G 3lt",
-    stock: 3,
-    image: "/images/assorted-products-display.png",
-  },
-  {
-    id: 7,
-    price: 7,
-    name: "Aguai Azucar Blanca de 1kg",
-    stock: 42,
-    image: "/images/assorted-products-display.png",
-  },
-  {
-    id: 8,
-    price: 32,
-    name: "Aguai Azucar Blanca de 5kg",
-    stock: 5,
-    image: "/images/assorted-products-display.png",
-  },
-]
+import {useState} from "react"
+import {Button} from "@/components/ui/button"
+import {Input} from "@/components/ui/input"
+import {Search, Plus} from "lucide-react"
+import {ProductFormWrapper} from "@/components/ProductFormWrapper"
+import {useProductForm} from "@/contexts/ProductFormContext"
+import {CashRegisterManager} from "@/components/CashRegisterManager"
+import {SalesFormManager} from "@/components/SalesFormManager"
+import {ExpenseFormManager} from "@/components/ExpenseFormManager"
+import {ShoppingCart} from "@/components/ShoppingCart"
+import {useCart} from "@/contexts/CartContext"
+import {Category} from "@/types/Category";
+import {useCategories} from "@/hooks/useCategories";
+import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
+import {useProducts} from "@/hooks/useProducts";
 
 export default function VentasPage() {
-  const [selectedCategory, setSelectedCategory] = useState("Todos")
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const {products, isLoading: isLoadingProducts} = useProducts(selectedCategory?.id);
+  const {categories, isLoading: isLoadingCategories, error, editCategory, mutate} = useCategories()
+  // const [selectedCategory, setSelectedCategory] = useState("Todos")
   const [searchTerm, setSearchTerm] = useState("")
-  const { openProductForm } = useProductForm()
-  const { addItem, items } = useCart()
+  const {openProductForm} = useProductForm()
+  const {addItem, items} = useCart()
 
-  const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredProducts = products.filter(
+    (product) => product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="flex h-full">
@@ -101,7 +39,7 @@ export default function VentasPage() {
             <h1 className="text-2xl font-bold">Nueva venta</h1>
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500"/>
                 <Input
                   type="search"
                   placeholder="Buscar productos"
@@ -110,25 +48,34 @@ export default function VentasPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <CashRegisterManager />
-              <SalesFormManager />
-              <ExpenseFormManager />
+              <CashRegisterManager/>
+              <SalesFormManager/>
+              <ExpenseFormManager/>
             </div>
           </div>
 
           {/* Categorías horizontales */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={category === selectedCategory ? "default" : "outline"}
-                className={category === selectedCategory ? "bg-yellow-400 text-black hover:bg-yellow-500" : ""}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+          {isLoadingCategories ? (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {Array.from({length: 10}).map((_, i) => (
+                <SkeletonShimmer key={i} className="h-9 w-24"/>
+              ))}
+            </div>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={category.name === selectedCategory?.name ? "default" : "outline"}
+                  className={category.name === selectedCategory?.name ? "bg-yellow-400 text-black hover:bg-yellow-500" : ""}
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+          )}
+
         </div>
 
         {/* Contenido principal con productos y carrito */}
@@ -141,7 +88,7 @@ export default function VentasPage() {
                 onClick={openProductForm}
               >
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                  <Plus className="h-6 w-6" />
+                  <Plus className="h-6 w-6"/>
                 </div>
                 <div className="text-center">
                   <p className="font-medium">Crear</p>
@@ -155,7 +102,7 @@ export default function VentasPage() {
                   <div
                     key={product.id}
                     className="border rounded-lg p-4 h-64 flex flex-col cursor-pointer hover:bg-gray-50 relative"
-                    onClick={() =>
+                    /*onClick={() =>
                       addItem({
                         id: product.id,
                         name: product.name,
@@ -163,16 +110,17 @@ export default function VentasPage() {
                         image: product.image,
                         available: product.stock,
                       })
-                    }
+                    }*/
                   >
                     {inCart && (
-                      <div className="absolute top-2 right-2 h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                      <div
+                        className="absolute top-2 right-2 h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
                         {inCart.quantity}
                       </div>
                     )}
                     <div className="flex justify-center mb-2">
                       <img
-                        src={product.image || "/placeholder.svg"}
+                        src={product.image || "/placeholder.png"}
                         alt={product.name}
                         className="h-24 w-24 object-contain"
                       />
@@ -196,13 +144,13 @@ export default function VentasPage() {
 
           {/* Panel lateral derecho - Carrito */}
           <div className="w-80 border-l">
-            <ShoppingCart />
+            <ShoppingCart/>
           </div>
         </div>
       </div>
 
       {/* Include the product form */}
-      <ProductFormWrapper />
+      <ProductFormWrapper/>
     </div>
   )
 }

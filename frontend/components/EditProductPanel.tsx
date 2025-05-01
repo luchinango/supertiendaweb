@@ -115,7 +115,7 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                   <div className="relative">
                     <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
                       <img
-                        src={product.imagen || "/placeholder.svg"}
+                        src={product.imagen || "/placeholder.png"}
                         alt={product.nombre}
                         className="w-full h-full object-cover rounded-lg"
                       />

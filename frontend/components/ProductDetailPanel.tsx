@@ -66,7 +66,7 @@ export function ProductDetailPanel({ open, onOpenChange, product, onEdit, onDele
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-2">
                   {product.imagen ? (
                     <img
-                      src={product.imagen || "/placeholder.svg"}
+                      src={product.imagen || "/placeholder.png"}
                       alt={product.nombre}
                       className="w-full h-full object-cover rounded-full"
                     />

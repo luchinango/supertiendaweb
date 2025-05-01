@@ -12,6 +12,32 @@ export const getAll = async (_req: Request, res: Response) => {
   res.json(products);
 };
 
+export const getByCategory = async (req: Request, res: Response) => {
+  const categoryId = Number(req.params.categoryId);
+
+  if (isNaN(categoryId)) {
+    res.status(400).json({message: 'categoryId inválido'});
+    return
+  }
+
+  try {
+    const products = await prisma.product.findMany({
+      where: {category_id: categoryId},
+      include: {category: true}
+    });
+
+    if (products.length === 0) {
+      res.status(404).json({message: 'No se encontraron productos en esta categoría'});
+      return
+    }
+
+    res.status(200).json(products);
+  } catch (error) {
+    console.error('Error al obtener productos por categoría:', error);
+    res.status(500).json({message: 'Error interno del servidor'});
+  }
+};
+
 export const getById = async (req: Request, res: Response) => {
   const {id} = req.params;
   const product = await prisma.product.findUnique({

@@ -68,7 +68,7 @@ export function AddProductPanel({ open, onOpenChange }: AddProductPanelProps) {
                 <div className="w-32 h-32 bg-blue-50 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-blue-200 mb-2">
                   {image ? (
                     <img
-                      src={URL.createObjectURL(image) || "/placeholder.svg"}
+                      src={URL.createObjectURL(image) || "/placeholder.png"}
                       alt="Product preview"
                       className="w-full h-full object-contain rounded-lg"
                     />

@@ -10,9 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { NewClientPanel } from "../../components/NewClientPanel"
-import { EditClientPanel } from "../../components/EditClientPanel"
-import { ClientesOverlay } from "../../components/ClientesOverlay"
+import { NewClientPanel } from "@/components/NewClientPanel"
+import { EditClientPanel } from "@/components/EditClientPanel"
+import { ClientesOverlay } from "@/components/ClientesOverlay"
 import { MoreVertical } from "lucide-react"
 import {Customer} from "@/types/Customer";
 import {useCustomers} from "@/hooks/useCustomers";
@@ -80,9 +80,6 @@ export default function Clientes() {
 
   return (
     <div className="space-y-6">
-
-
-
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <h1 className="text-2xl font-bold">Clientes</h1>
         <div className="flex gap-2 items-end">

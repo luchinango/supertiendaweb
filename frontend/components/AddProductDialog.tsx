@@ -91,7 +91,7 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
               <div className="h-24 w-24 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center">
                 {image ? (
                   <img
-                    src={URL.createObjectURL(image) || "/placeholder.svg"}
+                    src={URL.createObjectURL(image) || "/placeholder.png"}
                     alt="Preview"
                     className="h-full w-full object-contain"
                   />

@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Download, Grid2X2, Plus } from "lucide-react"
-import { CategoriesDialog } from "../../components/CategoriesDialog"
-import { ProductFormWrapper } from "../../components/ProductFormWrapper"
-import { useProductForm } from "../../contexts/ProductFormContext"
+import { CategoriesDialog } from "@/components/CategoriesDialog"
+import { ProductFormWrapper } from "@/components/ProductFormWrapper"
+import { useProductForm } from "@/contexts/ProductFormContext"
 
 interface Product {
   id: number
@@ -158,7 +158,7 @@ export default function Inventario() {
             <CardContent className="p-0">
               <div className="aspect-square relative bg-gray-50">
                 <img
-                  src={product.imagen || "/placeholder.svg"}
+                  src={product.imagen || "/placeholder.png"}
                   alt={product.nombre}
                   className="absolute inset-0 w-full h-full object-contain p-4"
                 />

@@ -232,7 +232,7 @@ export function PromotionForm() {
             <div className="flex items-center gap-3">
               {product.imagen ? (
                 <img
-                  src={product.imagen || "/placeholder.svg"}
+                  src={product.imagen || "/placeholder.png"}
                   alt={product.nombre}
                   className="w-12 h-12 object-contain bg-white rounded-md border"
                 />

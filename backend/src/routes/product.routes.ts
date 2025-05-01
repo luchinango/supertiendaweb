@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import * as productController from '../controllers/product.controller';
 
 const router = Router();
@@ -27,6 +27,33 @@ const router = Router();
  *                 $ref: '#/components/schemas/Product'
  */
 router.get('/products', productController.getAll);
+
+/**
+ * @swagger
+ * /api/products/category/{categoryId}:
+ *   get:
+ *     summary: Obtener productos por categoría
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Lista de productos filtrados por categoría
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: Categoría no encontrada o sin productos
+ */
+router.get('/products/category/:categoryId', productController.getByCategory);
+
 
 /**
  * @swagger
