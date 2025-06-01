@@ -1,22 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from "@/app/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/app/components/ui/dialog"
-import { Input } from "@/app/components/ui/input"
-import { Label } from "@/app/components/ui/label"
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/app/components/ui/select"
+} from "@/components/ui/select"
 
 export interface Credit {
   id: number

@@ -1,62 +1,56 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
-
-type CashRegisterStatus = "closed" | "open"
+import { createContext, useContext, useState, ReactNode } from "react";
+import { openCashRegister as openCashRegisterService } from "@/services/cashRegisterService";
 
 interface CashRegisterContextType {
-  isFormOpen: boolean
-  registerStatus: CashRegisterStatus
-  openCashRegisterForm: () => void
-  closeCashRegisterForm: () => void
-  openCashRegister: (employeeId: string, initialAmount: number) => void
-  closeCashRegister: () => void
+  registerStatus: "closed" | "open";
+  openCashRegisterForm: () => void;
+  closeCashRegisterForm: () => void;
+  // Función que llama al endpoint para abrir caja
+  openCashRegister: (initialAmount: number, userId: number) => Promise<void>;
+  isOpenFormVisible: boolean;
 }
 
-const CashRegisterContext = createContext<CashRegisterContextType | undefined>(undefined)
+const CashRegisterContext = createContext<CashRegisterContextType | undefined>(undefined);
 
 export function CashRegisterProvider({ children }: { children: ReactNode }) {
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [registerStatus, setRegisterStatus] = useState<CashRegisterStatus>("closed")
-  const [currentEmployee, setCurrentEmployee] = useState<string | null>(null)
-  const [initialAmount, setInitialAmount] = useState(0)
+  const [registerStatus, setRegisterStatus] = useState<"closed" | "open">("closed");
+  const [isOpenFormVisible, setIsOpenFormVisible] = useState(false);
 
-  const openCashRegisterForm = () => setIsFormOpen(true)
-  const closeCashRegisterForm = () => setIsFormOpen(false)
+  const openCashRegisterForm = () => setIsOpenFormVisible(true);
+  const closeCashRegisterForm = () => setIsOpenFormVisible(false);
 
-  const openCashRegister = (employeeId: string, amount: number) => {
-    setCurrentEmployee(employeeId)
-    setInitialAmount(amount)
-    setRegisterStatus("open")
-    setIsFormOpen(false)
-  }
-
-  const closeCashRegister = () => {
-    setCurrentEmployee(null)
-    setInitialAmount(0)
-    setRegisterStatus("closed")
+  async function openCashRegister(initialAmount: number, userId: number) {
+    try {
+      const data = await openCashRegisterService({ initialAmount, userId });
+      if (data.success) {
+        setRegisterStatus("open");
+        closeCashRegisterForm();
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
     <CashRegisterContext.Provider
       value={{
-        isFormOpen,
         registerStatus,
         openCashRegisterForm,
         closeCashRegisterForm,
         openCashRegister,
-        closeCashRegister,
+        isOpenFormVisible,
       }}
     >
       {children}
     </CashRegisterContext.Provider>
-  )
+  );
 }
 
 export function useCashRegister() {
-  const context = useContext(CashRegisterContext)
-  if (context === undefined) {
-    throw new Error("useCashRegister must be used within a CashRegisterProvider")
-  }
-  return context
+  const context = useContext(CashRegisterContext);
+  if (!context)
+    throw new Error("useCashRegister must be used within a CashRegisterProvider");
+  return context;
 }
