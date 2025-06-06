@@ -3,8 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   const { initialAmount, userId } = await request.json();
 
-  // Aquí iría la lógica para registrar la apertura de caja en tu base de datos
-  // Por ahora devolvemos datos simulados
+  // Aquí iría la lógica real (acceso a la BD, validaciones, etc.)
   const result = {
     success: true,
     cashRegisterId: 1,
