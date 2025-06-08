@@ -56,3 +56,6 @@ backend/pnpm-lock.yaml
 backend/prisma/schemas/json-schema.json
 
 frontend/pnpm-lock.yaml
+/backend/keys/private.pem
+/backend/keys/public.pem
+/backend/scripts

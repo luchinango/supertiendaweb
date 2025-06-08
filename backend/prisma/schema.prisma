@@ -348,6 +348,8 @@ model Product {
   name            String    @db.VarChar(100)
   price           Decimal   @db.Decimal(10, 2)
   cost            Decimal   @db.Decimal(10, 2)
+  profit          Decimal?  @default(0) @db.Decimal(10, 2)
+  profit_perc     Decimal?  @default(0) @db.Decimal(10, 2)
   description     String?
   purchase_price  Decimal?  @default(0.00) @db.Decimal(10, 2)
   sale_price      Decimal?  @default(0.00) @db.Decimal(10, 2)

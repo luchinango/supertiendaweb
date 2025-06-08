@@ -6,18 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { X, Pencil, Trash2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-interface Product {
-  id: number
-  nombre: string
-  precio: number
-  costo: number
-  stock: number
-  categoria: string
-  imagen?: string
-  barcode?: string
-  ganancia: number
-  gananciaPercent: number
-}
+import {Product} from "@/types/Product";
 
 interface ProductDetailPanelProps {
   open: boolean
@@ -64,10 +53,10 @@ export function ProductDetailPanel({ open, onOpenChange, product, onEdit, onDele
             <div className="flex flex-col items-center mb-6">
               <div className="relative">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-2">
-                  {product.imagen ? (
+                  {product.image ? (
                     <img
-                      src={product.imagen || "/placeholder.png"}
-                      alt={product.nombre}
+                      src={product.image || "/placeholder.png"}
+                      alt={product.name}
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
@@ -94,7 +83,7 @@ export function ProductDetailPanel({ open, onOpenChange, product, onEdit, onDele
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <h3 className="text-lg font-medium mt-2">{product.nombre}</h3>
+              <h3 className="text-lg font-medium mt-2">{product.name}</h3>
               <p className="text-sm text-gray-500">{product.stock} Disponible</p>
             </div>
 
@@ -128,7 +117,7 @@ export function ProductDetailPanel({ open, onOpenChange, product, onEdit, onDele
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                 </svg>
                 <span className="text-sm text-gray-600 ml-2">Precio</span>
-                <span className="text-sm font-medium">Bs {product.precio}</span>
+                <span className="text-sm font-medium">Bs {product.price}</span>
               </div>
 
               <div className="grid grid-cols-[24px_1fr_auto] items-center py-2">
@@ -143,7 +132,7 @@ export function ProductDetailPanel({ open, onOpenChange, product, onEdit, onDele
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                 </svg>
                 <span className="text-sm text-gray-600 ml-2">Costo</span>
-                <span className="text-sm font-medium">Bs {product.costo}</span>
+                <span className="text-sm font-medium">Bs {product.cost}</span>
               </div>
 
               <div className="grid grid-cols-[24px_1fr_auto] items-center py-2">
@@ -158,7 +147,7 @@ export function ProductDetailPanel({ open, onOpenChange, product, onEdit, onDele
                   <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
                 </svg>
                 <span className="text-sm text-gray-600 ml-2">Categoría</span>
-                <span className="text-sm font-medium">{product.categoria || "Productos para cocina"}</span>
+                <span className="text-sm font-medium">{product.category.name || "Productos para cocina"}</span>
               </div>
             </div>
 

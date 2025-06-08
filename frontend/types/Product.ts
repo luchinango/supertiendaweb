@@ -1,9 +1,13 @@
+import {Category} from "@/types/Category";
+
 export interface Product {
   id: number
   name: string
   description?: string
   price: number
   cost: number
+  profit: number
+  profit_perc: number
   purchase_price?: number
   sale_price?: number
   sku?: string
@@ -22,4 +26,5 @@ export interface Product {
   alert_sent?: boolean
   created_at: string
   updated_at: string
+  category: Category
 }

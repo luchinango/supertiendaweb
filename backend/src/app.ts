@@ -32,6 +32,7 @@ import debtPaymentRoutes from './routes/debtPayment.routes';
 import cashRegisterRoutes from './routes/cashRegister.routes';
 import auditCashRegisterRoutes from './routes/auditCashRegister.routes';
 import auditLogRoutes from './routes/auditLog.routes';
+import authRoutes from './routes/auth.routes';
 
 /*
 import salesControlRouter from './routes/salesControl';
@@ -79,6 +80,7 @@ app.use('/api', debtPaymentRoutes);
 app.use('/api', cashRegisterRoutes);
 app.use('/api', auditCashRegisterRoutes);
 app.use('/api', auditLogRoutes);
+app.use('/api', authRoutes);
 
 /*
 app.use('/api/sales-control', salesControlRouter);

@@ -5,64 +5,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Download, Grid2X2, Plus, ChevronDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CategoriesDialog } from "../../components/CategoriesDialog"
-import { ProductFormWrapper } from "../../components/ProductFormWrapper"
-import { useProductForm } from "../../contexts/ProductFormContext"
-import { AddProductPanel } from "../../components/AddProductPanel"
-import { DownloadReportPanel } from "../../components/DownloadReportPanel"
-import { ProductDetailPanel } from "../../components/ProductDetailPanel"
-import { EditProductPanel } from "../../components/EditProductPanel"
-
-interface Product {
-  id: number
-  nombre: string
-  precio: number
-  costo: number
-  stock: number
-  categoria: string
-  imagen?: string
-  barcode?: string
-  ganancia: number
-  gananciaPercent: number
-}
-
-const productosFicticios: Product[] = [
-  {
-    id: 1,
-    nombre: "ACT II Pipoca Mantequilla 91g",
-    precio: 14,
-    costo: 12.6,
-    stock: 6,
-    categoria: "Productos para cocina",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 1.4,
-    gananciaPercent: 10,
-    barcode: "PP-ACTIIPIMA -91",
-  },
-  {
-    id: 2,
-    nombre: "ACT II Pipoca Mantequilla Extra 91g",
-    precio: 14,
-    costo: 12.6,
-    stock: 7,
-    categoria: "Snacks",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 1.4,
-    gananciaPercent: 10,
-  },
-  {
-    id: 3,
-    nombre: "Adayo Acondicionador de 500ml",
-    precio: 10,
-    costo: 7.5,
-    stock: 2,
-    categoria: "Cuidado Personal",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-    ganancia: 2.5,
-    gananciaPercent: 25,
-  },
-  // More products...
-]
+import { CategoriesDialog } from "@/components/CategoriesDialog"
+import { ProductFormWrapper } from "@/components/ProductFormWrapper"
+import { useProductForm } from "@/contexts/ProductFormContext"
+import { AddProductPanel } from "@/components/AddProductPanel"
+import { DownloadReportPanel } from "@/components/DownloadReportPanel"
+import { ProductDetailPanel } from "@/components/ProductDetailPanel"
+import { EditProductPanel } from "@/components/EditProductPanel"
+import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
+import {Category} from "@/types/Category";
+import {Product} from "@/types/Product";
+import {useCategories} from "@/hooks/useCategories";
+import {useProducts} from "@/hooks/useProducts";
 
 export default function Inventario() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -74,16 +28,18 @@ export default function Inventario() {
   const [showEditProduct, setShowEditProduct] = useState(false)
   const { openProductForm } = useProductForm()
   const [mounted, setMounted] = useState(false)
+  const {products, isLoading: isLoadingProducts} = useProducts();
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const filteredProducts = productosFicticios.filter((product) =>
-    product.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Calculate total inventory cost
-  const totalInventoryCost = productosFicticios.reduce((sum, product) => sum + product.costo * product.stock, 0)
+  const totalInventoryCost = products.reduce((sum, product) => sum + product.cost * product.stock, 0)
 
   // Format number with commas
   const formatNumber = (num: number) => {
@@ -231,13 +187,13 @@ export default function Inventario() {
                 <div className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center">
                   <span className="text-xs text-gray-500">P</span>
                 </div>
-                <span>{product.nombre}</span>
+                <span>{product.name}</span>
               </div>
               <div className="text-right">
-                <Input value={`Bs. ${product.precio}`} className="text-right" readOnly />
+                <Input value={`Bs. ${product.price}`} className="text-right" readOnly />
               </div>
               <div className="text-right">
-                <Input value={`Bs. ${product.costo}`} className="text-right" readOnly />
+                <Input value={`Bs. ${product.cost}`} className="text-right" readOnly />
               </div>
               <div className="text-right">
                 <Input value={product.stock.toString()} className="text-right" readOnly />
@@ -247,17 +203,17 @@ export default function Inventario() {
                 <Input value={"5"} className="text-right" readOnly />
               </div>
               <div className="text-right flex items-center justify-end">
-                <span className="mr-2">Bs {product.ganancia}</span>
+                <span className="mr-2">Bs {product.profit}</span>
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    product.gananciaPercent >= 25
+                    product.profit_perc >= 25
                       ? "bg-green-100 text-green-800"
-                      : product.gananciaPercent >= 15
+                      : product.profit_perc >= 15
                         ? "bg-blue-100 text-blue-800"
                         : "bg-yellow-100 text-yellow-800"
                   }`}
                 >
-                  {product.gananciaPercent}%
+                  {product.profit_perc}%
                 </span>
               </div>
             </div>

@@ -7,19 +7,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { X, ArrowLeft, Minus, Plus, Search, Pencil } from "lucide-react"
-
-interface Product {
-  id: number
-  nombre: string
-  precio: number
-  costo: number
-  stock: number
-  categoria: string
-  imagen?: string
-  barcode?: string
-  ganancia: number
-  gananciaPercent: number
-}
+import {Product} from "@/types/Product";
+import {Category} from "@/types/Category";
+import {useCategories} from "@/hooks/useCategories";
+import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
 
 interface EditProductPanelProps {
   open: boolean
@@ -28,16 +19,9 @@ interface EditProductPanelProps {
   onSave: (product: Product) => void
 }
 
-const categories = [
-  "Productos para cocina",
-  "Alimentos Basicos",
-  "Alimentos para Animales",
-  "Ambientador en Spray",
-  "Articulos para el Hogar",
-  "Basurero",
-]
 
 export function EditProductPanel({ open, onOpenChange, product, onSave }: EditProductPanelProps) {
+  const {categories, isLoading: isLoadingCategories, error, editCategory, mutate} = useCategories()
   if (!product) return null // <-- Soluciona el error
 
   const [editedProduct, setEditedProduct] = useState<Product | null>(null)
@@ -72,7 +56,7 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
     onOpenChange(false)
   }
 
-  const filteredCategories = categories.filter((cat) => cat.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredCategories = categories.filter((cat) => cat.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   return (
     <div
@@ -110,13 +94,13 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
           <div className="flex-1 overflow-auto p-4">
             <div className="space-y-6">
               {/* Image */}
-              {product.imagen && (
+              {product.image && (
                 <div className="flex justify-center mb-4">
                   <div className="relative">
                     <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
                       <img
-                        src={product.imagen || "/placeholder.png"}
-                        alt={product.nombre}
+                        src={product.image || "/placeholder.png"}
+                        alt={product.name}
                         className="w-full h-full object-cover rounded-lg"
                       />
                     </div>
@@ -139,11 +123,11 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                 <p className="text-xs text-gray-500">Recuerda, este debe ser único en tu inventario</p>
                 <Input
                   id="product-name"
-                  value={editedProduct.nombre}
+                  value={editedProduct.name}
                   onChange={(e) =>
                     setEditedProduct({
                       ...editedProduct,
-                      nombre: e.target.value,
+                      name: e.target.value,
                     })
                   }
                 />
@@ -232,12 +216,12 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                     id="cost"
                     type="text"
                     inputMode="decimal"
-                    value={editedProduct.costo.toString()}
+                    value={editedProduct.cost.toString()}
                     onChange={(e) => {
                       const value = Number.parseFloat(e.target.value.replace(/[^0-9.]/g, "")) || 0
                       setEditedProduct({
                         ...editedProduct,
-                        costo: value,
+                        cost: value,
                       })
                     }}
                     className="pl-10"
@@ -256,12 +240,12 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                     id="price"
                     type="text"
                     inputMode="decimal"
-                    value={editedProduct.precio.toString()}
+                    value={editedProduct.price.toString()}
                     onChange={(e) => {
                       const value = Number.parseFloat(e.target.value.replace(/[^0-9.]/g, "")) || 0
                       setEditedProduct({
                         ...editedProduct,
-                        precio: value,
+                        price: value,
                       })
                     }}
                     className="pl-10"
@@ -279,7 +263,7 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                     className="border rounded-md p-3 flex justify-between items-center cursor-pointer"
                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                   >
-                    <span>{editedProduct.categoria || "Productos para cocina"}</span>
+                    <span>{editedProduct.category.name || "Productos para cocina"}</span>
                     <svg
                       width="15"
                       height="15"
@@ -322,17 +306,17 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                       <div className="max-h-48 overflow-y-auto">
                         {filteredCategories.map((category) => (
                           <div
-                            key={category}
+                            key={category.id}
                             className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                             onClick={() => {
                               setEditedProduct({
                                 ...editedProduct,
-                                categoria: category,
+                                category: category,
                               })
                               setShowCategoryDropdown(false)
                             }}
                           >
-                            {category}
+                            {category.name}
                           </div>
                         ))}
                       </div>
