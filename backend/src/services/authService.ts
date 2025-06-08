@@ -6,7 +6,7 @@ import {promisify} from 'util';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma';
 import {UnauthorizedError} from '../errors';
-import { UserStatus } from '@prisma/client';
+import {UserStatus} from '@prisma/client';
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -55,12 +55,19 @@ class AuthService {
 
   private async initializeKeys(): Promise<void> {
     try {
+      console.log('Iniciando inicialización de llaves RSA...');
+      console.log('Ruta llave privada:', this.privateKeyPath);
+      console.log('Ruta llave pública:', this.publicKeyPath);
+
       if (!fs.existsSync(this.privateKeyPath) || !fs.existsSync(this.publicKeyPath)) {
+        console.log('No se encontraron las llaves, generando nuevo par...');
         await this.generateKeyPair();
       }
 
       this.privateKey = await readFileAsync(this.privateKeyPath, 'utf8');
       this.publicKey = await readFileAsync(this.publicKeyPath, 'utf8');
+
+      console.log('Llaves cargadas exitosamente:');
     } catch (error) {
       console.error('Error inicializando llaves RSA:', error);
       throw new Error('Error en la configuración de autenticación');
@@ -69,12 +76,14 @@ class AuthService {
 
   private async generateKeyPair(): Promise<void> {
     try {
+      console.log('Generando nuevo par de llaves RSA...');
       const keysDir = path.dirname(this.privateKeyPath);
+
       if (!fs.existsSync(keysDir)) {
+        console.log('Creando directorio para llaves:', keysDir);
         fs.mkdirSync(keysDir, {recursive: true});
       }
 
-      // Generar par de llaves RSA
       const {privateKey, publicKey} = crypto.generateKeyPairSync('rsa', {
         modulusLength: 4096,
         publicKeyEncoding: {
@@ -87,9 +96,19 @@ class AuthService {
         }
       });
 
-      // Guardar llaves en archivos
+      console.log('Llaves generadas, guardando en archivos...');
+
       await writeFileAsync(this.privateKeyPath, privateKey);
       await writeFileAsync(this.publicKeyPath, publicKey);
+
+      console.log('Llaves guardadas exitosamente');
+
+      if (!fs.existsSync(this.privateKeyPath) || !fs.existsSync(this.publicKeyPath)) {
+        throw new Error('Error: Los archivos de llaves no se crearon correctamente');
+      }
+
+      this.privateKey = privateKey;
+      this.publicKey = publicKey;
     } catch (error) {
       console.error('Error generando par de llaves:', error);
       throw new Error('Error generando llaves de autenticación');
@@ -163,7 +182,7 @@ class AuthService {
 
     return jwt.sign(payload, this.privateKey, {
       algorithm: 'RS256',
-      expiresIn: '1h'
+      expiresIn: '30d' // 1h
     });
   }
 
@@ -180,12 +199,13 @@ class AuthService {
 
     return jwt.sign(payload, this.privateKey, {
       algorithm: 'RS256',
-      expiresIn: '7d'
+      expiresIn: '30d' // 7d
     });
   }
 
   async verifyToken(token: string): Promise<TokenPayload> {
     if (!this.publicKey) {
+      console.error('Error: Llave pública no inicializada');
       throw new Error('Llave pública no inicializada');
     }
 
@@ -196,19 +216,35 @@ class AuthService {
 
       const user = await prisma.user.findUnique({
         where: {id: decoded.userId},
-        select: {status: true}
+        select: {
+          status: true,
+          role: {
+            select: {
+              code: true
+            }
+          }
+        }
       });
 
       if (!user || user.status !== 'ACTIVE') {
         throw new UnauthorizedError('Usuario no válido o inactivo');
       }
 
+      if (decoded.role !== user.role.code) {
+        throw new UnauthorizedError('El rol del usuario ha cambiado');
+      }
+
       return decoded;
     } catch (error) {
+      console.error('Error detallado verificando token:', error);
       if (error instanceof jwt.TokenExpiredError) {
         throw new UnauthorizedError('Token expirado');
       }
-      throw new UnauthorizedError('Token inválido');
+      if (error instanceof jwt.JsonWebTokenError) {
+        console.error('Error específico de JWT:', error.message);
+        throw new UnauthorizedError(`Token inválido: ${error.message}`);
+      }
+      throw error;
     }
   }
 
@@ -279,7 +315,7 @@ class AuthService {
     status?: UserStatus;
   }): Promise<void> {
     const exists = await prisma.user.findUnique({
-      where: { username: userData.username }
+      where: {username: userData.username}
     });
 
     if (exists) {

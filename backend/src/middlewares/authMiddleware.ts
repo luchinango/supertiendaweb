@@ -1,16 +1,14 @@
 import {Request, Response, NextFunction, RequestHandler} from 'express'
-import jwt from 'jsonwebtoken'
+import {UnauthorizedError, NotFoundError} from '../errors'
+import authService from '../services/authService'
 import prisma from '../config/prisma'
-import { UnauthorizedError, NotFoundError } from '../errors'
 
-// Interface para el usuario autenticado
 export interface AuthenticatedUser {
   id: number
   username: string
   role: string
 }
 
-// Extensión de la interfaz Request de Express
 declare module 'express' {
   interface Request {
     user?: AuthenticatedUser
@@ -26,44 +24,25 @@ export const authenticate = (roles?: string[]) => {
     try {
       const authHeader = req.headers.authorization
       if (!authHeader?.startsWith('Bearer ')) {
-        throw new UnauthorizedError('Authentication invalid')
+        throw new UnauthorizedError('Token no proporcionado')
       }
 
       const token = authHeader.split(' ')[1]
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-        userId: number
-      }
+      const decoded = await authService.verifyToken(token)
 
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          username: true,
-          role: {
-            select: {
-              name: true
-            }
-          },
-          status: true
-        }
-      })
-
-      if (!user || user.status !== 'ACTIVE') {
-        throw new UnauthorizedError('Authentication invalid')
-      }
-
-      if (roles && !roles.includes(user.role.name)) {
-        throw new UnauthorizedError('Unauthorized access')
+      if (roles && !roles.includes(decoded.role)) {
+        throw new UnauthorizedError('No tiene permisos para realizar esta acción')
       }
 
       req.user = {
-        id: user.id,
-        username: user.username,
-        role: user.role.name
+        id: decoded.userId,
+        username: decoded.username,
+        role: decoded.role
       }
 
       next()
     } catch (error) {
+      console.error('Error en middleware de autenticación:', error)
       next(error)
     }
   }
@@ -82,8 +61,8 @@ export const checkOwnershipOrAdmin = (
 
       const id = parseInt(req.params[paramName])
       const record = await (prisma[model] as any).findUnique({
-        where: { id },
-        select: { userId: true }
+        where: {id},
+        select: {userId: true}
       })
 
       if (!record) {

@@ -56,7 +56,7 @@ app.use('/api', permissionRoutes);
 app.use('/api', rolePermissionRoutes);
 app.use('/api', userRoutes);
 app.use('/api', businessTypeRoutes);
-app.use('/api', businessRoutes);
+app.use('/api/businesses', businessRoutes);
 app.use('/api', employeeRoutes)
 app.use('/api', businessOrgChartRoutes);
 app.use('/api', categoryRoutes);

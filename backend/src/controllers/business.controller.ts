@@ -1,115 +1,131 @@
-import {Request, Response} from 'express';
-import prisma from '../config/prisma';
+import {Request, Response, NextFunction} from 'express';
+import {businessService} from '../services/businessService';
+import {UnauthorizedError} from '../errors';
 
-export const getAll = async (_req: Request, res: Response) => {
-  const businesses = await prisma.business.findMany({
-    include: {
-      type: true,
-    },
-    orderBy: {created_at: 'desc'},
-  });
-  res.json(businesses);
-};
+export const create = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const businessData = {
+      ...req.body,
+      created_by: req.user?.id,
+      updated_by: req.user?.id
+    };
 
-export const getById = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  const business = await prisma.business.findUnique({
-    where: {id: Number(id)},
-    include: {type: true},
-  });
-  if (!business) {
-    res.status(404).json({message: 'No encontrado'});
-    return;
+    const business = await businessService.create(businessData);
+    res.status(201).json(business);
+  } catch (error) {
+    next(error);
   }
-  res.json(business);
 };
 
-export const create = async (req: Request, res: Response) => {
-  const {
-    name,
-    legal_name,
-    description,
-    tax_id,
-    email,
-    phone,
-    address,
-    logo_url,
-    website,
-    timezone,
-    currency,
-    status,
-    type_id,
-    created_by,
-    updated_by,
-  } = req.body;
+export const update = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {id} = req.params;
+    const businessData = {
+      ...req.body,
+      updated_by: req.user?.id
+    };
 
-  const business = await prisma.business.create({
-    data: {
-      name,
-      legal_name,
-      description,
-      tax_id,
-      email,
-      phone,
-      address,
-      logo_url,
-      website,
-      timezone,
-      currency,
-      status,
-      type_id,
-      created_by,
-      updated_by,
-    },
-  });
-  res.status(201).json(business);
+    const business = await businessService.update(Number(id), businessData);
+    res.json(business);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const update = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  const {
-    name,
-    legal_name,
-    description,
-    tax_id,
-    email,
-    phone,
-    address,
-    logo_url,
-    website,
-    timezone,
-    currency,
-    status,
-    type_id,
-    updated_by,
-  } = req.body;
-
-  const business = await prisma.business.update({
-    where: {id: Number(id)},
-    data: {
-      name,
-      legal_name,
-      description,
-      tax_id,
-      email,
-      phone,
-      address,
-      logo_url,
-      website,
-      timezone,
-      currency,
-      status,
-      type_id,
-      updated_at: new Date(),
-      updated_by,
-    },
-  });
-
-  res.json(business);
+export const getById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {id} = req.params;
+    const business = await businessService.getById(Number(id));
+    res.json(business);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const remove = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  await prisma.business.delete({where: {id: Number(id)}});
-  res.status(204).send();
+export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {status, type_id, search} = req.query;
+    const businesses = await businessService.getAll({
+      status: status as any,
+      type_id: type_id ? Number(type_id) : undefined,
+      search: search as string
+    });
+    res.json(businesses);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const remove = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {id} = req.params;
+    await businessService.delete(Number(id));
+    res.json({message: 'Negocio desactivado exitosamente'});
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBusinessTypes = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const types = await businessService.getBusinessTypes();
+    res.json(types);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addProduct = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {businessId} = req.params;
+    const {productId, customPrice} = req.body;
+
+    const businessProduct = await businessService.addProductToBusiness(
+      Number(businessId),
+      Number(productId),
+      customPrice
+    );
+    res.status(201).json(businessProduct);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {businessId, productId} = req.params;
+    const {customPrice, actualStock} = req.body;
+
+    const businessProduct = await businessService.updateBusinessProduct(
+      Number(businessId),
+      Number(productId),
+      {customPrice, actualStock}
+    );
+    res.json(businessProduct);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeProduct = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {businessId, productId} = req.params;
+    await businessService.removeProductFromBusiness(
+      Number(businessId),
+      Number(productId)
+    );
+    res.json({message: 'Producto removido del negocio exitosamente'});
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProducts = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {businessId} = req.params;
+    const products = await businessService.getBusinessProducts(Number(businessId));
+    res.json(products);
+  } catch (error) {
+    next(error);
+  }
 };
