@@ -9,9 +9,10 @@
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "test": "jest",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:dbpush": "prisma db push",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "db:seed": "ts-node prisma/seed.ts",
     "swagger": "ts-node src/config/swagger.ts",
     "swagger:json": "ts-node src/scripts/generate-swagger.ts"
   },

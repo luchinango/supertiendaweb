@@ -44,14 +44,33 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 
 export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {status, type_id, search} = req.query;
-    const businesses = await businessService.getAll({
-      status: status as any,
-      type_id: type_id ? Number(type_id) : undefined,
-      search: search as string
-    });
+    const filters: any = {};
+
+    if (req.query.status) {
+      filters.status = req.query.status;
+      console.log('Status filtrado:', filters.status);
+    }
+
+    if (req.query.type_id) {
+      const typeId = Number(req.query.type_id);
+      if (!isNaN(typeId)) {
+        filters.type_id = typeId;
+        console.log('Type ID filtrado:', filters.type_id);
+      }
+    }
+
+    if (req.query.search && typeof req.query.search === 'string') {
+      filters.search = req.query.search.trim();
+      console.log('Search filtrado:', filters.search);
+    }
+
+    const businesses = await businessService.getAll(
+      Object.keys(filters).length > 0 ? filters : undefined
+    );
+
     res.json(businesses);
   } catch (error) {
+    console.error('Error en getAll businesses:', error);
     next(error);
   }
 };

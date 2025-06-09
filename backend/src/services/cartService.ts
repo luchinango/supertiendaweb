@@ -1,89 +1,234 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { PrismaClient, CartStatus, Cart, CartItem } from '@prisma/client';
+import { BusinessError } from '../utils/errors';
 
-interface CartResponse {
-  id: number;
-  customer_id: number;
-  created_at: string;
-}
+const prisma = new PrismaClient();
 
-interface CartItemResponse {
-  id: number;
-  cart_id: number;
-  product_id: number;
-  quantity: number;
-  price_at_time: number;
-  name?: string;
-  price?: number;
-}
+export class CartService {
+  async getActiveCart(userId: number, businessId: number): Promise<Cart | null> {
+    return prisma.cart.findFirst({
+      where: {
+        user_id: userId,
+        business_id: businessId,
+        status: CartStatus.ACTIVE
+      },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                category: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 
-interface CheckoutResponse {
-  message: string;
-  total_cost: number;
-  customer_payment_method: string;
-  transaction: {
-    id: number;
-    customer_id: number;
-    user_id: number;
-    amount: number;
-    type: string;
-    reference: string;
-    created_at: string;
-  };
-}
-
-interface ErrorResponse {
-  error: string;
-  message: string;
-}
-
-type ApiResponse<T> = T | ErrorResponse;
-
-const API_URL: string = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const api: AxiosInstance = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async createCart(userId: number, businessId: number): Promise<Cart> {
+    // Verificar si ya existe un carrito activo
+    const existingCart = await this.getActiveCart(userId, businessId);
+    if (existingCart) {
+      throw new BusinessError('Ya existe un carrito activo para este negocio');
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
-// Funciones específicas para cart.ts
-export const createCart = async (customer_id: number): Promise<ApiResponse<CartResponse>> => {
-  return await api.post('/api/cart', { customer_id }).then((res: AxiosResponse) => res.data);
-};
+    return prisma.cart.create({
+      data: {
+        user_id: userId,
+        business_id: businessId,
+        status: CartStatus.ACTIVE
+      },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                category: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 
-export const addItemToCart = async (item: { cart_id: number; product_id: number; quantity?: number }): Promise<ApiResponse<CartItemResponse>> => {
-  return await api.post('/api/cart/items', item).then((res: AxiosResponse) => res.data);
-};
+  async addItem(cartId: number, productId: number, quantity: number): Promise<CartItem> {
+    // Verificar que el carrito existe y está activo
+    const cart = await prisma.cart.findFirst({
+      where: {
+        id: cartId,
+        status: CartStatus.ACTIVE
+      },
+      include: {
+        business: {
+          include: {
+            products: {
+              where: {
+                product_id: productId
+              }
+            }
+          }
+        }
+      }
+    });
 
-export const fetchCartItems = async (cartId: number): Promise<ApiResponse<CartItemResponse[]>> => {
-  return await api.get(`/api/cart/${cartId}`).then((res: AxiosResponse) => res.data);
-};
+    if (!cart) {
+      throw new BusinessError('Carrito no encontrado o no está activo');
+    }
 
-export const removeItemFromCart = async (
-  cartId: number,
-  itemId: number
-): Promise<ApiResponse<{ message: string; removedItem: CartItemResponse; updatedStock: number }>> => {
-  return await api.delete(`/api/cart/${cartId}/items/${itemId}`).then((res: AxiosResponse) => res.data);
-};
+    // Verificar que el producto pertenece al negocio
+    const businessProduct = cart.business.products[0];
+    if (!businessProduct) {
+      throw new BusinessError('El producto no está disponible en este negocio');
+    }
 
-export const checkoutCart = async (
-  cartId: number,
-  checkoutData: { customer_payment_method: 'cash' | 'credit'; user_id: number }
-): Promise<ApiResponse<CheckoutResponse>> => {
-  return await api.post(`/api/cart/${cartId}/checkout`, checkoutData).then((res: AxiosResponse) => res.data);
-};
+    // Verificar stock
+    if (businessProduct.actualStock < quantity) {
+      throw new BusinessError('Stock insuficiente');
+    }
 
-export default api;
+    // Verificar si el producto ya está en el carrito
+    const existingItem = await prisma.cartItem.findUnique({
+      where: {
+        cart_id_product_id: {
+          cart_id: cartId,
+          product_id: productId
+        }
+      }
+    });
+
+    if (existingItem) {
+      // Actualizar cantidad
+      return prisma.cartItem.update({
+        where: {
+          id: existingItem.id
+        },
+        data: {
+          quantity: existingItem.quantity + quantity,
+          price: businessProduct.customPrice
+        }
+      });
+    }
+
+    // Agregar nuevo item
+    return prisma.cartItem.create({
+      data: {
+        cart_id: cartId,
+        product_id: productId,
+        quantity: quantity,
+        price: businessProduct.customPrice
+      }
+    });
+  }
+
+  async updateItemQuantity(cartId: number, productId: number, quantity: number): Promise<CartItem> {
+    const cartItem = await prisma.cartItem.findUnique({
+      where: {
+        cart_id_product_id: {
+          cart_id: cartId,
+          product_id: productId
+        }
+      },
+      include: {
+        cart: {
+          include: {
+            business: {
+              include: {
+                products: {
+                  where: {
+                    product_id: productId
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!cartItem) {
+      throw new BusinessError('Item no encontrado en el carrito');
+    }
+
+    if (cartItem.cart.status !== CartStatus.ACTIVE) {
+      throw new BusinessError('El carrito no está activo');
+    }
+
+    // Verificar stock
+    const businessProduct = cartItem.cart.business.products[0];
+    if (businessProduct.actualStock < quantity) {
+      throw new BusinessError('Stock insuficiente');
+    }
+
+    return prisma.cartItem.update({
+      where: {
+        id: cartItem.id
+      },
+      data: {
+        quantity: quantity,
+        price: businessProduct.customPrice
+      }
+    });
+  }
+
+  async removeItem(cartId: number, productId: number): Promise<void> {
+    const cartItem = await prisma.cartItem.findUnique({
+      where: {
+        cart_id_product_id: {
+          cart_id: cartId,
+          product_id: productId
+        }
+      },
+      include: {
+        cart: true
+      }
+    });
+
+    if (!cartItem) {
+      throw new BusinessError('Item no encontrado en el carrito');
+    }
+
+    if (cartItem.cart.status !== CartStatus.ACTIVE) {
+      throw new BusinessError('El carrito no está activo');
+    }
+
+    await prisma.cartItem.delete({
+      where: {
+        id: cartItem.id
+      }
+    });
+  }
+
+  async clearCart(cartId: number): Promise<void> {
+    const cart = await prisma.cart.findFirst({
+      where: {
+        id: cartId,
+        status: CartStatus.ACTIVE
+      }
+    });
+
+    if (!cart) {
+      throw new BusinessError('Carrito no encontrado o no está activo');
+    }
+
+    await prisma.cartItem.deleteMany({
+      where: {
+        cart_id: cartId
+      }
+    });
+  }
+
+  async getCartTotal(cartId: number): Promise<number> {
+    const items = await prisma.cartItem.findMany({
+      where: {
+        cart_id: cartId
+      }
+    });
+
+    return items.reduce((total, item) => {
+      return total + (Number(item.price) * item.quantity);
+    }, 0);
+  }
+}
+
+export const cartService = new CartService();

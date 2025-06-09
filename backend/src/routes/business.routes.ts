@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import * as businessController from '../controllers/business.controller';
-import { authenticate } from '../middlewares/authMiddleware';
+import {authenticate} from '../middlewares/authMiddleware';
 
 const router = Router();
 
@@ -13,7 +13,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/business:
+ * /api/businesses:
  *   post:
  *     summary: Crear un nuevo negocio
  *     tags: [Business]
@@ -54,11 +54,11 @@ const router = Router();
  *               type_id:
  *                 type: integer
  */
-router.post('/', authenticate(['ADMIN']), businessController.create);
+router.post('/businesses', authenticate(['ADMIN']), businessController.create);
 
 /**
  * @swagger
- * /api/business:
+ * /api/businesses:
  *   get:
  *     summary: Obtener lista de negocios
  *     tags: [Business]
@@ -69,6 +69,7 @@ router.post('/', authenticate(['ADMIN']), businessController.create);
  *         name: status
  *         schema:
  *           type: string
+ *           enum: [ACTIVE, INACTIVE, SUSPENDED]
  *         description: Filtrar por estado
  *       - in: query
  *         name: type_id
@@ -80,12 +81,25 @@ router.post('/', authenticate(['ADMIN']), businessController.create);
  *         schema:
  *           type: string
  *         description: Buscar por nombre, razón social o NIT
+ *     responses:
+ *       200:
+ *         description: Lista de negocios obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error del servidor
  */
-router.get('/', authenticate(), businessController.getAll);
+router.get('/businesses', authenticate(), businessController.getAll);
 
 /**
  * @swagger
- * /api/business/{id}:
+ * /api/businesses/{id}:
  *   get:
  *     summary: Obtener un negocio por ID
  *     tags: [Business]
@@ -97,12 +111,25 @@ router.get('/', authenticate(), businessController.getAll);
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       200:
+ *         description: Negocio obtenido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Negocio no encontrado
+ *       500:
+ *         description: Error del servidor
  */
-router.get('/:id', authenticate(), businessController.getById);
+router.get('/businesses/:id', authenticate(), businessController.getById);
 
 /**
  * @swagger
- * /api/business/{id}:
+ * /api/businesses/{id}:
  *   put:
  *     summary: Actualizar un negocio
  *     tags: [Business]
@@ -114,12 +141,25 @@ router.get('/:id', authenticate(), businessController.getById);
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       200:
+ *         description: Negocio actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Negocio no encontrado
+ *       500:
+ *         description: Error del servidor
  */
-router.put('/:id', authenticate(['ADMIN']), businessController.update);
+router.put('/businesses/:id', authenticate(['ADMIN']), businessController.update);
 
 /**
  * @swagger
- * /api/business/{id}:
+ * /api/businesses/{id}:
  *   delete:
  *     summary: Desactivar un negocio
  *     tags: [Business]
@@ -131,23 +171,49 @@ router.put('/:id', authenticate(['ADMIN']), businessController.update);
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       200:
+ *         description: Negocio desactivado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Negocio no encontrado
+ *       500:
+ *         description: Error del servidor
  */
-router.delete('/:id', authenticate(['ADMIN']), businessController.remove);
+router.delete('/businesses/:id', authenticate(['ADMIN']), businessController.remove);
 
 /**
  * @swagger
- * /api/business/types:
+ * /api/businesses/types:
  *   get:
  *     summary: Obtener tipos de negocio
  *     tags: [Business]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tipos de negocio obtenidos exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error del servidor
  */
-router.get('/types', authenticate(), businessController.getBusinessTypes);
+router.get('/business/types', authenticate(), businessController.getBusinessTypes);
 
 /**
  * @swagger
- * /api/business/{businessId}/products:
+ * /api/businesses/{businessId}/products:
  *   post:
  *     summary: Agregar producto a un negocio
  *     tags: [Business]
@@ -159,12 +225,25 @@ router.get('/types', authenticate(), businessController.getBusinessTypes);
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       201:
+ *         description: Producto agregado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Negocio no encontrado
+ *       500:
+ *         description: Error del servidor
  */
-router.post('/:businessId/products', authenticate(['ADMIN']), businessController.addProduct);
+router.post('/businesses/:businessId/products', authenticate(['ADMIN']), businessController.addProduct);
 
 /**
  * @swagger
- * /api/business/{businessId}/products/{productId}:
+ * /api/businesses/{businessId}/products/{productId}:
  *   put:
  *     summary: Actualizar producto en un negocio
  *     tags: [Business]
@@ -181,12 +260,25 @@ router.post('/:businessId/products', authenticate(['ADMIN']), businessController
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       200:
+ *         description: Producto actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Producto o negocio no encontrado
+ *       500:
+ *         description: Error del servidor
  */
-router.put('/:businessId/products/:productId', authenticate(['ADMIN']), businessController.updateProduct);
+router.put('/businesses/:businessId/products/:productId', authenticate(['ADMIN']), businessController.updateProduct);
 
 /**
  * @swagger
- * /api/business/{businessId}/products/{productId}:
+ * /api/businesses/{businessId}/products/{productId}:
  *   delete:
  *     summary: Remover producto de un negocio
  *     tags: [Business]
@@ -203,12 +295,25 @@ router.put('/:businessId/products/:productId', authenticate(['ADMIN']), business
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       200:
+ *         description: Producto removido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Producto o negocio no encontrado
+ *       500:
+ *         description: Error del servidor
  */
-router.delete('/:businessId/products/:productId', authenticate(['ADMIN']), businessController.removeProduct);
+router.delete('/businesses/:businessId/products/:productId', authenticate(['ADMIN']), businessController.removeProduct);
 
 /**
  * @swagger
- * /api/business/{businessId}/products:
+ * /api/businesses/{businessId}/products:
  *   get:
  *     summary: Obtener productos de un negocio
  *     tags: [Business]
@@ -220,7 +325,22 @@ router.delete('/:businessId/products/:productId', authenticate(['ADMIN']), busin
  *         required: true
  *         schema:
  *           type: integer
+ *     responses:
+ *       200:
+ *         description: Productos obtenidos exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Negocio no encontrado
+ *       500:
+ *         description: Error del servidor
  */
-router.get('/:businessId/products', authenticate(), businessController.getProducts);
+router.get('/businesses/:businessId/products', authenticate(), businessController.getProducts);
 
 export default router;
