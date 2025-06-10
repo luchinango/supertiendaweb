@@ -2,30 +2,44 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
-    "lib": ["ES2020"],
-    "rootDir": "./src",
+    "lib": [
+      "ES2020"
+    ],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "sourceMap": true,
+    "rootDir": ".",
     "outDir": "./dist",
     "esModuleInterop": true,
     "strict": true,
     "moduleResolution": "node",
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "*": ["*"],
-      "@prisma/client": ["../prisma/generated"]
+      "*": [
+        "*"
+      ],
+      "@prisma/client": [
+        "./prisma/generated"
+      ],
+      "prisma/generated": [
+        "./prisma/generated"
+      ]
     },
     "typeRoots": [
-      "./types",
-      "./node_modules/@types"
+      "./node_modules/@types",
+      "./src/types"
     ]
   },
   "include": [
-    "src/**/*",   // Tus archivos fuente
-    "types/**/*"  // Añade esto para asegurar que TS vea la carpeta
+    "src/**/*",
+    "src/types/**/*",
+    "prisma/generated/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist" // Excluye la carpeta de salida
+    "dist"
   ]
 }

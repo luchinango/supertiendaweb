@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "dev": "npx ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
+    "build": "npm run db:generate && tsc",
+    "build:prod": "node scripts/build.js",
+    "build:full": "npm run clean && npm run db:generate && npm run db:push && tsc",
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "test": "jest",
@@ -14,7 +16,8 @@
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
     "swagger": "ts-node src/config/swagger.ts",
-    "swagger:json": "ts-node src/scripts/generate-swagger.ts"
+    "swagger:json": "ts-node scripts/generate-swagger.ts",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",

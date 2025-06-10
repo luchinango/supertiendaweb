@@ -21,7 +21,7 @@
           "username": {
             "type": "string"
           },
-          "password_hash": {
+          "passwordHash": {
             "type": "string"
           },
           "phone": {
@@ -43,18 +43,18 @@
               "DELETED"
             ]
           },
-          "role_id": {
+          "roleId": {
             "type": "integer"
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "last_login": {
+          "lastLogin": {
             "type": [
               "string",
               "null"
@@ -98,18 +98,6 @@
               "$ref": "#/definitions/Cart"
             }
           },
-          "inventoryTransactions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/InventoryTransaction"
-            }
-          },
-          "businesses": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/Business"
-            }
-          },
           "purchaseOrders": {
             "type": "array",
             "items": {
@@ -125,8 +113,8 @@
         },
         "required": [
           "username",
-          "password_hash",
-          "role_id"
+          "passwordHash",
+          "roleId"
         ]
       },
       "Role": {
@@ -147,15 +135,15 @@
               "null"
             ]
           },
-          "is_active": {
+          "isActive": {
             "type": "boolean",
             "default": true
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -199,11 +187,11 @@
             "type": "string",
             "default": ""
           },
-          "is_active": {
+          "isActive": {
             "type": "boolean",
             "default": true
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -225,13 +213,13 @@
           "id": {
             "type": "integer"
           },
-          "role_id": {
+          "roleId": {
             "type": "integer"
           },
-          "permission_id": {
+          "permissionId": {
             "type": "integer"
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -243,8 +231,8 @@
           }
         },
         "required": [
-          "role_id",
-          "permission_id"
+          "roleId",
+          "permissionId"
         ]
       },
       "Business": {
@@ -256,7 +244,7 @@
           "name": {
             "type": "string"
           },
-          "legal_name": {
+          "legalName": {
             "type": [
               "string",
               "null"
@@ -274,7 +262,7 @@
               "null"
             ]
           },
-          "business_type": {
+          "businessType": {
             "type": "string",
             "default": "PERSONA_NATURAL",
             "enum": [
@@ -330,13 +318,13 @@
             "type": "string",
             "default": "Bolivia"
           },
-          "postal_code": {
+          "postalCode": {
             "type": [
               "string",
               "null"
             ]
           },
-          "logo_url": {
+          "logoUrl": {
             "type": [
               "string",
               "null"
@@ -361,7 +349,7 @@
               "EUR"
             ]
           },
-          "default_tax_rate": {
+          "defaultTaxRate": {
             "type": "number",
             "default": 13
           },
@@ -375,30 +363,30 @@
               "PENDING"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -428,12 +416,6 @@
               "$ref": "#/definitions/PurchaseOrder"
             }
           },
-          "inventoryTransactions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/InventoryTransaction"
-            }
-          },
           "fiscalSettings": {
             "anyOf": [
               {
@@ -443,12 +425,6 @@
                 "type": "null"
               }
             ]
-          },
-          "products": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/Product"
-            }
           },
           "auditLogs": {
             "type": "array",
@@ -479,22 +455,6 @@
             "items": {
               "$ref": "#/definitions/Customer"
             }
-          },
-          "User": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/User"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "userId": {
-            "type": [
-              "integer",
-              "null"
-            ]
           }
         },
         "required": [
@@ -507,76 +467,76 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer"
           },
-          "authorization_number": {
+          "authorizationNumber": {
             "type": "string"
           },
-          "activity_code": {
+          "activityCode": {
             "type": "string"
           },
-          "law_number": {
+          "lawNumber": {
             "type": "string"
           },
-          "invoice_series": {
+          "invoiceSeries": {
             "type": "string"
           },
-          "invoice_start_number": {
+          "invoiceStartNumber": {
             "type": "integer",
             "default": 1
           },
-          "invoice_current_number": {
+          "invoiceCurrentNumber": {
             "type": "integer",
             "default": 1
           },
-          "invoice_end_number": {
+          "invoiceEndNumber": {
             "type": "integer"
           },
-          "is_electronic": {
+          "isElectronic": {
             "type": "boolean",
             "default": true
           },
-          "siat_url": {
+          "siatUrl": {
             "type": [
               "string",
               "null"
             ]
           },
-          "siat_token": {
+          "siatToken": {
             "type": [
               "string",
               "null"
             ]
           },
-          "siat_environment": {
+          "siatEnvironment": {
             "type": "string",
             "default": "TEST"
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -587,12 +547,12 @@
           }
         },
         "required": [
-          "business_id",
-          "authorization_number",
-          "activity_code",
-          "law_number",
-          "invoice_series",
-          "invoice_end_number"
+          "businessId",
+          "authorizationNumber",
+          "activityCode",
+          "lawNumber",
+          "invoiceSeries",
+          "invoiceEndNumber"
         ]
       },
       "Employee": {
@@ -601,17 +561,17 @@
           "id": {
             "type": "integer"
           },
-          "user_id": {
+          "userId": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer",
             "default": 1
           },
-          "first_name": {
+          "firstName": {
             "type": "string"
           },
-          "last_name": {
+          "lastName": {
             "type": [
               "string",
               "null"
@@ -626,11 +586,11 @@
               "null"
             ]
           },
-          "start_date": {
+          "startDate": {
             "type": "string",
             "format": "date-time"
           },
-          "end_date": {
+          "endDate": {
             "type": [
               "string",
               "null"
@@ -663,7 +623,7 @@
               "UNSPECIFIED"
             ]
           },
-          "birth_date": {
+          "birthDate": {
             "type": [
               "string",
               "null"
@@ -688,48 +648,48 @@
               "null"
             ]
           },
-          "emergency_contact": {
+          "emergencyContact": {
             "type": [
               "string",
               "null"
             ]
           },
-          "emergency_phone": {
+          "emergencyPhone": {
             "type": [
               "string",
               "null"
             ]
           },
-          "ci_number": {
+          "ciNumber": {
             "type": [
               "string",
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -743,10 +703,10 @@
           }
         },
         "required": [
-          "user_id",
-          "first_name",
+          "userId",
+          "firstName",
           "position",
-          "start_date"
+          "startDate"
         ]
       },
       "Category": {
@@ -764,44 +724,44 @@
               "null"
             ]
           },
-          "parent_id": {
+          "parentId": {
             "type": [
               "integer",
               "null"
             ]
           },
-          "is_active": {
+          "isActive": {
             "type": "boolean",
             "default": true
           },
-          "sort_order": {
+          "sortOrder": {
             "type": "integer",
             "default": 0
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -840,11 +800,7 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
-            "type": "integer",
-            "default": 1
-          },
-          "category_id": {
+          "categoryId": {
             "type": "integer"
           },
           "sku": {
@@ -899,15 +855,15 @@
               "null"
             ]
           },
-          "cost_price": {
+          "costPrice": {
             "type": "number",
             "default": 0
           },
-          "selling_price": {
+          "sellingPrice": {
             "type": "number",
             "default": 0
           },
-          "tax_type": {
+          "taxType": {
             "type": "string",
             "default": "IVA_13",
             "enum": [
@@ -919,25 +875,25 @@
               "IUE"
             ]
           },
-          "tax_rate": {
+          "taxRate": {
             "type": "number",
             "default": 13
           },
-          "min_stock": {
+          "minStock": {
             "type": "integer",
             "default": 0
           },
-          "max_stock": {
+          "maxStock": {
             "type": [
               "integer",
               "null"
             ]
           },
-          "reorder_point": {
+          "reorderPoint": {
             "type": "integer",
             "default": 0
           },
-          "is_active": {
+          "isActive": {
             "type": "boolean",
             "default": true
           },
@@ -951,44 +907,41 @@
               "OUT_OF_STOCK"
             ]
           },
-          "expiry_date": {
+          "expiryDate": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
             ]
-          },
-          "business": {
-            "$ref": "#/definitions/Business"
           },
           "category": {
             "$ref": "#/definitions/Category"
@@ -1016,16 +969,10 @@
             "items": {
               "$ref": "#/definitions/PurchaseOrderItem"
             }
-          },
-          "inventoryTransactions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/InventoryTransaction"
-            }
           }
         },
         "required": [
-          "category_id",
+          "categoryId",
           "name"
         ]
       },
@@ -1035,42 +982,39 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer"
           },
-          "product_id": {
+          "productId": {
             "type": "integer"
           },
-          "custom_price": {
-            "type": [
-              "number",
-              "null"
-            ]
+          "customPrice": {
+            "type": "number"
           },
-          "current_stock": {
+          "currentStock": {
             "type": "integer",
             "default": 0
           },
-          "reserved_stock": {
+          "reservedStock": {
             "type": "integer",
             "default": 0
           },
-          "available_stock": {
+          "availableStock": {
             "type": "integer",
             "default": 0
           },
-          "last_restock": {
+          "lastRestock": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -1082,8 +1026,9 @@
           }
         },
         "required": [
-          "business_id",
-          "product_id"
+          "businessId",
+          "productId",
+          "customPrice"
         ]
       },
       "Supplier": {
@@ -1092,7 +1037,7 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer",
             "default": 1
           },
@@ -1105,7 +1050,7 @@
           "name": {
             "type": "string"
           },
-          "document_type": {
+          "documentType": {
             "type": "string",
             "default": "NIT",
             "enum": [
@@ -1115,13 +1060,13 @@
               "FOREIGN_ID"
             ]
           },
-          "document_number": {
+          "documentNumber": {
             "type": [
               "string",
               "null"
             ]
           },
-          "contact_person": {
+          "contactPerson": {
             "type": [
               "string",
               "null"
@@ -1173,23 +1118,23 @@
             "type": "string",
             "default": "Bolivia"
           },
-          "postal_code": {
+          "postalCode": {
             "type": [
               "string",
               "null"
             ]
           },
-          "payment_terms": {
+          "paymentTerms": {
             "type": "integer",
             "default": 30
           },
-          "credit_limit": {
+          "creditLimit": {
             "type": [
               "number",
               "null"
             ]
           },
-          "current_balance": {
+          "currentBalance": {
             "type": "number",
             "default": 0
           },
@@ -1208,30 +1153,30 @@
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -1263,20 +1208,20 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer",
             "default": 1
           },
-          "first_name": {
+          "firstName": {
             "type": "string"
           },
-          "last_name": {
+          "lastName": {
             "type": [
               "string",
               "null"
             ]
           },
-          "document_type": {
+          "documentType": {
             "type": "string",
             "default": "CI",
             "enum": [
@@ -1286,7 +1231,7 @@
               "FOREIGN_ID"
             ]
           },
-          "document_number": {
+          "documentNumber": {
             "type": [
               "string",
               "null"
@@ -1338,54 +1283,54 @@
             "type": "string",
             "default": "Bolivia"
           },
-          "postal_code": {
+          "postalCode": {
             "type": [
               "string",
               "null"
             ]
           },
-          "credit_limit": {
+          "creditLimit": {
             "type": [
               "number",
               "null"
             ]
           },
-          "current_balance": {
+          "currentBalance": {
             "type": "number",
             "default": 0
           },
-          "loyalty_points": {
+          "loyaltyPoints": {
             "type": "integer",
             "default": 0
           },
-          "is_active": {
+          "isActive": {
             "type": "boolean",
             "default": true
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -1414,7 +1359,7 @@
           }
         },
         "required": [
-          "first_name"
+          "firstName"
         ]
       },
       "PurchaseOrder": {
@@ -1423,14 +1368,14 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer",
             "default": 1
           },
-          "supplier_id": {
+          "supplierId": {
             "type": "integer"
           },
-          "po_number": {
+          "poNumber": {
             "type": [
               "string",
               "null"
@@ -1449,18 +1394,18 @@
               "CANCELLED"
             ]
           },
-          "order_date": {
+          "orderDate": {
             "type": "string",
             "format": "date-time"
           },
-          "expected_date": {
+          "expectedDate": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "received_date": {
+          "receivedDate": {
             "type": [
               "string",
               "null"
@@ -1471,11 +1416,11 @@
             "type": "number",
             "default": 0
           },
-          "tax_amount": {
+          "taxAmount": {
             "type": "number",
             "default": 0
           },
-          "total_amount": {
+          "totalAmount": {
             "type": "number",
             "default": 0
           },
@@ -1485,36 +1430,36 @@
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
             ]
           },
-          "approved_by": {
+          "approvedBy": {
             "type": [
               "integer",
               "null"
@@ -1556,7 +1501,7 @@
           }
         },
         "required": [
-          "supplier_id"
+          "supplierId"
         ]
       },
       "PurchaseOrderItem": {
@@ -1565,23 +1510,23 @@
           "id": {
             "type": "integer"
           },
-          "purchase_order_id": {
+          "purchaseOrderId": {
             "type": "integer"
           },
-          "product_id": {
+          "productId": {
             "type": "integer"
           },
           "quantity": {
             "type": "integer"
           },
-          "unit_cost": {
+          "unitCost": {
             "type": "number"
           },
-          "received_quantity": {
+          "receivedQuantity": {
             "type": "integer",
             "default": 0
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -1593,10 +1538,10 @@
           }
         },
         "required": [
-          "purchase_order_id",
-          "product_id",
+          "purchaseOrderId",
+          "productId",
           "quantity",
-          "unit_cost"
+          "unitCost"
         ]
       },
       "SupplierDebt": {
@@ -1605,10 +1550,10 @@
           "id": {
             "type": "integer"
           },
-          "supplier_id": {
+          "supplierId": {
             "type": "integer"
           },
-          "purchase_order_id": {
+          "purchaseOrderId": {
             "type": [
               "integer",
               "null"
@@ -1617,23 +1562,23 @@
           "amount": {
             "type": "number"
           },
-          "paid_amount": {
+          "paidAmount": {
             "type": "number",
             "default": 0
           },
-          "due_date": {
+          "dueDate": {
             "type": "string",
             "format": "date-time"
           },
-          "is_paid": {
+          "isPaid": {
             "type": "boolean",
             "default": false
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "paid_at": {
+          "paidAt": {
             "type": [
               "string",
               "null"
@@ -1655,9 +1600,9 @@
           }
         },
         "required": [
-          "supplier_id",
+          "supplierId",
           "amount",
-          "due_date"
+          "dueDate"
         ]
       },
       "Cart": {
@@ -1666,13 +1611,13 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer"
           },
-          "user_id": {
+          "userId": {
             "type": "integer"
           },
-          "customer_id": {
+          "customerId": {
             "type": [
               "integer",
               "null"
@@ -1692,19 +1637,19 @@
             "type": "number",
             "default": 0
           },
-          "tax_amount": {
+          "taxAmount": {
             "type": "number",
             "default": 0
           },
-          "total_amount": {
+          "totalAmount": {
             "type": "number",
             "default": 0
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -1742,8 +1687,8 @@
           }
         },
         "required": [
-          "business_id",
-          "user_id"
+          "businessId",
+          "userId"
         ]
       },
       "CartItem": {
@@ -1752,34 +1697,34 @@
           "id": {
             "type": "integer"
           },
-          "cart_id": {
+          "cartId": {
             "type": "integer"
           },
-          "product_id": {
+          "productId": {
             "type": "integer"
           },
           "quantity": {
             "type": "integer"
           },
-          "unit_price": {
+          "unitPrice": {
             "type": "number"
           },
-          "tax_rate": {
+          "taxRate": {
             "type": "number",
             "default": 13
           },
-          "tax_amount": {
+          "taxAmount": {
             "type": "number",
             "default": 0
           },
-          "total_price": {
+          "totalPrice": {
             "type": "number"
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -1791,11 +1736,11 @@
           }
         },
         "required": [
-          "cart_id",
-          "product_id",
+          "cartId",
+          "productId",
           "quantity",
-          "unit_price",
-          "total_price"
+          "unitPrice",
+          "totalPrice"
         ]
       },
       "Sale": {
@@ -1804,25 +1749,25 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer"
           },
-          "cart_id": {
+          "cartId": {
             "type": "integer"
           },
-          "user_id": {
+          "userId": {
             "type": "integer"
           },
-          "customer_id": {
+          "customerId": {
             "type": [
               "integer",
               "null"
             ]
           },
-          "invoice_number": {
+          "invoiceNumber": {
             "type": "string"
           },
-          "invoice_type": {
+          "invoiceType": {
             "type": "string",
             "default": "FACTURA",
             "enum": [
@@ -1835,13 +1780,13 @@
               "NOTA_SIMPLE"
             ]
           },
-          "authorization_code": {
+          "authorizationCode": {
             "type": [
               "string",
               "null"
             ]
           },
-          "control_code": {
+          "controlCode": {
             "type": [
               "string",
               "null"
@@ -1861,17 +1806,17 @@
           "subtotal": {
             "type": "number"
           },
-          "tax_amount": {
+          "taxAmount": {
             "type": "number"
           },
-          "discount_amount": {
+          "discountAmount": {
             "type": "number",
             "default": 0
           },
-          "total_amount": {
+          "totalAmount": {
             "type": "number"
           },
-          "payment_method": {
+          "paymentMethod": {
             "type": "string",
             "enum": [
               "CASH",
@@ -1885,7 +1830,7 @@
               "ELECTRONIC_WALLET"
             ]
           },
-          "payment_status": {
+          "paymentStatus": {
             "type": "string",
             "default": "PENDING",
             "enum": [
@@ -1902,30 +1847,30 @@
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -1980,14 +1925,14 @@
           }
         },
         "required": [
-          "business_id",
-          "cart_id",
-          "user_id",
-          "invoice_number",
+          "businessId",
+          "cartId",
+          "userId",
+          "invoiceNumber",
           "subtotal",
-          "tax_amount",
-          "total_amount",
-          "payment_method"
+          "taxAmount",
+          "totalAmount",
+          "paymentMethod"
         ]
       },
       "SaleItem": {
@@ -1996,33 +1941,33 @@
           "id": {
             "type": "integer"
           },
-          "sale_id": {
+          "saleId": {
             "type": "integer"
           },
-          "product_id": {
+          "productId": {
             "type": "integer"
           },
           "quantity": {
             "type": "integer"
           },
-          "unit_price": {
+          "unitPrice": {
             "type": "number"
           },
-          "tax_rate": {
+          "taxRate": {
             "type": "number",
             "default": 13
           },
-          "tax_amount": {
+          "taxAmount": {
             "type": "number"
           },
-          "discount_amount": {
+          "discountAmount": {
             "type": "number",
             "default": 0
           },
-          "total_price": {
+          "totalPrice": {
             "type": "number"
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -2034,12 +1979,12 @@
           }
         },
         "required": [
-          "sale_id",
-          "product_id",
+          "saleId",
+          "productId",
           "quantity",
-          "unit_price",
-          "tax_amount",
-          "total_price"
+          "unitPrice",
+          "taxAmount",
+          "totalPrice"
         ]
       },
       "CustomerDebt": {
@@ -2048,10 +1993,10 @@
           "id": {
             "type": "integer"
           },
-          "customer_id": {
+          "customerId": {
             "type": "integer"
           },
-          "sale_id": {
+          "saleId": {
             "type": [
               "integer",
               "null"
@@ -2060,23 +2005,23 @@
           "amount": {
             "type": "number"
           },
-          "paid_amount": {
+          "paidAmount": {
             "type": "number",
             "default": 0
           },
-          "due_date": {
+          "dueDate": {
             "type": "string",
             "format": "date-time"
           },
-          "is_paid": {
+          "isPaid": {
             "type": "boolean",
             "default": false
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "paid_at": {
+          "paidAt": {
             "type": [
               "string",
               "null"
@@ -2098,9 +2043,9 @@
           }
         },
         "required": [
-          "customer_id",
+          "customerId",
           "amount",
-          "due_date"
+          "dueDate"
         ]
       },
       "CashRegister": {
@@ -2109,32 +2054,32 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer"
           },
-          "user_id": {
+          "userId": {
             "type": "integer"
           },
-          "register_number": {
+          "registerNumber": {
             "type": "string"
           },
-          "opening_amount": {
+          "openingAmount": {
             "type": "number"
           },
-          "closing_amount": {
+          "closingAmount": {
             "type": [
               "number",
               "null"
             ]
           },
-          "current_amount": {
+          "currentAmount": {
             "type": "number"
           },
-          "opening_date": {
+          "openingDate": {
             "type": "string",
             "format": "date-time"
           },
-          "closing_date": {
+          "closingDate": {
             "type": [
               "string",
               "null"
@@ -2156,30 +2101,30 @@
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "deleted_at": {
+          "deletedAt": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "created_by": {
+          "createdBy": {
             "type": "integer",
             "default": 0
           },
-          "updated_by": {
+          "updatedBy": {
             "type": "integer",
             "default": 0
           },
-          "deleted_by": {
+          "deletedBy": {
             "type": [
               "integer",
               "null"
@@ -2205,11 +2150,11 @@
           }
         },
         "required": [
-          "business_id",
-          "user_id",
-          "register_number",
-          "opening_amount",
-          "current_amount"
+          "businessId",
+          "userId",
+          "registerNumber",
+          "openingAmount",
+          "currentAmount"
         ]
       },
       "InventoryTransaction": {
@@ -2218,16 +2163,16 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": "integer"
           },
-          "product_id": {
+          "productId": {
             "type": "integer"
           },
-          "user_id": {
+          "userId": {
             "type": "integer"
           },
-          "transaction_type": {
+          "transactionType": {
             "type": "string",
             "enum": [
               "PURCHASE",
@@ -2244,19 +2189,19 @@
           "quantity": {
             "type": "integer"
           },
-          "unit_cost": {
+          "unitCost": {
             "type": "number"
           },
-          "total_cost": {
+          "totalCost": {
             "type": "number"
           },
-          "reference_id": {
+          "referenceId": {
             "type": [
               "integer",
               "null"
             ]
           },
-          "reference_type": {
+          "referenceType": {
             "type": [
               "string",
               "null"
@@ -2268,28 +2213,19 @@
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "business": {
-            "$ref": "#/definitions/Business"
-          },
-          "product": {
-            "$ref": "#/definitions/Product"
-          },
-          "user": {
-            "$ref": "#/definitions/User"
           }
         },
         "required": [
-          "business_id",
-          "product_id",
-          "user_id",
-          "transaction_type",
+          "businessId",
+          "productId",
+          "userId",
+          "transactionType",
           "quantity",
-          "unit_cost",
-          "total_cost"
+          "unitCost",
+          "totalCost"
         ]
       },
       "AuditLog": {
@@ -2298,13 +2234,13 @@
           "id": {
             "type": "integer"
           },
-          "business_id": {
+          "businessId": {
             "type": [
               "integer",
               "null"
             ]
           },
-          "user_id": {
+          "userId": {
             "type": "integer"
           },
           "action": {
@@ -2313,10 +2249,10 @@
           "entity": {
             "type": "string"
           },
-          "entity_id": {
+          "entityId": {
             "type": "integer"
           },
-          "old_values": {
+          "oldValues": {
             "type": [
               "number",
               "string",
@@ -2326,7 +2262,7 @@
               "null"
             ]
           },
-          "new_values": {
+          "newValues": {
             "type": [
               "number",
               "string",
@@ -2336,19 +2272,19 @@
               "null"
             ]
           },
-          "ip_address": {
+          "ipAddress": {
             "type": [
               "string",
               "null"
             ]
           },
-          "user_agent": {
+          "userAgent": {
             "type": [
               "string",
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -2367,10 +2303,10 @@
           }
         },
         "required": [
-          "user_id",
+          "userId",
           "action",
           "entity",
-          "entity_id"
+          "entityId"
         ]
       },
       "AuditCashRegister": {
@@ -2379,10 +2315,10 @@
           "id": {
             "type": "integer"
           },
-          "cash_register_id": {
+          "cashRegisterId": {
             "type": "integer"
           },
-          "user_id": {
+          "userId": {
             "type": "integer"
           },
           "action": {
@@ -2400,7 +2336,7 @@
               "null"
             ]
           },
-          "created_at": {
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           },
@@ -2412,8 +2348,8 @@
           }
         },
         "required": [
-          "cash_register_id",
-          "user_id",
+          "cashRegisterId",
+          "userId",
           "action"
         ]
       }
@@ -3078,40 +3014,6 @@
         }
       }
     },
-    "/api/businesses/types": {
-      "get": {
-        "summary": "Obtener tipos de negocio",
-        "tags": [
-          "Business"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tipos de negocio obtenidos exitosamente",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No autorizado"
-          },
-          "500": {
-            "description": "Error del servidor"
-          }
-        }
-      }
-    },
     "/api/businesses/{businessId}/products": {
       "post": {
         "summary": "Agregar producto a un negocio",
@@ -3303,161 +3205,6 @@
         }
       }
     },
-    "/api/business-org-charts": {
-      "get": {
-        "summary": "Listar todos los organigramas",
-        "tags": [
-          "BusinessOrgCharts"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de organigramas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BusinessOrgChart"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear un nuevo organigrama",
-        "tags": [
-          "BusinessOrgCharts"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "businessId",
-                  "userId",
-                  "position"
-                ],
-                "properties": {
-                  "businessId": {
-                    "type": "integer"
-                  },
-                  "userId": {
-                    "type": "integer"
-                  },
-                  "position": {
-                    "type": "string"
-                  },
-                  "parentPositionId": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Organigrama creado"
-          }
-        }
-      }
-    },
-    "/api/business-org-charts/{id}": {
-      "get": {
-        "summary": "Obtener un organigrama por ID",
-        "tags": [
-          "BusinessOrgCharts"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Organigrama encontrado"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar un organigrama",
-        "tags": [
-          "BusinessOrgCharts"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "businessId": {
-                    "type": "integer"
-                  },
-                  "userId": {
-                    "type": "integer"
-                  },
-                  "position": {
-                    "type": "string"
-                  },
-                  "parentPositionId": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Organigrama actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar un organigrama",
-        "tags": [
-          "BusinessOrgCharts"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Eliminado exitosamente"
-          }
-        }
-      }
-    },
     "/api/business-products": {
       "get": {
         "summary": "Listar todos los productos asignados a negocios",
@@ -3606,128 +3353,6 @@
         "responses": {
           "204": {
             "description": "Eliminado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/business-types": {
-      "get": {
-        "summary": "Listar todos los tipos de negocio",
-        "tags": [
-          "BusinessTypes"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de tipos de negocio",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BusinessType"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear tipo de negocio",
-        "tags": [
-          "BusinessTypes"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BusinessType"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Tipo creado"
-          }
-        }
-      }
-    },
-    "/api/business-types/{id}": {
-      "get": {
-        "summary": "Obtener tipo de negocio por ID",
-        "tags": [
-          "BusinessTypes"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tipo encontrado"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar tipo de negocio",
-        "tags": [
-          "BusinessTypes"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BusinessType"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Tipo actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar tipo de negocio",
-        "tags": [
-          "BusinessTypes"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Tipo eliminado exitosamente"
           }
         }
       }
@@ -4611,345 +4236,6 @@
         }
       }
     },
-    "/api/consignments": {
-      "get": {
-        "summary": "Listar todas las consignaciones",
-        "tags": [
-          "Consignments"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de consignaciones"
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear nueva consignación",
-        "tags": [
-          "Consignments"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Consignment"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Consignación creada"
-          }
-        }
-      }
-    },
-    "/api/consignments/{id}": {
-      "get": {
-        "summary": "Obtener consignación por ID",
-        "tags": [
-          "Consignments"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Consignación encontrada"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar consignación",
-        "tags": [
-          "Consignments"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Consignment"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Consignación actualizada"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar consignación",
-        "tags": [
-          "Consignments"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Eliminado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/consignment-items": {
-      "get": {
-        "summary": "Listar todos los productos consignados",
-        "tags": [
-          "ConsignmentItems"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de productos consignados"
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear producto consignado",
-        "tags": [
-          "ConsignmentItems"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConsignmentItem"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Producto consignado creado"
-          }
-        }
-      }
-    },
-    "/api/consignment-items/{id}": {
-      "get": {
-        "summary": "Obtener producto consignado por ID",
-        "tags": [
-          "ConsignmentItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Producto consignado encontrado"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar producto consignado",
-        "tags": [
-          "ConsignmentItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConsignmentItem"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Producto consignado actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar producto consignado",
-        "tags": [
-          "ConsignmentItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Eliminado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/credits": {
-      "get": {
-        "summary": "Listar todos los créditos de clientes",
-        "tags": [
-          "Credits"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de créditos"
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear nuevo crédito para cliente",
-        "tags": [
-          "Credits"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Credit"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Crédito creado"
-          },
-          "400": {
-            "description": "Cliente ya tiene crédito"
-          }
-        }
-      }
-    },
-    "/api/credits/{id}": {
-      "get": {
-        "summary": "Obtener crédito de cliente por ID",
-        "tags": [
-          "Credits"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Crédito encontrado"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar crédito de cliente",
-        "tags": [
-          "Credits"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Credit"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Crédito actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar crédito de cliente",
-        "tags": [
-          "Credits"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Crédito eliminado"
-          }
-        }
-      }
-    },
     "/api/customers": {
       "get": {
         "summary": "Listar todos los clientes",
@@ -5061,135 +4347,6 @@
         "responses": {
           "204": {
             "description": "Cliente eliminado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/debt-payments": {
-      "get": {
-        "summary": "Listar todos los pagos de deudas",
-        "tags": [
-          "DebtPayments"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de pagos de deudas"
-          }
-        }
-      },
-      "post": {
-        "summary": "Registrar un pago de deuda",
-        "tags": [
-          "DebtPayments"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "debt_id",
-                  "amount"
-                ],
-                "properties": {
-                  "debt_id": {
-                    "type": "integer"
-                  },
-                  "amount": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Pago registrado"
-          }
-        }
-      }
-    },
-    "/api/debt-payments/{id}": {
-      "get": {
-        "summary": "Obtener pago de deuda por ID",
-        "tags": [
-          "DebtPayments"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Pago encontrado"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar pago de deuda",
-        "tags": [
-          "DebtPayments"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "amount": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Pago actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar pago de deuda",
-        "tags": [
-          "DebtPayments"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Pago eliminado exitosamente"
           }
         }
       }
@@ -5411,199 +4568,6 @@
         }
       }
     },
-    "/api/inventory/purchase-order/{purchaseOrderId}/receive": {
-      "post": {
-        "summary": "Recibir mercancía de una orden de compra",
-        "tags": [
-          "Inventory"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "purchaseOrderId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "items"
-                ],
-                "properties": {
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "product_id",
-                        "quantity",
-                        "unit_cost"
-                      ],
-                      "properties": {
-                        "product_id": {
-                          "type": "integer"
-                        },
-                        "quantity": {
-                          "type": "integer"
-                        },
-                        "unit_cost": {
-                          "type": "number"
-                        },
-                        "notes": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Mercancía recibida exitosamente"
-          }
-        }
-      }
-    },
-    "/api/inventory/{businessId}/{productId}/adjust": {
-      "post": {
-        "summary": "Ajustar inventario (mermas, daños, etc.)",
-        "tags": [
-          "Inventory"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "businessId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "quantity",
-                  "reason"
-                ],
-                "properties": {
-                  "quantity": {
-                    "type": "integer",
-                    "description": "Cantidad positiva para entrada, negativa para salida"
-                  },
-                  "reason": {
-                    "type": "string",
-                    "description": "Motivo del ajuste"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Inventario ajustado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/inventory/transfer/{fromBusinessId}/{toBusinessId}/{productId}": {
-      "post": {
-        "summary": "Transferir inventario entre negocios",
-        "tags": [
-          "Inventory"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "fromBusinessId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "toBusinessId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "quantity"
-                ],
-                "properties": {
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "notes": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Transferencia realizada exitosamente"
-          }
-        }
-      }
-    },
     "/api/inventory/{businessId}/{productId}/stock": {
       "get": {
         "summary": "Obtener stock actual de un producto",
@@ -5668,57 +4632,6 @@
         }
       }
     },
-    "/api/inventory/{businessId}/history": {
-      "get": {
-        "summary": "Obtener historial de transacciones de inventario",
-        "tags": [
-          "Inventory"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "businessId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "productId",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Historial de transacciones"
-          }
-        }
-      }
-    },
     "/api/inventory/{businessId}/report": {
       "get": {
         "summary": "Generar reporte de inventario",
@@ -5743,375 +4656,6 @@
         "responses": {
           "200": {
             "description": "Reporte de inventario"
-          }
-        }
-      }
-    },
-    "/api/inventory/{businessId}/{productId}/add": {
-      "post": {
-        "summary": "Agregar stock al inventario",
-        "tags": [
-          "Inventory"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "businessId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "quantity",
-                  "unit_cost",
-                  "transaction_type"
-                ],
-                "properties": {
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "unit_cost": {
-                    "type": "number"
-                  },
-                  "transaction_type": {
-                    "type": "string",
-                    "enum": [
-                      "PURCHASE",
-                      "ADJUSTMENT",
-                      "TRANSFER",
-                      "RETURN"
-                    ]
-                  },
-                  "notes": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Stock agregado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/inventory/{businessId}/{productId}/remove": {
-      "post": {
-        "summary": "Remover stock del inventario",
-        "tags": [
-          "Inventory"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "businessId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "quantity",
-                  "unit_cost",
-                  "transaction_type"
-                ],
-                "properties": {
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "unit_cost": {
-                    "type": "number"
-                  },
-                  "transaction_type": {
-                    "type": "string",
-                    "enum": [
-                      "SALE",
-                      "ADJUSTMENT",
-                      "TRANSFER",
-                      "DAMAGED",
-                      "EXPIRED",
-                      "THEFT",
-                      "LOSS"
-                    ]
-                  },
-                  "notes": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Stock removido exitosamente"
-          }
-        }
-      }
-    },
-    "/api/kardex": {
-      "get": {
-        "summary": "Listar todos los movimientos de stock",
-        "tags": [
-          "Kardex"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de movimientos"
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear nuevo movimiento de stock",
-        "tags": [
-          "Kardex"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Kardex"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Movimiento creado"
-          }
-        }
-      }
-    },
-    "/api/kardex/{id}": {
-      "get": {
-        "summary": "Obtener movimiento de stock por ID",
-        "tags": [
-          "Kardex"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Movimiento encontrado"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar movimiento de stock",
-        "tags": [
-          "Kardex"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Kardex"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Movimiento actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar movimiento de stock",
-        "tags": [
-          "Kardex"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Eliminado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/mermas": {
-      "get": {
-        "summary": "Listar todas las mermas",
-        "tags": [
-          "Mermas"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de mermas"
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear nueva merma",
-        "tags": [
-          "Mermas"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Merma"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Merma creada"
-          }
-        }
-      }
-    },
-    "/api/mermas/{id}": {
-      "get": {
-        "summary": "Obtener merma por ID",
-        "tags": [
-          "Mermas"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Merma encontrada"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar merma",
-        "tags": [
-          "Mermas"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Merma"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Merma actualizada"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar merma",
-        "tags": [
-          "Mermas"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Eliminado exitosamente"
           }
         }
       }
@@ -7470,29 +6014,29 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "sale_id",
-                  "product_id",
+                  "saleId",
+                  "productId",
                   "quantity",
-                  "unit_price"
+                  "unitPrice"
                 ],
                 "properties": {
-                  "sale_id": {
+                  "saleId": {
                     "type": "integer"
                   },
-                  "product_id": {
+                  "productId": {
                     "type": "integer"
                   },
                   "quantity": {
                     "type": "integer"
                   },
-                  "unit_price": {
+                  "unitPrice": {
                     "type": "number"
                   },
-                  "tax_rate": {
+                  "taxRate": {
                     "type": "number",
                     "default": 13
                   },
-                  "discount_amount": {
+                  "discountAmount": {
                     "type": "number",
                     "default": 0
                   }
@@ -7934,258 +6478,6 @@
         }
       }
     },
-    "/api/transactions": {
-      "get": {
-        "summary": "Listar todas las ventas",
-        "tags": [
-          "Transactions"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de ventas"
-          }
-        }
-      },
-      "post": {
-        "summary": "Registrar una nueva venta",
-        "tags": [
-          "Transactions"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Transaction"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Venta registrada"
-          }
-        }
-      }
-    },
-    "/api/transactions/{id}": {
-      "get": {
-        "summary": "Obtener venta por ID",
-        "tags": [
-          "Transactions"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Venta encontrada"
-          },
-          "404": {
-            "description": "No encontrada"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar datos de una venta",
-        "tags": [
-          "Transactions"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Transaction"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Venta actualizada"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar venta",
-        "tags": [
-          "Transactions"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Venta eliminada exitosamente"
-          }
-        }
-      }
-    },
-    "/api/transaction-items": {
-      "get": {
-        "summary": "Listar todos los productos vendidos",
-        "tags": [
-          "TransactionItems"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de productos vendidos"
-          }
-        }
-      },
-      "post": {
-        "summary": "Agregar producto a una venta",
-        "tags": [
-          "TransactionItems"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "transaction_id",
-                  "product_id",
-                  "quantity",
-                  "price_at_sale"
-                ],
-                "properties": {
-                  "transaction_id": {
-                    "type": "integer"
-                  },
-                  "product_id": {
-                    "type": "integer"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "price_at_sale": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Producto registrado en la venta"
-          }
-        }
-      }
-    },
-    "/api/transaction-items/{id}": {
-      "get": {
-        "summary": "Obtener producto vendido por ID",
-        "tags": [
-          "TransactionItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Producto vendido encontrado"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar datos de producto vendido",
-        "tags": [
-          "TransactionItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "price_at_sale": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Producto actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar producto de la venta",
-        "tags": [
-          "TransactionItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Producto eliminado"
-          }
-        }
-      }
-    },
     "/api/users": {
       "get": {
         "summary": "Listar todos los usuarios",
@@ -8391,16 +6683,8 @@
       "description": "Gestión de negocios"
     },
     {
-      "name": "BusinessOrgCharts",
-      "description": "Organización interna de empleados"
-    },
-    {
       "name": "BusinessProducts",
       "description": "Productos personalizados por negocio"
-    },
-    {
-      "name": "BusinessTypes",
-      "description": "Tipos de negocios"
     },
     {
       "name": "Carts",
@@ -8419,24 +6703,8 @@
       "description": "Gestión de categorías de productos"
     },
     {
-      "name": "Consignments",
-      "description": "Gestión de consignaciones"
-    },
-    {
-      "name": "ConsignmentItems",
-      "description": "Gestión de productos consignados"
-    },
-    {
-      "name": "Credits",
-      "description": "Gestión de créditos de clientes"
-    },
-    {
       "name": "Customers",
       "description": "Gestión de clientes"
-    },
-    {
-      "name": "DebtPayments",
-      "description": "Pagos de deudas a proveedores"
     },
     {
       "name": "Employees",
@@ -8445,14 +6713,6 @@
     {
       "name": "Inventory",
       "description": "Gestión de inventario y stock"
-    },
-    {
-      "name": "Kardex",
-      "description": "Gestión de movimientos de stock"
-    },
-    {
-      "name": "Mermas",
-      "description": "Gestión de pérdidas o deterioros de productos"
     },
     {
       "name": "Permissions",
@@ -8493,14 +6753,6 @@
     {
       "name": "SupplierDebts",
       "description": "Deudas con proveedores"
-    },
-    {
-      "name": "Transactions",
-      "description": "Gestión de ventas realizadas"
-    },
-    {
-      "name": "TransactionItems",
-      "description": "Productos vendidos en cada transacción"
     },
     {
       "name": "Users",
