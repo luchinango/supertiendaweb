@@ -5,10 +5,13 @@ export const getAll = async (_req: Request, res: Response) => {
   const orders = await prisma.purchaseOrder.findMany({
     include: {
       supplier: true,
-      product: true,
-      purchase_order_items: true,
+      items: {
+        include: {
+          product: true
+        }
+      },
     },
-    orderBy: {created_at: 'desc'},
+    orderBy: {createdAt: 'desc'},
   });
   res.json(orders);
 };
@@ -19,8 +22,11 @@ export const getById = async (req: Request, res: Response) => {
     where: {id: Number(id)},
     include: {
       supplier: true,
-      product: true,
-      purchase_order_items: true,
+      items: {
+        include: {
+          product: true
+        }
+      },
     },
   });
   if (!order) {
@@ -32,22 +38,28 @@ export const getById = async (req: Request, res: Response) => {
 
 export const create = async (req: Request, res: Response) => {
   const {
-    product_id,
-    supplier_id,
-    quantity,
+    supplierId,
+    poNumber,
     status,
-    payment_type,
-    total_amount,
+    orderDate,
+    expectedDate,
+    subtotal,
+    taxAmount,
+    totalAmount,
+    notes,
   } = req.body;
 
   const order = await prisma.purchaseOrder.create({
     data: {
-      product_id,
-      supplier_id,
-      quantity,
+      supplierId,
+      poNumber,
       status,
-      payment_type,
-      total_amount,
+      orderDate,
+      expectedDate,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      notes,
     },
   });
 
@@ -57,24 +69,29 @@ export const create = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
   const {
-    product_id,
-    supplier_id,
-    quantity,
+    supplierId,
+    poNumber,
     status,
-    payment_type,
-    total_amount,
+    orderDate,
+    expectedDate,
+    subtotal,
+    taxAmount,
+    totalAmount,
+    notes,
   } = req.body;
 
   const order = await prisma.purchaseOrder.update({
     where: {id: Number(id)},
     data: {
-      product_id,
-      supplier_id,
-      quantity,
+      supplierId,
+      poNumber,
       status,
-      payment_type,
-      total_amount,
-      created_at: new Date(),
+      orderDate,
+      expectedDate,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      notes,
     },
   });
 

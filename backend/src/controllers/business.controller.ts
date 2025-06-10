@@ -1,13 +1,13 @@
 import {Request, Response, NextFunction} from 'express';
-import {businessService} from '../services/businessService';
+import businessService from '../services/businessService';
 import {UnauthorizedError} from '../errors';
 
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const businessData = {
       ...req.body,
-      created_by: req.user?.id,
-      updated_by: req.user?.id
+      createdBy: req.user?.id,
+      updatedBy: req.user?.id
     };
 
     const business = await businessService.create(businessData);
@@ -22,7 +22,7 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
     const {id} = req.params;
     const businessData = {
       ...req.body,
-      updated_by: req.user?.id
+      updatedBy: req.user?.id
     };
 
     const business = await businessService.update(Number(id), businessData);
@@ -51,12 +51,9 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
       console.log('Status filtrado:', filters.status);
     }
 
-    if (req.query.type_id) {
-      const typeId = Number(req.query.type_id);
-      if (!isNaN(typeId)) {
-        filters.type_id = typeId;
-        console.log('Type ID filtrado:', filters.type_id);
-      }
+    if (req.query.businessType) {
+      filters.businessType = req.query.businessType;
+      console.log('Business Type filtrado:', filters.businessType);
     }
 
     if (req.query.search && typeof req.query.search === 'string') {
@@ -85,15 +82,6 @@ export const remove = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const getBusinessTypes = async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const types = await businessService.getBusinessTypes();
-    res.json(types);
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const addProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {businessId} = req.params;
@@ -113,12 +101,12 @@ export const addProduct = async (req: Request, res: Response, next: NextFunction
 export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {businessId, productId} = req.params;
-    const {customPrice, actualStock} = req.body;
+    const {customPrice, currentStock} = req.body;
 
     const businessProduct = await businessService.updateBusinessProduct(
       Number(businessId),
       Number(productId),
-      {customPrice, actualStock}
+      {customPrice, currentStock}
     );
     res.json(businessProduct);
   } catch (error) {

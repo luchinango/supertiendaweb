@@ -7,9 +7,9 @@ export const getAll = async (_req: Request, res: Response) => {
   const carts = await prisma.cart.findMany({
     include: {
       customer: true,
-      cartItems: true,
+      items: true,
     },
-    orderBy: {created_at: 'desc'},
+    orderBy: {createdAt: 'desc'},
   });
   res.json(carts);
 };
@@ -20,7 +20,7 @@ export const getById = async (req: Request, res: Response) => {
     where: {id: Number(id)},
     include: {
       customer: true,
-      cartItems: true,
+      items: true,
     },
   });
   if (!cart) {
@@ -31,11 +31,13 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {customer_id} = req.body;
+  const {customerId, businessId, userId} = req.body;
 
   const cart = await prisma.cart.create({
     data: {
-      customer_id,
+      customerId,
+      businessId,
+      userId,
     },
   });
 
@@ -44,13 +46,12 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
-  const {customer_id} = req.body;
+  const {customerId} = req.body;
 
   const cart = await prisma.cart.update({
     where: {id: Number(id)},
     data: {
-      customer_id,
-      created_at: new Date(),
+      customerId,
     },
   });
 

@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import * as employeeController from '../controllers/employee.controller';
-import {authenticate} from '../middleware/auth';
+import {authenticate} from '../middlewares/authMiddleware';
 
 const router = Router();
 
@@ -102,7 +102,7 @@ router.get('/employees/:id', employeeController.getById);
  *       409:
  *         description: Email ya existe o usuario ya tiene empleado asociado
  */
-router.post('/employees', authenticate('ADMIN'), employeeController.create);
+router.post('/employees', authenticate(['ADMIN']), employeeController.create);
 
 /**
  * @swagger

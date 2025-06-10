@@ -1,32 +1,32 @@
 import prisma from '../config/prisma';
-import {EmployeeStatus, Gender} from '@prisma/client';
+import {EmployeeStatus, Gender} from '../../prisma/generated';
 import {NotFoundError} from '../errors';
 
 interface CreateEmployeeData {
-  first_name: string;
-  last_name?: string;
+  firstName: string;
+  lastName?: string;
   position?: string;
-  start_date: Date;
+  startDate: Date;
   status: EmployeeStatus;
   gender: Gender;
-  birth_date?: Date;
+  birthDate?: Date;
   email: string;
   address: string;
-  mobile_phone: string;
-  user_id?: number;
+  mobilePhone: string;
+  userId: number;
 }
 
 interface UpdateEmployeeData {
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   position?: string;
   status?: EmployeeStatus;
   gender?: Gender;
-  birth_date?: Date;
+  birthDate?: Date;
   email?: string;
   address?: string;
-  mobile_phone?: string;
-  user_id?: number;
+  mobilePhone?: string;
+  userId?: number;
 }
 
 class EmployeeService {
@@ -40,10 +40,10 @@ class EmployeeService {
       throw new Error('Ya existe un empleado con este email');
     }
 
-    // Si se proporciona user_id, verificar que el usuario existe
-    if (data.user_id) {
+    // Si se proporciona userId, verificar que el usuario existe
+    if (data.userId) {
       const user = await prisma.user.findUnique({
-        where: {id: data.user_id}
+        where: {id: data.userId}
       });
 
       if (!user) {
@@ -52,7 +52,7 @@ class EmployeeService {
 
       // Verificar que el usuario no tenga ya un empleado asociado
       const existingUserEmployee = await prisma.employee.findUnique({
-        where: {user_id: data.user_id}
+        where: {userId: data.userId}
       });
 
       if (existingUserEmployee) {
@@ -63,7 +63,7 @@ class EmployeeService {
     return prisma.employee.create({
       data: {
         ...data,
-        last_name: data.last_name || '',
+        lastName: data.lastName || '',
         position: data.position || '',
         gender: data.gender || 'UNSPECIFIED'
       },
@@ -107,10 +107,10 @@ class EmployeeService {
       }
     }
 
-    // Si se está actualizando el user_id, verificar que el usuario existe y no tiene otro empleado
-    if (data.user_id && data.user_id !== employee.user_id) {
+    // Si se está actualizando el userId, verificar que el usuario existe y no tiene otro empleado
+    if (data.userId && data.userId !== employee.userId) {
       const user = await prisma.user.findUnique({
-        where: {id: data.user_id}
+        where: {id: data.userId}
       });
 
       if (!user) {
@@ -119,7 +119,7 @@ class EmployeeService {
 
       const existingUserEmployee = await prisma.employee.findFirst({
         where: {
-          user_id: data.user_id,
+          userId: data.userId,
           id: {not: id}
         }
       });
@@ -185,10 +185,10 @@ class EmployeeService {
       ...(filters?.gender && {gender: filters.gender}),
       ...(filters?.search && {
         OR: [
-          {first_name: {contains: filters.search}},
-          {last_name: {contains: filters.search}},
+          {firstName: {contains: filters.search}},
+          {lastName: {contains: filters.search}},
           {email: {contains: filters.search}},
-          {mobile_phone: {contains: filters.search}}
+          {mobilePhone: {contains: filters.search}}
         ]
       })
     };
@@ -211,8 +211,8 @@ class EmployeeService {
       },
       orderBy: [
         {status: 'asc'},
-        {first_name: 'asc'},
-        {last_name: 'asc'}
+        {firstName: 'asc'},
+        {lastName: 'asc'}
       ]
     });
   }
@@ -237,7 +237,7 @@ class EmployeeService {
 
   async getByUserId(userId: number) {
     const employee = await prisma.employee.findUnique({
-      where: {user_id: userId},
+      where: {userId: userId},
       include: {
         user: {
           select: {

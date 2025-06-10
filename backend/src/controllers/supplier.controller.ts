@@ -23,19 +23,24 @@ export const getById = async (req: Request, res: Response) => {
 export const create = async (req: Request, res: Response) => {
   const {
     name,
-    contact,
+    contactPerson,
     phone,
     email,
-    company_name,
-    tax_id,
+    documentNumber,
     address,
-    supplier_type,
+    city,
+    department,
+    country,
+    postalCode,
+    paymentTerms,
+    creditLimit,
     status,
+    notes,
   } = req.body;
 
-  // Verificar unicidad de NIT/tax_id
-  if (tax_id) {
-    const exists = await prisma.supplier.findUnique({ where: { tax_id } });
+  // Verificar unicidad de NIT/documentNumber
+  if (documentNumber) {
+    const exists = await prisma.supplier.findFirst({ where: { documentNumber } });
     if (exists) {
       res.status(400).json({ message: 'El NIT ya está registrado' });
       return;
@@ -45,14 +50,19 @@ export const create = async (req: Request, res: Response) => {
   const supplier = await prisma.supplier.create({
     data: {
       name,
-      contact,
+      contactPerson,
       phone,
       email,
-      company_name,
-      tax_id,
+      documentNumber,
       address,
-      supplier_type,
+      city,
+      department,
+      country,
+      postalCode,
+      paymentTerms,
+      creditLimit,
       status,
+      notes,
     },
   });
 
@@ -63,28 +73,38 @@ export const update = async (req: Request, res: Response) => {
   const { id } = req.params;
   const {
     name,
-    contact,
+    contactPerson,
     phone,
     email,
-    company_name,
-    tax_id,
+    documentNumber,
     address,
-    supplier_type,
+    city,
+    department,
+    country,
+    postalCode,
+    paymentTerms,
+    creditLimit,
     status,
+    notes,
   } = req.body;
 
   const supplier = await prisma.supplier.update({
     where: { id: Number(id) },
     data: {
       name,
-      contact,
+      contactPerson,
       phone,
       email,
-      company_name,
-      tax_id,
+      documentNumber,
       address,
-      supplier_type,
+      city,
+      department,
+      country,
+      postalCode,
+      paymentTerms,
+      creditLimit,
       status,
+      notes,
     },
   });
 

@@ -1,14 +1,13 @@
-import { PrismaClient, CartStatus, Cart, CartItem } from '@prisma/client';
-import { BusinessError } from '../utils/errors';
-
-const prisma = new PrismaClient();
+import prisma from '../config/prisma';
+import {CartStatus, Cart, CartItem} from '../../prisma/generated';
+import {BusinessError} from '../utils/errors';
 
 export class CartService {
   async getActiveCart(userId: number, businessId: number): Promise<Cart | null> {
     return prisma.cart.findFirst({
       where: {
-        user_id: userId,
-        business_id: businessId,
+        userId: userId,
+        businessId: businessId,
         status: CartStatus.ACTIVE
       },
       include: {
@@ -26,7 +25,6 @@ export class CartService {
   }
 
   async createCart(userId: number, businessId: number): Promise<Cart> {
-    // Verificar si ya existe un carrito activo
     const existingCart = await this.getActiveCart(userId, businessId);
     if (existingCart) {
       throw new BusinessError('Ya existe un carrito activo para este negocio');
@@ -34,8 +32,8 @@ export class CartService {
 
     return prisma.cart.create({
       data: {
-        user_id: userId,
-        business_id: businessId,
+        userId: userId,
+        businessId: businessId,
         status: CartStatus.ACTIVE
       },
       include: {
@@ -53,7 +51,6 @@ export class CartService {
   }
 
   async addItem(cartId: number, productId: number, quantity: number): Promise<CartItem> {
-    // Verificar que el carrito existe y está activo
     const cart = await prisma.cart.findFirst({
       where: {
         id: cartId,
@@ -62,9 +59,9 @@ export class CartService {
       include: {
         business: {
           include: {
-            products: {
+            businessProducts: {
               where: {
-                product_id: productId
+                productId: productId
               }
             }
           }
@@ -76,47 +73,48 @@ export class CartService {
       throw new BusinessError('Carrito no encontrado o no está activo');
     }
 
-    // Verificar que el producto pertenece al negocio
-    const businessProduct = cart.business.products[0];
+    const businessProduct = cart.business.businessProducts[0];
     if (!businessProduct) {
       throw new BusinessError('El producto no está disponible en este negocio');
     }
 
-    // Verificar stock
-    if (businessProduct.actualStock < quantity) {
+    if (businessProduct.currentStock < quantity) {
       throw new BusinessError('Stock insuficiente');
     }
 
-    // Verificar si el producto ya está en el carrito
     const existingItem = await prisma.cartItem.findUnique({
       where: {
-        cart_id_product_id: {
-          cart_id: cartId,
-          product_id: productId
+        cartId_productId: {
+          cartId: cartId,
+          productId: productId
         }
       }
     });
 
     if (existingItem) {
-      // Actualizar cantidad
       return prisma.cartItem.update({
         where: {
           id: existingItem.id
         },
         data: {
           quantity: existingItem.quantity + quantity,
-          price: businessProduct.customPrice
+          unitPrice: businessProduct.customPrice
         }
       });
     }
 
-    // Agregar nuevo item
+    let taxRate = 0.13;
+    let totalPrice = quantity * Number(businessProduct.customPrice);
+    let taxAmount = totalPrice * taxRate;
     return prisma.cartItem.create({
       data: {
-        cart_id: cartId,
-        product_id: productId,
+        cartId: cartId,
+        productId: productId,
         quantity: quantity,
-        price: businessProduct.customPrice
+        unitPrice: businessProduct.customPrice,
+        taxRate,
+        totalPrice,
+        taxAmount
       }
     });
   }
@@ -124,9 +122,9 @@ export class CartService {
   async updateItemQuantity(cartId: number, productId: number, quantity: number): Promise<CartItem> {
     const cartItem = await prisma.cartItem.findUnique({
       where: {
-        cart_id_product_id: {
-          cart_id: cartId,
-          product_id: productId
+        cartId_productId: {
+          cartId: cartId,
+          productId: productId
         }
       },
       include: {
@@ -134,9 +132,9 @@ export class CartService {
           include: {
             business: {
               include: {
-                products: {
+                businessProducts: {
                   where: {
-                    product_id: productId
+                    productId: productId
                   }
                 }
               }
@@ -154,9 +152,8 @@ export class CartService {
       throw new BusinessError('El carrito no está activo');
     }
 
-    // Verificar stock
-    const businessProduct = cartItem.cart.business.products[0];
-    if (businessProduct.actualStock < quantity) {
+    const businessProduct = cartItem.cart.business.businessProducts[0];
+    if (businessProduct.currentStock < quantity) {
       throw new BusinessError('Stock insuficiente');
     }
 
@@ -166,7 +163,7 @@ export class CartService {
       },
       data: {
         quantity: quantity,
-        price: businessProduct.customPrice
+        unitPrice: businessProduct.customPrice
       }
     });
   }
@@ -174,9 +171,9 @@ export class CartService {
   async removeItem(cartId: number, productId: number): Promise<void> {
     const cartItem = await prisma.cartItem.findUnique({
       where: {
-        cart_id_product_id: {
-          cart_id: cartId,
-          product_id: productId
+        cartId_productId: {
+          cartId: cartId,
+          productId: productId
         }
       },
       include: {
@@ -213,7 +210,7 @@ export class CartService {
 
     await prisma.cartItem.deleteMany({
       where: {
-        cart_id: cartId
+        cartId: cartId
       }
     });
   }
@@ -221,12 +218,12 @@ export class CartService {
   async getCartTotal(cartId: number): Promise<number> {
     const items = await prisma.cartItem.findMany({
       where: {
-        cart_id: cartId
+        cartId: cartId
       }
     });
 
     return items.reduce((total, item) => {
-      return total + (Number(item.price) * item.quantity);
+      return total + (Number(item.unitPrice) * item.quantity);
     }, 0);
   }
 }

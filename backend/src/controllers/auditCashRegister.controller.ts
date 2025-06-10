@@ -7,7 +7,7 @@ export const getAll = async (_req: Request, res: Response) => {
       cashRegister: true,
       user: true,
     },
-    orderBy: {actionDate: 'desc'},
+    orderBy: {createdAt: 'desc'},
   });
   res.json(audits);
 };
@@ -29,7 +29,7 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {cashRegisterId, action, userId, details} = req.body;
+  const {cashRegisterId, action, userId, details, amount} = req.body;
 
   const audit = await prisma.auditCashRegister.create({
     data: {
@@ -37,7 +37,7 @@ export const create = async (req: Request, res: Response) => {
       action,
       userId,
       details,
-      actionDate: new Date(),
+      amount,
     },
   });
 

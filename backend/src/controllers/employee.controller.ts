@@ -1,6 +1,6 @@
 import {Request, Response, NextFunction} from 'express';
 import employeeService from '../services/employeeService';
-import {EmployeeStatus, Gender} from '@prisma/client';
+import {EmployeeStatus, Gender} from '../../prisma/generated';
 
 import {createEmployeeSchema, updateEmployeeSchema} from '../validators/employee.validator';
 

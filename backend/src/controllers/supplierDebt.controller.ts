@@ -5,10 +5,8 @@ export const getAll = async (_req: Request, res: Response) => {
   const debts = await prisma.supplierDebt.findMany({
     include: {
       supplier: true,
-      user: true,
-      debt_payments: true,
     },
-    orderBy: {created_at: 'desc'},
+    orderBy: {createdAt: 'desc'},
   });
   res.json(debts);
 };
@@ -19,8 +17,6 @@ export const getById = async (req: Request, res: Response) => {
     where: {id: Number(id)},
     include: {
       supplier: true,
-      user: true,
-      debt_payments: true,
     },
   });
   if (!debt) {
@@ -31,14 +27,14 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {supplier_id, amount, remaining_amount, user_id} = req.body;
+  const {supplierId, amount, paidAmount, dueDate} = req.body;
 
   const debt = await prisma.supplierDebt.create({
     data: {
-      supplier_id,
+      supplierId,
       amount,
-      remaining_amount,
-      user_id,
+      paidAmount,
+      dueDate,
     },
   });
 
@@ -47,13 +43,13 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
-  const {remaining_amount} = req.body;
+  const {paidAmount, isPaid} = req.body;
 
   const debt = await prisma.supplierDebt.update({
     where: {id: Number(id)},
     data: {
-      remaining_amount,
-      updated_at: new Date(),
+      paidAmount,
+      isPaid,
     },
   });
 

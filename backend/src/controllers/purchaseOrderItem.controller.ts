@@ -5,7 +5,7 @@ export const getAll = async (_req: Request, res: Response) => {
   const items = await prisma.purchaseOrderItem.findMany({
     include: {
       product: true,
-      purchase_order: true,
+      purchaseOrder: true,
     },
     orderBy: { id: 'asc' },
   });
@@ -16,7 +16,7 @@ export const getById = async (req: Request, res: Response) => {
   const { id } = req.params;
   const item = await prisma.purchaseOrderItem.findUnique({
     where: { id: Number(id) },
-    include: { product: true, purchase_order: true },
+    include: { product: true, purchaseOrder: true },
   });
   if (!item) {
     res.status(404).json({ message: 'No encontrado' });
@@ -26,14 +26,14 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { purchase_order_id, product_id, quantity, unit_price } = req.body;
+  const { purchaseOrderId, productId, quantity, unitCost } = req.body;
 
   const item = await prisma.purchaseOrderItem.create({
     data: {
-      purchase_order_id,
-      product_id,
+      purchaseOrderId,
+      productId,
       quantity,
-      unit_price,
+      unitCost,
     },
   });
 
@@ -42,13 +42,13 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { quantity, unit_price } = req.body;
+  const { quantity, unitCost } = req.body;
 
   const item = await prisma.purchaseOrderItem.update({
     where: { id: Number(id) },
     data: {
       quantity,
-      unit_price,
+      unitCost,
     },
   });
 

@@ -5,7 +5,7 @@ export const getAll = async (_req: Request, res: Response) => {
   const items = await prisma.cartItem.findMany({
     include: {
       cart: true,
-      products: true,
+      product: true,
     },
     orderBy: {id: 'asc'},
   });
@@ -18,7 +18,7 @@ export const getById = async (req: Request, res: Response) => {
     where: {id: Number(id)},
     include: {
       cart: true,
-      products: true,
+      product: true,
     },
   });
   if (!item) {
@@ -29,14 +29,20 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {cart_id, product_id, quantity, price_at_time} = req.body;
+  const {cartId, productId, quantity, unitPrice} = req.body;
+
+  // Calcular totalPrice
+  const totalPrice = quantity * unitPrice;
 
   const cartItem = await prisma.cartItem.create({
     data: {
-      cart_id,
-      product_id,
+      cartId,
+      productId,
       quantity,
-      price_at_time,
+      unitPrice,
+      totalPrice,
+      taxRate: 13, // IVA 13% por defecto
+      taxAmount: totalPrice * 0.13,
     },
   });
 
@@ -45,13 +51,13 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
-  const {quantity, price_at_time} = req.body;
+  const {quantity, unitPrice} = req.body;
 
   const cartItem = await prisma.cartItem.update({
     where: {id: Number(id)},
     data: {
       quantity,
-      price_at_time,
+      unitPrice,
     },
   });
 

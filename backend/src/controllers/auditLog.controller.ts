@@ -6,7 +6,7 @@ export const getAll = async (_req: Request, res: Response) => {
     include: {
       user: true,
     },
-    orderBy: {created_at: 'desc'},
+    orderBy: {createdAt: 'desc'},
   });
   res.json(audits);
 };
@@ -25,17 +25,17 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {action, entity, entity_id, old_values, new_values, user_id, ip_address} = req.body;
+  const {action, entity, entityId, oldValues, newValues, userId, ipAddress} = req.body;
 
   const audit = await prisma.auditLog.create({
     data: {
       action,
       entity,
-      entity_id,
-      old_values,
-      new_values,
-      user_id,
-      ip_address,
+      entityId,
+      oldValues,
+      newValues,
+      userId,
+      ipAddress,
     },
   });
 

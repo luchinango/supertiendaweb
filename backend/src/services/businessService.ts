@@ -1,60 +1,68 @@
 import prisma from '../config/prisma';
-import {BusinessStatus, BusinessType} from '@prisma/client';
+import {BusinessStatus, BusinessType, Department, Currency} from '../../prisma/generated';
+
 import {NotFoundError} from '../errors';
 
+// Usar los enums desde Prisma
 interface CreateBusinessData {
   name: string;
-  legal_name?: string;
+  legalName?: string;
   description?: string;
-  tax_id?: string;
+  nit?: string;
+  businessType?: BusinessType;
   email?: string;
   phone?: string;
   address?: string;
-  logo_url?: string;
+  city?: string;
+  department?: Department;
+  country?: string;
+  postalCode?: string;
+  logoUrl?: string;
   website?: string;
   timezone?: string;
-  currency?: string;
-  type_id: number;
-  created_by: number;
-  updated_by: number;
+  currency?: Currency;
+  defaultTaxRate?: number;
+  status?: BusinessStatus;
+  createdBy?: number;
+  updatedBy?: number;
 }
 
 interface UpdateBusinessData {
   name?: string;
-  legal_name?: string;
+  legalName?: string;
   description?: string;
-  tax_id?: string;
+  nit?: string;
+  businessType?: BusinessType;
   email?: string;
   phone?: string;
   address?: string;
-  logo_url?: string;
+  city?: string;
+  department?: Department;
+  country?: string;
+  postalCode?: string;
+  logoUrl?: string;
   website?: string;
   timezone?: string;
-  currency?: string;
+  currency?: Currency;
+  defaultTaxRate?: number;
   status?: BusinessStatus;
-  type_id?: number;
-  updated_by: number;
+  updatedBy?: number;
 }
 
 class BusinessService {
   async create(data: CreateBusinessData) {
-    const businessType = await prisma.businessType.findUnique({
-      where: {id: data.type_id}
-    });
-
-    if (!businessType) {
-      throw new NotFoundError('Tipo de negocio no encontrado');
-    }
-
     return prisma.business.create({
       data: {
         ...data,
-        status: 'ACTIVE',
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      include: {
-        type: true
+        status: data.status || 'ACTIVE',
+        businessType: data.businessType || 'PERSONA_NATURAL',
+        department: data.department || 'LA_PAZ',
+        country: data.country || 'Bolivia',
+        timezone: data.timezone || 'America/La_Paz',
+        currency: data.currency || 'BOB',
+        defaultTaxRate: data.defaultTaxRate || 13,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     });
   }
@@ -68,24 +76,11 @@ class BusinessService {
       throw new NotFoundError('Negocio no encontrado');
     }
 
-    if (data.type_id) {
-      const businessType = await prisma.businessType.findUnique({
-        where: {id: data.type_id}
-      });
-
-      if (!businessType) {
-        throw new NotFoundError('Tipo de negocio no encontrado');
-      }
-    }
-
     return prisma.business.update({
       where: {id},
       data: {
         ...data,
-        updated_at: new Date()
-      },
-      include: {
-        type: true
+        updatedAt: new Date()
       }
     });
   }
@@ -94,30 +89,26 @@ class BusinessService {
     const business = await prisma.business.findUnique({
       where: {id},
       include: {
-        type: true,
-        products: {
+        businessProducts: {
           include: {
-            product: true
+            product: {
+              include: {
+                category: true
+              }
+            }
           }
         },
-        BusinessOrgChart: {
+        employees: {
           include: {
             user: {
               select: {
                 id: true,
-                username: true,
-                employee: {
-                  select: {
-                    first_name: true,
-                    last_name: true,
-                    position: true
-                  }
-                }
+                username: true
               }
-            },
-            parent: true
+            }
           }
-        }
+        },
+        fiscalSettings: true
       }
     });
 
@@ -130,17 +121,19 @@ class BusinessService {
 
   async getAll(filters?: {
     status?: BusinessStatus;
-    type_id?: number;
+    businessType?: BusinessType;
+    department?: Department;
     search?: string;
   }) {
     const where = {
       ...(filters?.status && {status: filters.status}),
-      ...(filters?.type_id && {type_id: filters.type_id}),
+      ...(filters?.businessType && {businessType: filters.businessType}),
+      ...(filters?.department && {department: filters.department}),
       ...(filters?.search && {
         OR: [
           {name: {contains: filters.search}},
-          {legal_name: {contains: filters.search}},
-          {tax_id: {contains: filters.search}}
+          {legalName: {contains: filters.search}},
+          {nit: {contains: filters.search}}
         ]
       })
     };
@@ -148,24 +141,21 @@ class BusinessService {
     return prisma.business.findMany({
       where,
       include: {
-        type: true,
-        products: {
+        businessProducts: {
           include: {
-            product: true
+            product: {
+              include: {
+                category: true
+              }
+            }
           }
         },
-        BusinessOrgChart: {
+        employees: {
           include: {
             user: {
               select: {
                 id: true,
-                username: true,
-                role: {
-                  select: {
-                    code: true,
-                    name: true
-                  }
-                }
+                username: true
               }
             }
           }
@@ -192,15 +182,7 @@ class BusinessService {
       where: {id},
       data: {
         status: 'INACTIVE',
-        updated_at: new Date()
-      }
-    });
-  }
-
-  async getBusinessTypes() {
-    return prisma.businessType.findMany({
-      orderBy: {
-        name: 'asc'
+        updatedAt: new Date()
       }
     });
   }
@@ -219,23 +201,46 @@ class BusinessService {
       throw new NotFoundError('Producto no encontrado');
     }
 
-    return prisma.businessProduct.create({
-      data: {
+    return prisma.businessProduct.upsert({
+      where: {
+        businessId_productId: {
+          businessId,
+          productId
+        }
+      },
+      update: {
+        customPrice: customPrice || 0
+      },
+      create: {
         businessId,
         productId,
-        customPrice,
-        actualStock: 0
-      },
-      include: {
-        product: true
+        customPrice: customPrice || 0,
+        currentStock: 0,
+        reservedStock: 0,
+        availableStock: 0
       }
     });
   }
 
   async updateBusinessProduct(businessId: number, productId: number, data: {
     customPrice?: number;
-    actualStock?: number;
+    currentStock?: number;
+    reservedStock?: number;
+    availableStock?: number;
   }) {
+    const businessProduct = await prisma.businessProduct.findUnique({
+      where: {
+        businessId_productId: {
+          businessId,
+          productId
+        }
+      }
+    });
+
+    if (!businessProduct) {
+      throw new NotFoundError('Producto no encontrado en el negocio');
+    }
+
     return prisma.businessProduct.update({
       where: {
         businessId_productId: {
@@ -244,11 +249,8 @@ class BusinessService {
         }
       },
       data: {
-        customPrice: data.customPrice,
-        actualStock: data.actualStock
-      },
-      include: {
-        product: true
+        ...data,
+        updatedAt: new Date()
       }
     });
   }
@@ -265,22 +267,17 @@ class BusinessService {
   }
 
   async getBusinessProducts(businessId: number) {
-    const business = await prisma.business.findUnique({
-      where: {id: businessId}
-    });
-
-    if (!business) {
-      throw new NotFoundError('Negocio no encontrado');
-    }
-
     return prisma.businessProduct.findMany({
       where: {businessId},
       include: {
-        product: true
+        product: {
+          include: {
+            category: true
+          }
+        }
       }
     });
   }
 }
 
-export const businessService = new BusinessService();
-export default businessService;
+export default new BusinessService();

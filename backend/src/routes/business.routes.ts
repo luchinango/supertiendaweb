@@ -186,31 +186,7 @@ router.put('/businesses/:id', authenticate(['ADMIN']), businessController.update
  *         description: Error del servidor
  */
 router.delete('/businesses/:id', authenticate(['ADMIN']), businessController.remove);
-
-/**
- * @swagger
- * /api/businesses/types:
- *   get:
- *     summary: Obtener tipos de negocio
- *     tags: [Business]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Tipos de negocio obtenidos exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *       401:
- *         description: No autorizado
- *       500:
- *         description: Error del servidor
- */
-router.get('/business/types', authenticate(), businessController.getBusinessTypes);
-
+ 
 /**
  * @swagger
  * /api/businesses/{businessId}/products:

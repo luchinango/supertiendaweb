@@ -6,7 +6,7 @@ import {promisify} from 'util';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma';
 import {UnauthorizedError} from '../errors';
-import {UserStatus} from '@prisma/client';
+import {EmployeeStatus, Gender, UserStatus} from '../../prisma/generated';
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -27,16 +27,16 @@ interface AuthResponse {
     username: string;
     role: string;
     employee?: {
-      first_name: string;
-      last_name: string | null;
-      position: string | null;
-      start_date: Date;
-      status: string;
-      gender: string;
-      birth_date: Date | null;
-      email: string;
-      address: string;
-      mobile_phone: string;
+      firstName: string;
+      lastName: string | null;
+      position: string;
+      startDate: Date;
+      status: EmployeeStatus;
+      gender: Gender;
+      birthDate: Date | null;
+      email: string | null;
+      address: string | null;
+      phone: string | null;
     };
   };
 }
@@ -121,7 +121,7 @@ class AuthService {
       select: {
         id: true,
         username: true,
-        password_hash: true,
+        passwordHash: true,
         role: {
           select: {
             code: true
@@ -130,16 +130,16 @@ class AuthService {
         status: true,
         employee: {
           select: {
-            first_name: true,
-            last_name: true,
+            firstName: true,
+            lastName: true,
             position: true,
-            start_date: true,
+            startDate: true,
             status: true,
             gender: true,
-            birth_date: true,
+            birthDate: true,
             email: true,
             address: true,
-            mobile_phone: true
+            phone: true
           }
         }
       }
@@ -149,7 +149,7 @@ class AuthService {
       throw new UnauthorizedError('Credenciales inválidas');
     }
 
-    const isValidPassword = await this.verifyPassword(password, user.password_hash);
+    const isValidPassword = await this.verifyPassword(password, user.passwordHash);
     if (!isValidPassword) {
       throw new UnauthorizedError('Credenciales inválidas');
     }
@@ -283,14 +283,14 @@ class AuthService {
   async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
     const user = await prisma.user.findUnique({
       where: {id: userId},
-      select: {password_hash: true}
+      select: {passwordHash: true}
     });
 
     if (!user) {
       throw new UnauthorizedError('Usuario no encontrado');
     }
 
-    const isValidPassword = await this.verifyPassword(currentPassword, user.password_hash);
+    const isValidPassword = await this.verifyPassword(currentPassword, user.passwordHash);
     if (!isValidPassword) {
       throw new UnauthorizedError('Contraseña actual incorrecta');
     }
@@ -301,9 +301,8 @@ class AuthService {
     await prisma.user.update({
       where: {id: userId},
       data: {
-        password_hash: newPasswordHash,
-        must_change_password: false,
-        updated_at: new Date()
+        passwordHash: newPasswordHash,
+        updatedAt: new Date()
       }
     });
   }
@@ -311,7 +310,7 @@ class AuthService {
   async createUser(userData: {
     username: string;
     password: string;
-    role_id: number;
+    roleId: number;
     status?: UserStatus;
   }): Promise<void> {
     const exists = await prisma.user.findUnique({
@@ -328,11 +327,9 @@ class AuthService {
     await prisma.user.create({
       data: {
         username: userData.username,
-        password_hash: passwordHash,
-        role_id: userData.role_id,
+        passwordHash: passwordHash,
+        roleId: userData.roleId,
         status: userData.status || 'ACTIVE' as UserStatus,
-        must_change_password: true,
-        is_active: true
       }
     });
   }

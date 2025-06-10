@@ -5,7 +5,6 @@ export const getAll = async (_req: Request, res: Response) => {
   const products = await prisma.product.findMany({
     include: {
       category: true,
-      supplier: true,
     },
     orderBy: {name: 'asc'},
   });
@@ -22,7 +21,7 @@ export const getByCategory = async (req: Request, res: Response) => {
 
   try {
     const products = await prisma.product.findMany({
-      where: {category_id: categoryId},
+      where: {categoryId: categoryId},
       include: {category: true}
     });
 
@@ -42,7 +41,7 @@ export const getById = async (req: Request, res: Response) => {
   const {id} = req.params;
   const product = await prisma.product.findUnique({
     where: {id: Number(id)},
-    include: {category: true, supplier: true},
+    include: {category: true},
   });
   if (!product) {
     res.status(404).json({message: 'No encontrado'});
@@ -55,13 +54,19 @@ export const create = async (req: Request, res: Response) => {
 
   const {
     name,
-    price,
-    cost,
-    stock,
+    costPrice,
+    sellingPrice,
+    sku,
     barcode,
+    brand,
+    unit,
+    minStock,
+    maxStock,
+    reorderPoint,
+    expiryDate,
+    status,
     category,
-    created_at,
-    updated_at,
+    description,
   } = req.body;
 
   const exists = await prisma.product.findUnique({where: {barcode}});
@@ -69,25 +74,31 @@ export const create = async (req: Request, res: Response) => {
     res.status(400).json({message: 'Ya existe un producto con ese código de barras'});
     return;
   }
-  let category_id = 0;
+  let categoryId = 0;
   if (category) {
     let categoryExists = await prisma.category.findUnique({where: {name: category}});
     if (!categoryExists) {
       categoryExists = await prisma.category.create({data: {name: category}});
     }
-    category_id = categoryExists?.id;
+    categoryId = categoryExists?.id;
   }
 
   const product = await prisma.product.create({
     data: {
       name,
-      price,
-      cost,
-      stock,
+      costPrice,
+      sellingPrice,
+      sku,
       barcode,
-      category_id,
-      created_at,
-      updated_at,
+      brand,
+      unit,
+      minStock,
+      maxStock,
+      reorderPoint,
+      expiryDate,
+      status,
+      categoryId,
+      description,
     },
   });
 
@@ -98,23 +109,18 @@ export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
   const {
     name,
-    price,
-    purchase_price,
-    sale_price,
+    costPrice,
+    sellingPrice,
     sku,
     barcode,
     brand,
     unit,
-    min_stock,
-    max_stock,
-    stock,
-    expiration_date,
-    image,
+    minStock,
+    maxStock,
+    reorderPoint,
+    expiryDate,
     status,
-    shelf_life_days,
-    is_organic,
-    supplier_id,
-    category_id,
+    categoryId,
     description,
   } = req.body;
 
@@ -122,23 +128,18 @@ export const update = async (req: Request, res: Response) => {
     where: {id: Number(id)},
     data: {
       name,
-      price,
-      purchase_price,
-      sale_price,
+      costPrice,
+      sellingPrice,
       sku,
       barcode,
       brand,
       unit,
-      min_stock,
-      max_stock,
-      stock,
-      expiration_date,
-      image,
+      minStock,
+      maxStock,
+      reorderPoint,
+      expiryDate,
       status,
-      shelf_life_days,
-      is_organic,
-      supplier_id,
-      category_id,
+      categoryId,
       description,
     },
   });

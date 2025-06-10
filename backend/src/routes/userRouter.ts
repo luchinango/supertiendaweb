@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from 'express'
 import { authenticate } from '../middlewares/authMiddleware'
-import * as userController from '../controllers/userController'
+import * as userController from '../controllers/user.controller'
 
 const router = Router()
 

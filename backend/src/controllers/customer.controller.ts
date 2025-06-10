@@ -3,7 +3,7 @@ import prisma from '../config/prisma';
 
 export const getAll = async (_req: Request, res: Response) => {
   const customers = await prisma.customer.findMany({
-    orderBy: {first_name: 'asc'},
+    orderBy: {firstName: 'asc'},
   });
   res.json(customers);
 };
@@ -22,44 +22,40 @@ export const getById = async (req: Request, res: Response) => {
 
 export const create = async (req: Request, res: Response) => {
   const {
-    first_name,
-    last_name,
+    firstName,
+    lastName,
     address,
     phone,
-    company_name,
-    tax_id,
+    documentType,
+    documentNumber,
     email,
-    status,
-    credit_balance,
+    city,
+    department,
+    country,
+    postalCode,
+    creditLimit,
+    currentBalance,
+    loyaltyPoints,
+    isActive,
   } = req.body;
-
-  if (tax_id) {
-    const existsTax = await prisma.customer.findUnique({where: {tax_id}});
-    if (existsTax) {
-      res.status(400).json({message: 'El NIT ya está registrado'});
-      return;
-    }
-  }
-
-  if (email) {
-    const existsEmail = await prisma.customer.findUnique({where: {email}});
-    if (existsEmail) {
-      res.status(400).json({message: 'El correo ya está registrado'});
-      return;
-    }
-  }
 
   const customer = await prisma.customer.create({
     data: {
-      first_name,
-      last_name,
+      firstName,
+      lastName,
       address,
       phone,
-      company_name,
-      tax_id,
+      documentType,
+      documentNumber,
       email,
-      status,
-      credit_balance,
+      city,
+      department,
+      country,
+      postalCode,
+      creditLimit,
+      currentBalance,
+      loyaltyPoints,
+      isActive,
     },
   });
 
@@ -69,29 +65,41 @@ export const create = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
   const {
-    first_name,
-    last_name,
+    firstName,
+    lastName,
     address,
     phone,
-    company_name,
-    tax_id,
+    documentType,
+    documentNumber,
     email,
-    status,
-    credit_balance,
+    city,
+    department,
+    country,
+    postalCode,
+    creditLimit,
+    currentBalance,
+    loyaltyPoints,
+    isActive,
   } = req.body;
 
   const customer = await prisma.customer.update({
     where: {id: Number(id)},
     data: {
-      first_name,
-      last_name,
+      firstName,
+      lastName,
       address,
       phone,
-      company_name,
-      tax_id,
+      documentType,
+      documentNumber,
       email,
-      status,
-      credit_balance,
+      city,
+      department,
+      country,
+      postalCode,
+      creditLimit,
+      currentBalance,
+      loyaltyPoints,
+      isActive,
     },
   });
 

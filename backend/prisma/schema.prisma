@@ -1,7 +1,8 @@
 generator client {
-  provider      = "prisma-client-js"
-  output        = "../node_modules/.prisma/client"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  output          = "./generated"
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 generator jsonSchema {
@@ -12,8 +13,9 @@ generator jsonSchema {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm, btree_gin]
 }
 
 // ========================================
@@ -187,29 +189,29 @@ enum Currency {
 // ========================================
 
 model User {
-  id            Int        @id @default(autoincrement())
-  username      String     @unique @db.VarChar(50)
+  id           Int        @id @default(autoincrement())
+  username     String     @unique @db.VarChar(50)
   // email         String     @unique @db.VarChar(100)
   // first_name    String     @db.VarChar(50)
   // last_name     String?    @db.VarChar(50)
-  password_hash String     @db.VarChar(255)
-  phone         String?    @db.VarChar(20)
-  status        UserStatus @default(PENDING_VERIFICATION)
-  role_id       Int
-  created_at    DateTime   @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime   @default(now()) @db.Timestamptz(6)
-  last_login    DateTime?  @db.Timestamptz(6)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  phone        String?    @db.VarChar(20)
+  status       UserStatus @default(PENDING_VERIFICATION)
+  roleId       Int        @map("role_id")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  lastLogin    DateTime?  @map("last_login") @db.Timestamptz(6)
 
-  role                  Role                   @relation(fields: [role_id], references: [id])
-  employee              Employee?
-  auditLogs             AuditLog[]
-  cashRegisters         CashRegister[]
-  sales                 Sale[]
-  carts                 Cart[]
-  inventoryTransactions InventoryTransaction[]
-  businesses            Business[]
-  purchaseOrders        PurchaseOrder[]
-  auditCashRegisters    AuditCashRegister[]
+  role               Role                @relation(fields: [roleId], references: [id])
+  employee           Employee?
+  auditLogs          AuditLog[]
+  cashRegisters      CashRegister[]
+  sales              Sale[]
+  carts              Cart[]
+  // inventoryTransactions InventoryTransaction[]
+  // businesses            Business[]
+  purchaseOrders     PurchaseOrder[]
+  auditCashRegisters AuditCashRegister[]
 
   @@map("users")
 }
@@ -219,9 +221,9 @@ model Role {
   code        String   @unique @db.VarChar(50)
   name        String   @db.VarChar(50)
   description String?  @db.Text()
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   users       User[]
   permissions RolePermission[]
@@ -235,8 +237,8 @@ model Permission {
   name        String   @db.VarChar(100)
   description String?  @db.Text()
   module      String   @default("") @db.VarChar(50)
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   roles RolePermission[]
 
@@ -244,118 +246,117 @@ model Permission {
 }
 
 model RolePermission {
-  id            Int      @id @default(autoincrement())
-  role_id       Int
-  permission_id Int
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  id           Int      @id @default(autoincrement())
+  roleId       Int      @map("role_id")
+  permissionId Int      @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  role       Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  @@unique([role_id, permission_id])
+  @@unique([roleId, permissionId])
   @@map("role_permissions")
 }
 
 model Business {
-  id               Int            @id @default(autoincrement())
-  name             String         @db.VarChar(100)
-  legal_name       String?        @db.VarChar(150)
-  description      String?        @db.Text()
-  nit              String?        @unique @db.VarChar(20) // NIT boliviano
-  business_type    BusinessType   @default(PERSONA_NATURAL)
-  email            String?        @db.VarChar(100)
-  phone            String?        @db.VarChar(20)
-  address          String?        @db.Text()
-  city             String?        @db.VarChar(50)
-  department       Department     @default(LA_PAZ)
-  country          String         @default("Bolivia") @db.VarChar(50)
-  postal_code      String?        @db.VarChar(10)
-  logo_url         String?
-  website          String?
-  timezone         String         @default("America/La_Paz") @db.VarChar(50)
-  currency         Currency       @default(BOB)
-  default_tax_rate Decimal        @default(13) @db.Decimal(5, 2) // IVA 13%
-  status           BusinessStatus @default(ACTIVE)
-  created_at       DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime       @default(now()) @db.Timestamptz(6)
-  deleted_at       DateTime?
-  created_by       Int            @default(0)
-  updated_by       Int            @default(0)
-  deleted_by       Int?
+  id             Int            @id @default(autoincrement())
+  name           String         @db.VarChar(100)
+  legalName      String?        @map("legal_name") @db.VarChar(150)
+  description    String?        @db.Text()
+  nit            String?        @unique @db.VarChar(20) // NIT boliviano
+  businessType   BusinessType   @default(PERSONA_NATURAL) @map("business_type")
+  email          String?        @db.VarChar(100)
+  phone          String?        @db.VarChar(20)
+  address        String?        @db.Text()
+  city           String?        @db.VarChar(50)
+  department     Department     @default(LA_PAZ)
+  country        String         @default("Bolivia") @db.VarChar(50)
+  postalCode     String?        @map("postal_code") @db.VarChar(10)
+  logoUrl        String?        @map("logo_url")
+  website        String?
+  timezone       String         @default("America/La_Paz") @db.VarChar(50)
+  currency       Currency       @default(BOB)
+  defaultTaxRate Decimal        @default(13) @map("default_tax_rate") @db.Decimal(5, 2) // IVA 13%
+  status         BusinessStatus @default(ACTIVE)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?      @map("deleted_at")
+  createdBy      Int            @default(0) @map("created_by")
+  updatedBy      Int            @default(0) @map("updated_by")
+  deletedBy      Int?           @map("deleted_by")
 
-  cashRegisters         CashRegister[]
-  sales                 Sale[]
-  carts                 Cart[]
-  purchaseOrders        PurchaseOrder[]
-  inventoryTransactions InventoryTransaction[]
-  fiscalSettings        FiscalSettings?
-  products              Product[]
-  auditLogs             AuditLog[]
-  employees             Employee[]
-  businessProducts      BusinessProduct[]
-  suppliers             Supplier[]
-  customers             Customer[]
-  User                  User?                  @relation(fields: [userId], references: [id])
-  userId                Int?
+  cashRegisters    CashRegister[]
+  sales            Sale[]
+  carts            Cart[]
+  purchaseOrders   PurchaseOrder[]
+  // inventoryTransactions InventoryTransaction[]
+  fiscalSettings   FiscalSettings?
+  auditLogs        AuditLog[]
+  employees        Employee[]
+  businessProducts BusinessProduct[]
+  suppliers        Supplier[]
+  customers        Customer[]
+  // User                  User?                  @relation(fields: [userId], references: [id])
+  // userId                Int?
 
   @@map("businesses")
 }
 
 model FiscalSettings {
-  id                     Int       @id @default(autoincrement())
-  business_id            Int       @unique
-  authorization_number   String    @unique @db.VarChar(50) // Número de autorización Siat
-  activity_code          String    @db.VarChar(20) // Código de actividad económica
-  law_number             String    @db.VarChar(20) // Número de ley
-  invoice_series         String    @db.VarChar(10) // Serie de facturas
-  invoice_start_number   Int       @default(1)
-  invoice_current_number Int       @default(1)
-  invoice_end_number     Int
-  is_electronic          Boolean   @default(true) // Facturación electrónica
-  siat_url               String?   @db.VarChar(200)
-  siat_token             String?   @db.VarChar(500)
-  siat_environment       String    @default("TEST") @db.VarChar(10) // TEST, PROD
-  created_at             DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at             DateTime  @default(now()) @db.Timestamptz(6)
-  deleted_at             DateTime?
-  created_by             Int       @default(0)
-  updated_by             Int       @default(0)
-  deleted_by             Int?
+  id                   Int       @id @default(autoincrement())
+  businessId           Int       @unique @map("business_id")
+  authorizationNumber  String    @unique @map("authorization_number") @db.VarChar(50) // Número de autorización Siat
+  activityCode         String    @map("activity_code") @db.VarChar(20) // Código de actividad económica
+  lawNumber            String    @map("law_number") @db.VarChar(20) // Número de ley
+  invoiceSeries        String    @map("invoice_series") @db.VarChar(10) // Serie de facturas
+  invoiceStartNumber   Int       @default(1) @map("invoice_start_number")
+  invoiceCurrentNumber Int       @default(1) @map("invoice_current_number")
+  invoiceEndNumber     Int       @map("invoice_end_number")
+  isElectronic         Boolean   @default(true) @map("is_electronic") // Facturación electrónica
+  siatUrl              String?   @map("siat_url") @db.VarChar(200)
+  siatToken            String?   @map("siat_token") @db.VarChar(500)
+  siatEnvironment      String    @default("TEST") @map("siat_environment") @db.VarChar(10) // TEST, PROD
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime? @map("deleted_at")
+  createdBy            Int       @default(0) @map("created_by")
+  updatedBy            Int       @default(0) @map("updated_by")
+  deletedBy            Int?      @map("deleted_by")
 
-  business Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@map("fiscal_settings")
 }
 
 model Employee {
-  id                Int            @id @default(autoincrement())
-  user_id           Int            @unique
-  business_id       Int            @default(1)
-  first_name        String         @db.VarChar(50)
-  last_name         String?        @db.VarChar(50)
-  position          String         @db.VarChar(100)
-  department        String?        @db.VarChar(50)
-  start_date        DateTime
-  end_date          DateTime?
-  salary            Decimal?       @db.Decimal(10, 2)
-  status            EmployeeStatus @default(ACTIVE)
-  gender            Gender         @default(UNSPECIFIED)
-  birth_date        DateTime?
-  email             String?        @unique @db.VarChar(100)
-  phone             String?        @db.VarChar(20)
-  address           String?        @db.Text()
-  emergency_contact String?        @db.VarChar(100)
-  emergency_phone   String?        @db.VarChar(20)
-  ci_number         String?        @unique @db.VarChar(15) // Cédula de identidad
-  created_at        DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at        DateTime       @default(now()) @db.Timestamptz(6)
-  deleted_at        DateTime?
-  created_by        Int            @default(0)
-  updated_by        Int            @default(0)
-  deleted_by        Int?
+  id               Int            @id @default(autoincrement())
+  userId           Int            @unique @map("user_id")
+  businessId       Int            @default(1) @map("business_id")
+  firstName        String         @map("first_name") @db.VarChar(50)
+  lastName         String?        @map("last_name") @db.VarChar(50)
+  position         String         @db.VarChar(100)
+  department       String?        @db.VarChar(50)
+  startDate        DateTime       @map("start_date")
+  endDate          DateTime?      @map("end_date")
+  salary           Decimal?       @db.Decimal(10, 2)
+  status           EmployeeStatus @default(ACTIVE)
+  gender           Gender         @default(UNSPECIFIED)
+  birthDate        DateTime?      @map("birth_date")
+  email            String?        @unique @db.VarChar(100)
+  phone            String?        @db.VarChar(20)
+  address          String?        @db.Text()
+  emergencyContact String?        @map("emergency_contact") @db.VarChar(100)
+  emergencyPhone   String?        @map("emergency_phone") @db.VarChar(20)
+  ciNumber         String?        @unique @map("ci_number") @db.VarChar(15) // Cédula de identidad
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?      @map("deleted_at")
+  createdBy        Int            @default(0) @map("created_by")
+  updatedBy        Int            @default(0) @map("updated_by")
+  deletedBy        Int?           @map("deleted_by")
 
-  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  business Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@map("employees")
 }
@@ -365,17 +366,17 @@ model Category {
   id          Int       @id @default(autoincrement())
   name        String    @unique @db.VarChar(100)
   description String?   @db.Text()
-  parent_id   Int?
-  is_active   Boolean   @default(true)
-  sort_order  Int       @default(0)
-  created_at  DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime  @default(now()) @db.Timestamptz(6)
-  deleted_at  DateTime?
-  created_by  Int       @default(0)
-  updated_by  Int       @default(0)
-  deleted_by  Int?
+  parentId    Int?      @map("parent_id")
+  isActive    Boolean   @default(true) @map("is_active")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at")
+  createdBy   Int       @default(0) @map("created_by")
+  updatedBy   Int       @default(0) @map("updated_by")
+  deletedBy   Int?      @map("deleted_by")
 
-  parent    Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id])
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   childrens Category[] @relation("CategoryHierarchy")
   products  Product[]
 
@@ -383,93 +384,91 @@ model Category {
 }
 
 model Product {
-  id            Int           @id @default(autoincrement())
-  business_id   Int           @default(1)
-  category_id   Int
-  sku           String?       @unique @db.VarChar(50)
-  barcode       String?       @unique @db.VarChar(50)
-  name          String        @db.VarChar(200)
-  description   String?       @db.Text()
-  brand         String?       @db.VarChar(100)
-  model         String?       @db.VarChar(100)
-  unit          String?       @default("pcs") @db.VarChar(20) // kg, l, pcs, etc. - Temporalmente opcional
-  weight        Decimal?      @db.Decimal(8, 3)
-  dimensions    String?       @db.VarChar(50) // "LxWxH"
-  cost_price    Decimal       @default(0) @db.Decimal(10, 2)
-  selling_price Decimal       @default(0) @db.Decimal(10, 2)
-  tax_type      TaxType       @default(IVA_13)
-  tax_rate      Decimal       @default(13) @db.Decimal(5, 2) // IVA 13%
-  min_stock     Int           @default(0)
-  max_stock     Int?
-  reorder_point Int           @default(0)
-  is_active     Boolean       @default(true)
-  status        ProductStatus @default(ACTIVE)
-  expiry_date   DateTime?
-  created_at    DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime      @default(now()) @db.Timestamptz(6)
-  deleted_at    DateTime?
-  created_by    Int           @default(0)
-  updated_by    Int           @default(0)
-  deleted_by    Int?
+  id           Int           @id @default(autoincrement())
+  categoryId   Int           @map("category_id")
+  sku          String?       @unique @db.VarChar(50)
+  barcode      String?       @unique @db.VarChar(50)
+  name         String        @db.VarChar(200)
+  description  String?       @db.Text()
+  brand        String?       @db.VarChar(100)
+  model        String?       @db.VarChar(100)
+  unit         String?       @default("pcs") @db.VarChar(20) // kg, l, pcs, etc. - Temporalmente opcional
+  weight       Decimal?      @db.Decimal(8, 3)
+  dimensions   String?       @db.VarChar(50) // "LxWxH"
+  costPrice    Decimal       @default(0) @map("cost_price") @db.Decimal(10, 2)
+  sellingPrice Decimal       @default(0) @map("selling_price") @db.Decimal(10, 2)
+  taxType      TaxType       @default(IVA_13) @map("tax_type")
+  taxRate      Decimal       @default(13) @map("tax_rate") @db.Decimal(5, 2) // IVA 13%
+  minStock     Int           @default(0) @map("min_stock")
+  maxStock     Int?          @map("max_stock")
+  reorderPoint Int           @default(0) @map("reorder_point")
+  isActive     Boolean       @default(true) @map("is_active")
+  status       ProductStatus @default(ACTIVE)
+  expiryDate   DateTime?     @map("expiry_date")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime?     @map("deleted_at")
+  createdBy    Int           @default(0) @map("created_by")
+  updatedBy    Int           @default(0) @map("updated_by")
+  deletedBy    Int?          @map("deleted_by")
 
-  business              Business               @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  category              Category               @relation(fields: [category_id], references: [id])
-  businessProducts      BusinessProduct[]
-  cartItems             CartItem[]
-  saleItems             SaleItem[]
-  purchaseOrderItems    PurchaseOrderItem[]
-  inventoryTransactions InventoryTransaction[]
+  category           Category            @relation(fields: [categoryId], references: [id])
+  businessProducts   BusinessProduct[]
+  cartItems          CartItem[]
+  saleItems          SaleItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  // inventoryTransactions InventoryTransaction[]
 
   @@map("products")
 }
 
 model BusinessProduct {
-  id              Int       @id @default(autoincrement())
-  business_id     Int
-  product_id      Int
-  custom_price    Decimal?  @db.Decimal(10, 2)
-  current_stock   Int       @default(0)
-  reserved_stock  Int       @default(0)
-  available_stock Int       @default(0)
-  last_restock    DateTime?
-  created_at      DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+  id             Int       @id @default(autoincrement())
+  businessId     Int       @map("business_id")
+  productId      Int       @map("product_id")
+  customPrice    Decimal   @map("custom_price") @db.Decimal(10, 2)
+  currentStock   Int       @default(0) @map("current_stock")
+  reservedStock  Int       @default(0) @map("reserved_stock")
+  availableStock Int       @default(0) @map("available_stock")
+  lastRestock    DateTime? @map("last_restock")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  business Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
 
-  @@unique([business_id, product_id])
+  @@unique([businessId, productId])
   @@map("business_products")
 }
 
 model Supplier {
-  id              Int            @id @default(autoincrement())
-  business_id     Int            @default(1)
-  code            String?        @unique @db.VarChar(50)
-  name            String         @db.VarChar(200)
-  document_type   DocumentType   @default(NIT)
-  document_number String?        @db.VarChar(20) // NIT, CI, etc.
-  contact_person  String?        @db.VarChar(100)
-  email           String?        @db.VarChar(100)
-  phone           String?        @db.VarChar(20)
-  address         String?        @db.Text()
-  city            String?        @db.VarChar(50)
-  department      Department?    @default(LA_PAZ)
-  country         String         @default("Bolivia") @db.VarChar(50)
-  postal_code     String?        @db.VarChar(10)
-  payment_terms   Int            @default(30) // días
-  credit_limit    Decimal?       @db.Decimal(12, 2)
-  current_balance Decimal        @default(0) @db.Decimal(12, 2)
-  status          SupplierStatus @default(ACTIVE)
-  notes           String?        @db.Text()
-  created_at      DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime       @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime?
-  created_by      Int            @default(0)
-  updated_by      Int            @default(0)
-  deleted_by      Int?
+  id             Int            @id @default(autoincrement())
+  businessId     Int            @default(1) @map("business_id")
+  code           String?        @unique @db.VarChar(50)
+  name           String         @db.VarChar(200)
+  documentType   DocumentType   @default(NIT) @map("document_type")
+  documentNumber String?        @map("document_number") @db.VarChar(20) // NIT, CI, etc.
+  contactPerson  String?        @map("contact_person") @db.VarChar(100)
+  email          String?        @db.VarChar(100)
+  phone          String?        @db.VarChar(20)
+  address        String?        @db.Text()
+  city           String?        @db.VarChar(50)
+  department     Department?    @default(LA_PAZ)
+  country        String         @default("Bolivia") @db.VarChar(50)
+  postalCode     String?        @map("postal_code") @db.VarChar(10)
+  paymentTerms   Int            @default(30) @map("payment_terms") // días
+  creditLimit    Decimal?       @map("credit_limit") @db.Decimal(12, 2)
+  currentBalance Decimal        @default(0) @map("current_balance") @db.Decimal(12, 2)
+  status         SupplierStatus @default(ACTIVE)
+  notes          String?        @db.Text()
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?      @map("deleted_at")
+  createdBy      Int            @default(0) @map("created_by")
+  updatedBy      Int            @default(0) @map("updated_by")
+  deletedBy      Int?           @map("deleted_by")
 
-  business       Business        @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
   purchaseOrders PurchaseOrder[]
   supplierDebts  SupplierDebt[]
 
@@ -477,32 +476,32 @@ model Supplier {
 }
 
 model Customer {
-  id              Int          @id @default(autoincrement())
-  business_id     Int          @default(1)
+  id             Int          @id @default(autoincrement())
+  businessId     Int          @default(1) @map("business_id")
   // code            String       @unique @db.VarChar(20)
-  first_name      String       @db.VarChar(50)
-  last_name       String?      @db.VarChar(50)
-  document_type   DocumentType @default(CI)
-  document_number String?      @db.VarChar(20) // CI, NIT, etc.
-  email           String?      @db.VarChar(100)
-  phone           String?      @db.VarChar(20)
-  address         String?      @db.Text()
-  city            String?      @db.VarChar(50)
-  department      Department?  @default(LA_PAZ)
-  country         String       @default("Bolivia") @db.VarChar(50)
-  postal_code     String?      @db.VarChar(10)
-  credit_limit    Decimal?     @db.Decimal(12, 2)
-  current_balance Decimal      @default(0) @db.Decimal(12, 2)
-  loyalty_points  Int          @default(0)
-  is_active       Boolean      @default(true)
-  created_at      DateTime     @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime     @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime?
-  created_by      Int          @default(0)
-  updated_by      Int          @default(0)
-  deleted_by      Int?
+  firstName      String       @map("first_name") @db.VarChar(50)
+  lastName       String?      @map("last_name") @db.VarChar(50)
+  documentType   DocumentType @default(CI) @map("document_type")
+  documentNumber String?      @map("document_number") @db.VarChar(20) // CI, NIT, etc.
+  email          String?      @db.VarChar(100)
+  phone          String?      @db.VarChar(20)
+  address        String?      @db.Text()
+  city           String?      @db.VarChar(50)
+  department     Department?  @default(LA_PAZ)
+  country        String       @default("Bolivia") @db.VarChar(50)
+  postalCode     String?      @map("postal_code") @db.VarChar(10)
+  creditLimit    Decimal?     @map("credit_limit") @db.Decimal(12, 2)
+  currentBalance Decimal      @default(0) @map("current_balance") @db.Decimal(12, 2)
+  loyaltyPoints  Int          @default(0) @map("loyalty_points")
+  isActive       Boolean      @default(true) @map("is_active")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?    @map("deleted_at")
+  createdBy      Int          @default(0) @map("created_by")
+  updatedBy      Int          @default(0) @map("updated_by")
+  deletedBy      Int?         @map("deleted_by")
 
-  business      Business       @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
   carts         Cart[]
   sales         Sale[]
   customerDebts CustomerDebt[]
@@ -511,28 +510,28 @@ model Customer {
 }
 
 model PurchaseOrder {
-  id            Int                 @id @default(autoincrement())
-  business_id   Int                 @default(1)
-  supplier_id   Int
-  po_number     String?             @unique @db.VarChar(20)
-  status        PurchaseOrderStatus @default(DRAFT)
-  order_date    DateTime            @default(now()) @db.Timestamptz(6)
-  expected_date DateTime?
-  received_date DateTime?
-  subtotal      Decimal             @default(0) @db.Decimal(12, 2)
-  tax_amount    Decimal             @default(0) @db.Decimal(12, 2)
-  total_amount  Decimal             @default(0) @db.Decimal(12, 2)
-  notes         String?             @db.Text()
-  created_at    DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime            @default(now()) @db.Timestamptz(6)
-  deleted_at    DateTime?
-  created_by    Int                 @default(0)
-  updated_by    Int                 @default(0)
-  deleted_by    Int?
-  approved_by   Int?
+  id           Int                 @id @default(autoincrement())
+  businessId   Int                 @default(1) @map("business_id")
+  supplierId   Int                 @map("supplier_id")
+  poNumber     String?             @unique @map("po_number") @db.VarChar(20)
+  status       PurchaseOrderStatus @default(DRAFT)
+  orderDate    DateTime            @default(now()) @map("order_date") @db.Timestamptz(6)
+  expectedDate DateTime?           @map("expected_date")
+  receivedDate DateTime?           @map("received_date")
+  subtotal     Decimal             @default(0) @db.Decimal(12, 2)
+  taxAmount    Decimal             @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  totalAmount  Decimal             @default(0) @map("total_amount") @db.Decimal(12, 2)
+  notes        String?             @db.Text()
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime?           @map("deleted_at")
+  createdBy    Int                 @default(0) @map("created_by")
+  updatedBy    Int                 @default(0) @map("updated_by")
+  deletedBy    Int?                @map("deleted_by")
+  approvedBy   Int?                @map("approved_by")
 
-  business      Business            @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  supplier      Supplier            @relation(fields: [supplier_id], references: [id])
+  business      Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  supplier      Supplier            @relation(fields: [supplierId], references: [id])
   items         PurchaseOrderItem[]
   supplierDebts SupplierDebt[]
   User          User?               @relation(fields: [userId], references: [id])
@@ -542,107 +541,107 @@ model PurchaseOrder {
 }
 
 model PurchaseOrderItem {
-  id                Int      @id @default(autoincrement())
-  purchase_order_id Int
-  product_id        Int
-  quantity          Int
-  unit_cost         Decimal  @db.Decimal(10, 2)
-  received_quantity Int      @default(0)
-  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  id               Int      @id @default(autoincrement())
+  purchaseOrderId  Int      @map("purchase_order_id")
+  productId        Int      @map("product_id")
+  quantity         Int
+  unitCost         Decimal  @map("unit_cost") @db.Decimal(10, 2)
+  receivedQuantity Int      @default(0) @map("received_quantity")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  purchaseOrder PurchaseOrder @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade)
-  product       Product       @relation(fields: [product_id], references: [id])
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id])
 
   @@map("purchase_order_items")
 }
 
 model SupplierDebt {
-  id                Int       @id @default(autoincrement())
-  supplier_id       Int
-  purchase_order_id Int?
-  amount            Decimal   @db.Decimal(12, 2)
-  paid_amount       Decimal   @default(0) @db.Decimal(12, 2)
-  due_date          DateTime
-  is_paid           Boolean   @default(false)
-  created_at        DateTime  @default(now()) @db.Timestamptz(6)
-  paid_at           DateTime?
+  id              Int       @id @default(autoincrement())
+  supplierId      Int       @map("supplier_id")
+  purchaseOrderId Int?      @map("purchase_order_id")
+  amount          Decimal   @db.Decimal(12, 2)
+  paidAmount      Decimal   @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  dueDate         DateTime  @map("due_date")
+  isPaid          Boolean   @default(false) @map("is_paid")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  paidAt          DateTime? @map("paid_at")
 
-  supplier      Supplier       @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
-  purchaseOrder PurchaseOrder? @relation(fields: [purchase_order_id], references: [id])
+  supplier      Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  purchaseOrder PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
 
   @@map("supplier_debts")
 }
 
 model Cart {
-  id           Int        @id @default(autoincrement())
-  business_id  Int
-  user_id      Int
-  customer_id  Int?
-  status       CartStatus @default(ACTIVE)
-  subtotal     Decimal    @default(0) @db.Decimal(12, 2)
-  tax_amount   Decimal    @default(0) @db.Decimal(12, 2)
-  total_amount Decimal    @default(0) @db.Decimal(12, 2)
-  created_at   DateTime   @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime   @default(now()) @db.Timestamptz(6)
+  id          Int        @id @default(autoincrement())
+  businessId  Int        @map("business_id")
+  userId      Int        @map("user_id")
+  customerId  Int?       @map("customer_id")
+  status      CartStatus @default(ACTIVE)
+  subtotal    Decimal    @default(0) @db.Decimal(12, 2)
+  taxAmount   Decimal    @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  totalAmount Decimal    @default(0) @map("total_amount") @db.Decimal(12, 2)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  business Business   @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  user     User       @relation(fields: [user_id], references: [id])
-  customer Customer?  @relation(fields: [customer_id], references: [id])
+  business Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id])
+  customer Customer?  @relation(fields: [customerId], references: [id])
   items    CartItem[]
   sale     Sale?
 
-  @@unique([business_id, user_id, status], name: "unique_active_cart")
+  @@unique([businessId, userId, status], name: "unique_active_cart")
   @@map("carts")
 }
 
 model CartItem {
-  id          Int      @id @default(autoincrement())
-  cart_id     Int
-  product_id  Int
-  quantity    Int
-  unit_price  Decimal  @db.Decimal(10, 2)
-  tax_rate    Decimal  @default(13) @db.Decimal(5, 2) // IVA 13%
-  tax_amount  Decimal  @default(0) @db.Decimal(10, 2)
-  total_price Decimal  @db.Decimal(10, 2)
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+  id         Int      @id @default(autoincrement())
+  cartId     Int      @map("cart_id")
+  productId  Int      @map("product_id")
+  quantity   Int
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  taxRate    Decimal  @default(13) @map("tax_rate") @db.Decimal(5, 2) // IVA 13%
+  taxAmount  Decimal  @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  totalPrice Decimal  @map("total_price") @db.Decimal(10, 2)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  cart    Cart    @relation(fields: [cart_id], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [product_id], references: [id])
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
-  @@unique([cart_id, product_id])
+  @@unique([cartId, productId])
   @@map("cart_items")
 }
 
 model Sale {
-  id                 Int           @id @default(autoincrement())
-  business_id        Int
-  cart_id            Int           @unique
-  user_id            Int
-  customer_id        Int?
-  invoice_number     String        @unique @db.VarChar(20) // Número de factura
-  invoice_type       InvoiceType   @default(FACTURA)
-  authorization_code String?       @db.VarChar(50) // Código de autorización Siat
-  control_code       String?       @db.VarChar(50) // Código de control
-  status             SaleStatus    @default(COMPLETED)
-  subtotal           Decimal       @db.Decimal(12, 2)
-  tax_amount         Decimal       @db.Decimal(12, 2)
-  discount_amount    Decimal       @default(0) @db.Decimal(12, 2)
-  total_amount       Decimal       @db.Decimal(12, 2)
-  payment_method     PaymentMethod
-  payment_status     PaymentStatus @default(PENDING)
-  notes              String?       @db.Text()
-  created_at         DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime      @default(now()) @db.Timestamptz(6)
-  deleted_at         DateTime?
-  created_by         Int           @default(0)
-  updated_by         Int           @default(0)
-  deleted_by         Int?
+  id                Int           @id @default(autoincrement())
+  businessId        Int           @map("business_id")
+  cartId            Int           @unique @map("cart_id")
+  userId            Int           @map("user_id")
+  customerId        Int?          @map("customer_id")
+  invoiceNumber     String        @unique @map("invoice_number") @db.VarChar(20) // Número de factura
+  invoiceType       InvoiceType   @default(FACTURA) @map("invoice_type")
+  authorizationCode String?       @map("authorization_code") @db.VarChar(50) // Código de autorización Siat
+  controlCode       String?       @map("control_code") @db.VarChar(50) // Código de control
+  status            SaleStatus    @default(COMPLETED)
+  subtotal          Decimal       @db.Decimal(12, 2)
+  taxAmount         Decimal       @map("tax_amount") @db.Decimal(12, 2)
+  discountAmount    Decimal       @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  totalAmount       Decimal       @map("total_amount") @db.Decimal(12, 2)
+  paymentMethod     PaymentMethod @map("payment_method")
+  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
+  notes             String?       @db.Text()
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?     @map("deleted_at")
+  createdBy         Int           @default(0) @map("created_by")
+  updatedBy         Int           @default(0) @map("updated_by")
+  deletedBy         Int?          @map("deleted_by")
 
-  business       Business       @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  cart           Cart           @relation(fields: [cart_id], references: [id])
-  user           User           @relation(fields: [user_id], references: [id])
-  customer       Customer?      @relation(fields: [customer_id], references: [id])
+  business       Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cart           Cart           @relation(fields: [cartId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+  customer       Customer?      @relation(fields: [customerId], references: [id])
   items          SaleItem[]
   customerDebts  CustomerDebt[]
   CashRegister   CashRegister?  @relation(fields: [cashRegisterId], references: [id])
@@ -652,61 +651,61 @@ model Sale {
 }
 
 model SaleItem {
-  id              Int      @id @default(autoincrement())
-  sale_id         Int
-  product_id      Int
-  quantity        Int
-  unit_price      Decimal  @db.Decimal(10, 2)
-  tax_rate        Decimal  @default(13) @db.Decimal(5, 2) // IVA 13%
-  tax_amount      Decimal  @db.Decimal(10, 2)
-  discount_amount Decimal  @default(0) @db.Decimal(10, 2)
-  total_price     Decimal  @db.Decimal(10, 2)
-  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  id             Int      @id @default(autoincrement())
+  saleId         Int      @map("sale_id")
+  productId      Int      @map("product_id")
+  quantity       Int
+  unitPrice      Decimal  @map("unit_price") @db.Decimal(10, 2)
+  taxRate        Decimal  @default(13) @map("tax_rate") @db.Decimal(5, 2) // IVA 13%
+  taxAmount      Decimal  @map("tax_amount") @db.Decimal(10, 2)
+  discountAmount Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  totalPrice     Decimal  @map("total_price") @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  sale    Sale    @relation(fields: [sale_id], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [product_id], references: [id])
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("sale_items")
 }
 
 model CustomerDebt {
-  id          Int       @id @default(autoincrement())
-  customer_id Int
-  sale_id     Int?
-  amount      Decimal   @db.Decimal(12, 2)
-  paid_amount Decimal   @default(0) @db.Decimal(12, 2)
-  due_date    DateTime
-  is_paid     Boolean   @default(false)
-  created_at  DateTime  @default(now()) @db.Timestamptz(6)
-  paid_at     DateTime?
+  id         Int       @id @default(autoincrement())
+  customerId Int       @map("customer_id")
+  saleId     Int?      @map("sale_id")
+  amount     Decimal   @db.Decimal(12, 2)
+  paidAmount Decimal   @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  dueDate    DateTime  @map("due_date")
+  isPaid     Boolean   @default(false) @map("is_paid")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  paidAt     DateTime? @map("paid_at")
 
-  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  sale     Sale?    @relation(fields: [sale_id], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sale     Sale?    @relation(fields: [saleId], references: [id])
 
   @@map("customer_debts")
 }
 
 model CashRegister {
-  id              Int                @id @default(autoincrement())
-  business_id     Int
-  user_id         Int
-  register_number String             @unique @db.VarChar(20)
-  opening_amount  Decimal            @db.Decimal(12, 2)
-  closing_amount  Decimal?           @db.Decimal(12, 2)
-  current_amount  Decimal            @db.Decimal(12, 2)
-  opening_date    DateTime           @default(now()) @db.Timestamptz(6)
-  closing_date    DateTime?          @db.Timestamptz(6)
-  status          CashRegisterStatus @default(OPEN)
-  notes           String?            @db.Text()
-  created_at      DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime           @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime?
-  created_by      Int                @default(0)
-  updated_by      Int                @default(0)
-  deleted_by      Int?
+  id             Int                @id @default(autoincrement())
+  businessId     Int                @map("business_id")
+  userId         Int                @map("user_id")
+  registerNumber String             @unique @map("register_number") @db.VarChar(20)
+  openingAmount  Decimal            @map("opening_amount") @db.Decimal(12, 2)
+  closingAmount  Decimal?           @map("closing_amount") @db.Decimal(12, 2)
+  currentAmount  Decimal            @map("current_amount") @db.Decimal(12, 2)
+  openingDate    DateTime           @default(now()) @map("opening_date") @db.Timestamptz(6)
+  closingDate    DateTime?          @map("closing_date") @db.Timestamptz(6)
+  status         CashRegisterStatus @default(OPEN)
+  notes          String?            @db.Text()
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?          @map("deleted_at")
+  createdBy      Int                @default(0) @map("created_by")
+  updatedBy      Int                @default(0) @map("updated_by")
+  deletedBy      Int?               @map("deleted_by")
 
-  business  Business            @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  user      User                @relation(fields: [user_id], references: [id])
+  business  Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user      User                @relation(fields: [userId], references: [id])
   sales     Sale[]
   auditLogs AuditCashRegister[]
 
@@ -714,59 +713,59 @@ model CashRegister {
 }
 
 model InventoryTransaction {
-  id               Int                      @id @default(autoincrement())
-  business_id      Int
-  product_id       Int
-  user_id          Int
-  transaction_type InventoryTransactionType
-  quantity         Int
-  unit_cost        Decimal                  @db.Decimal(10, 2)
-  total_cost       Decimal                  @db.Decimal(12, 2)
-  reference_id     Int? // ID de la transacción relacionada (venta, compra, etc.)
-  reference_type   String?                  @db.VarChar(50) // 'sale', 'purchase', 'adjustment', etc.
-  notes            String?                  @db.Text()
-  created_at       DateTime                 @default(now()) @db.Timestamptz(6)
+  id              Int                      @id @default(autoincrement())
+  businessId      Int                      @map("business_id")
+  productId       Int                      @map("product_id")
+  userId          Int                      @map("user_id")
+  transactionType InventoryTransactionType @map("transaction_type")
+  quantity        Int
+  unitCost        Decimal                  @map("unit_cost") @db.Decimal(10, 2)
+  totalCost       Decimal                  @map("total_cost") @db.Decimal(12, 2)
+  referenceId     Int?                     @map("reference_id") // ID de la transacción relacionada (venta, compra, etc.)
+  referenceType   String?                  @map("reference_type") @db.VarChar(50) // 'sale', 'purchase', 'adjustment', etc.
+  notes           String?                  @db.Text()
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  business Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [product_id], references: [id])
-  user     User     @relation(fields: [user_id], references: [id])
+  // business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  // product  Product  @relation(fields: [productId], references: [id])
+  // user     User     @relation(fields: [userId], references: [id])
 
   @@map("inventory_transactions")
 }
 
 model AuditLog {
-  id          Int      @id @default(autoincrement())
-  business_id Int?
-  user_id     Int
-  action      String   @db.VarChar(50)
-  entity      String   @db.VarChar(50)
-  entity_id   Int
-  old_values  Json?
-  new_values  Json?
-  ip_address  String?  @db.VarChar(45)
-  user_agent  String?  @db.Text()
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  id         Int      @id @default(autoincrement())
+  businessId Int?     @map("business_id")
+  userId     Int      @map("user_id")
+  action     String   @db.VarChar(50)
+  entity     String   @db.VarChar(50)
+  entityId   Int      @map("entity_id")
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.Text()
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  business Business? @relation(fields: [business_id], references: [id])
-  user     User      @relation(fields: [user_id], references: [id])
+  business Business? @relation(fields: [businessId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
 
-  @@index([entity, entity_id])
-  @@index([created_at])
-  @@index([business_id])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@index([businessId])
   @@map("audit_logs")
 }
 
 model AuditCashRegister {
-  id               Int      @id @default(autoincrement())
-  cash_register_id Int
-  user_id          Int
-  action           String   @db.VarChar(50)
-  amount           Decimal? @db.Decimal(12, 2)
-  details          String?  @db.Text()
-  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  id             Int      @id @default(autoincrement())
+  cashRegisterId Int      @map("cash_register_id")
+  userId         Int      @map("user_id")
+  action         String   @db.VarChar(50)
+  amount         Decimal? @db.Decimal(12, 2)
+  details        String?  @db.Text()
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  cashRegister CashRegister @relation(fields: [cash_register_id], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [user_id], references: [id])
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
 
   @@map("audit_cash_registers")
 }

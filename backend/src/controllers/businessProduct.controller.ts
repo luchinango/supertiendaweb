@@ -13,9 +13,14 @@ export const getAll = async (_req: Request, res: Response) => {
 };
 
 export const getById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { businessId, productId } = req.params;
   const record = await prisma.businessProduct.findUnique({
-    where: { id: Number(id) },
+    where: { 
+      businessId_productId: {
+        businessId: Number(businessId),
+        productId: Number(productId)
+      }
+    },
     include: { business: true, product: true },
   });
   if (!record) {
@@ -26,23 +31,14 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const { businessId, productId, customPrice, actualStock } = req.body;
-
-  // Validar que no exista combinación repetida
-  const exists = await prisma.businessProduct.findFirst({
-    where: { businessId, productId },
-  });
-  if (exists) {
-    res.status(400).json({ message: 'Este producto ya está asignado a este negocio' });
-    return;
-  }
+  const { businessId, productId, customPrice, currentStock } = req.body;
 
   const record = await prisma.businessProduct.create({
     data: {
       businessId,
       productId,
       customPrice,
-      actualStock,
+      currentStock,
     },
   });
 
@@ -50,15 +46,20 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { customPrice, actualStock } = req.body;
+  const { businessId, productId } = req.params;
+  const { customPrice, currentStock } = req.body;
 
   const record = await prisma.businessProduct.update({
-    where: { id: Number(id) },
+    where: { 
+      businessId_productId: {
+        businessId: Number(businessId),
+        productId: Number(productId)
+      }
+    },
     data: {
       customPrice,
-      actualStock,
-      createdAt: new Date(),
+      currentStock,
+      updatedAt: new Date(),
     },
   });
 
@@ -66,7 +67,14 @@ export const update = async (req: Request, res: Response) => {
 };
 
 export const remove = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  await prisma.businessProduct.delete({ where: { id: Number(id) } });
+  const { businessId, productId } = req.params;
+  await prisma.businessProduct.delete({ 
+    where: { 
+      businessId_productId: {
+        businessId: Number(businessId),
+        productId: Number(productId)
+      }
+    } 
+  });
   res.status(204).send();
 };

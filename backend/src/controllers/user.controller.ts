@@ -8,7 +8,7 @@ const SALT_ROUNDS = 10;
 export const getAll = async (_req: Request, res: Response) => {
   const users = await prisma.user.findMany({
     include: { role: true, employee: true },
-    orderBy: { created_at: 'desc' },
+    orderBy: { createdAt: 'desc' },
   });
   res.json(users);
 };
@@ -26,14 +26,35 @@ export const getById = async (req: Request, res: Response) => {
   res.json(user);
 };
 
+export const getCurrentUser = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  
+  if (!userId) {
+    res.status(401).json({ message: 'Usuario no autenticado' });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { role: true, employee: true },
+  });
+
+  if (!user) {
+    res.status(404).json({ message: 'Usuario no encontrado' });
+    return;
+  }
+
+  res.json(user);
+};
+
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, password, role_id, status } = req.body;
+    const { username, password, roleId, status } = req.body;
 
     await authService.createUser({
       username,
       password,
-      role_id,
+      roleId,
       status
     });
 
@@ -51,16 +72,14 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 
 export const update = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { role_id, status, is_active, avatar_url } = req.body;
+  const { roleId, status } = req.body;
 
   const user = await prisma.user.update({
     where: { id: Number(id) },
     data: {
-      role_id,
+      roleId,
       status,
-      is_active,
-      avatar_url,
-      updated_at: new Date(),
+      updatedAt: new Date(),
     },
   });
 

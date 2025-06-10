@@ -5,9 +5,9 @@ export const getAll = async (_req: Request, res: Response) => {
   const cashRegisters = await prisma.cashRegister.findMany({
     include: {
       user: true,
-      audit_cash_registers: true,
+      auditLogs: true,
     },
-    orderBy: {opening_date: 'desc'},
+    orderBy: {openingDate: 'desc'},
   });
   res.json(cashRegisters);
 };
@@ -18,7 +18,7 @@ export const getById = async (req: Request, res: Response) => {
     where: {id: Number(id)},
     include: {
       user: true,
-      audit_cash_registers: true,
+      auditLogs: true,
     },
   });
   if (!register) {
@@ -29,16 +29,17 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {user_id, opening_amount, notes} = req.body;
+  const {businessId, userId, registerNumber, openingAmount, notes} = req.body;
 
   const register = await prisma.cashRegister.create({
     data: {
-      user_id,
-      opening_amount,
-      closing_amount: 0,
+      businessId,
+      userId,
+      registerNumber,
+      openingAmount,
+      currentAmount: openingAmount,
       notes,
-      status: "abierta",
-      opening_date: new Date(),
+      status: "OPEN",
     },
   });
 
@@ -47,15 +48,15 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
-  const {closing_amount, notes, status} = req.body;
+  const {closingAmount, notes, status} = req.body;
 
   const register = await prisma.cashRegister.update({
     where: {id: Number(id)},
     data: {
-      closing_amount,
+      closingAmount,
       notes,
       status,
-      closing_date: new Date(),
+      closingDate: new Date(),
     },
   });
 

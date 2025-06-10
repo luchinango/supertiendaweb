@@ -15,7 +15,7 @@ export const getAll = async (_req: Request, res: Response) => {
       id: category.id,
       name: category.name,
       description: category.description,
-      is_active: category.is_active,
+      isActive: category.isActive,
       count: category._count.products,
     }));
 
@@ -37,7 +37,7 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {name, description, is_active} = req.body;
+  const {name, description, isActive} = req.body;
 
   // Verificar unicidad del nombre
   const exists = await prisma.category.findUnique({where: {name}});
@@ -50,7 +50,7 @@ export const create = async (req: Request, res: Response) => {
     data: {
       name,
       description,
-      is_active,
+      isActive,
     },
   });
 
@@ -59,14 +59,14 @@ export const create = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
-  const {name, description, is_active} = req.body;
+  const {name, description, isActive} = req.body;
 
   const category = await prisma.category.update({
     where: {id: Number(id)},
     data: {
       name,
       description,
-      is_active,
+      isActive,
     },
   });
 
