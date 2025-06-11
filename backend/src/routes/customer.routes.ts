@@ -24,6 +24,41 @@ router.get('/customers', controller.getAll);
 
 /**
  * @swagger
+ * /api/customers/search:
+ *   get:
+ *     summary: Filtrar clientes por documento
+ *     description: Filtra clientes por tipo y/o número de documento (búsqueda parcial)
+ *     tags: [Customers]
+ *     parameters:
+ *       - in: query
+ *         name: documentType
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [CI, NIT, PASSPORT, FOREIGN_ID]
+ *         description: Tipo de documento (opcional)
+ *       - in: query
+ *         name: documentNumber
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Número de documento (búsqueda parcial, opcional)
+ *     responses:
+ *       200:
+ *         description: Lista de clientes que coinciden con los filtros
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Al menos un filtro debe ser proporcionado
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/customers/search', controller.findByDocument);
+
+/**
+ * @swagger
  * /api/customers/{id}:
  *   get:
  *     summary: Obtener cliente por ID

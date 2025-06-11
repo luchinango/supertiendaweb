@@ -6,15 +6,15 @@ const printer = new escpos.Printer(device); // Puede ser similar o diferente
 
 // La API para imprimir probablemente cambiará
 printer.text('Hello World')
-       .cut()
-       .close((err: Error | null) => { // Añade el tipo aquí
-         if (err) {
-           console.error("Error al imprimir:", err);
-           /* manejo de error adicional */
-         } else {
-           console.log("Impresión completada.");
-         }
-       });
+.cut()
+.close((err: Error | null) => { // Añade el tipo aquí
+  if (err) {
+    console.error("Error al imprimir:", err);
+    /* manejo de error adicional */
+  } else {
+    console.log("Impresión completada.");
+  }
+});
 // O podría ser asíncrono:
 // try {
 //   await printer.text('Hello World').cut().close();

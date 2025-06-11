@@ -26,6 +26,7 @@ import authRoutes from './routes/auth.routes';
 import saleRoutes from './routes/sale.routes';
 import saleItemRoutes from './routes/saleItem.routes';
 import inventoryRoutes from './routes/inventory.routes';
+import posRoutes from './routes/posRoutes';
 
 /*
 import salesControlRouter from './routes/salesControl';
@@ -66,6 +67,7 @@ app.use('/api', authRoutes);
 app.use('/api', saleRoutes);
 app.use('/api', saleItemRoutes);
 app.use('/api', inventoryRoutes);
+app.use('/api/pos', posRoutes);
 
 /*
 app.use('/api/sales-control', salesControlRouter);

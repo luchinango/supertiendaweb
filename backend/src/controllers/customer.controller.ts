@@ -1,113 +1,104 @@
 import {Request, Response} from 'express';
-import prisma from '../config/prisma';
+import {customerService} from '../services/customerService';
 
 export const getAll = async (_req: Request, res: Response) => {
-  const customers = await prisma.customer.findMany({
-    orderBy: {firstName: 'asc'},
-  });
-  res.json(customers);
+  try {
+    const customers = await customerService.getAllCustomers();
+    res.json(customers);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    res.status(500).json({error: errorMessage});
+  }
 };
 
 export const getById = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  const customer = await prisma.customer.findUnique({
-    where: {id: Number(id)},
-  });
-  if (!customer) {
-    res.status(404).json({message: 'No encontrado'});
-    return;
+  try {
+    const {id} = req.params;
+    const customer = await customerService.getCustomerById(Number(id));
+    res.json(customer);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    if (errorMessage === 'Cliente no encontrado') {
+      res.status(404).json({error: errorMessage});
+    } else {
+      res.status(500).json({error: errorMessage});
+    }
   }
-  res.json(customer);
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {
-    firstName,
-    lastName,
-    address,
-    phone,
-    documentType,
-    documentNumber,
-    email,
-    city,
-    department,
-    country,
-    postalCode,
-    creditLimit,
-    currentBalance,
-    loyaltyPoints,
-    isActive,
-  } = req.body;
-
-  const customer = await prisma.customer.create({
-    data: {
-      firstName,
-      lastName,
-      address,
-      phone,
-      documentType,
-      documentNumber,
-      email,
-      city,
-      department,
-      country,
-      postalCode,
-      creditLimit,
-      currentBalance,
-      loyaltyPoints,
-      isActive,
-    },
-  });
-
-  res.status(201).json(customer);
+  try {
+    const customer = await customerService.createCustomer(req.body);
+    res.status(201).json(customer);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    if (errorMessage.includes('Ya existe')) {
+      res.status(400).json({error: errorMessage});
+    } else {
+      res.status(500).json({error: errorMessage});
+    }
+  }
 };
 
 export const update = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  const {
-    firstName,
-    lastName,
-    address,
-    phone,
-    documentType,
-    documentNumber,
-    email,
-    city,
-    department,
-    country,
-    postalCode,
-    creditLimit,
-    currentBalance,
-    loyaltyPoints,
-    isActive,
-  } = req.body;
-
-  const customer = await prisma.customer.update({
-    where: {id: Number(id)},
-    data: {
-      firstName,
-      lastName,
-      address,
-      phone,
-      documentType,
-      documentNumber,
-      email,
-      city,
-      department,
-      country,
-      postalCode,
-      creditLimit,
-      currentBalance,
-      loyaltyPoints,
-      isActive,
-    },
-  });
-
-  res.json(customer);
+  try {
+    const {id} = req.params;
+    const customer = await customerService.updateCustomer(Number(id), req.body);
+    res.json(customer);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    if (errorMessage === 'Cliente no encontrado') {
+      res.status(404).json({error: errorMessage});
+    } else if (errorMessage.includes('Ya existe')) {
+      res.status(400).json({error: errorMessage});
+    } else {
+      res.status(500).json({error: errorMessage});
+    }
+  }
 };
 
 export const remove = async (req: Request, res: Response) => {
-  const {id} = req.params;
-  await prisma.customer.delete({where: {id: Number(id)}});
-  res.status(204).send();
+  try {
+    const {id} = req.params;
+    const result = await customerService.deleteCustomer(Number(id));
+    res.status(204).json(result);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    if (errorMessage === 'Cliente no encontrado') {
+      res.status(404).json({error: errorMessage});
+    } else if (errorMessage.includes('No se puede eliminar')) {
+      res.status(400).json({error: errorMessage});
+    } else {
+      res.status(500).json({error: errorMessage});
+    }
+  }
+};
+
+export const findByDocument = async (req: Request, res: Response) => {
+  try {
+    const {documentType, documentNumber} = req.query;
+
+    if (!documentType && !documentNumber) {
+      res.status(400).json({error: 'Al menos documentType o documentNumber debe ser proporcionado'});
+      return;
+    }
+
+    const customers = await customerService.findByDocument(
+      documentType as any,
+      documentNumber as string
+    );
+
+    res.json({
+      success: true,
+      customers,
+      totalFound: customers.length,
+      filters: {
+        documentType: documentType || null,
+        documentNumber: documentNumber || null
+      }
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    res.status(500).json({error: errorMessage});
+  }
 };

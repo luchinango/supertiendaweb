@@ -59,3 +59,4 @@ frontend/pnpm-lock.yaml
 /backend/keys/private.pem
 /backend/keys/public.pem
 /backend/scripts
+*.zip

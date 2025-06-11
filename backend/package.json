@@ -12,7 +12,7 @@
     "prebuild": "npm run clean",
     "test": "jest",
     "db:push": "prisma db push",
-    "db:generate": "prisma generate",
+    "db:generate": "prisma generate && npm run swagger && npm run swagger:json",
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
     "swagger": "ts-node src/config/swagger.ts",
