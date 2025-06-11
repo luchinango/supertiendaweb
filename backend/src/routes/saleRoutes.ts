@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as controller from '../controllers/sale.controller';
+import * as controller from '../controllers/saleController';
 import { authenticate } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -328,4 +328,4 @@ router.post('/sales/:id/cancel', authenticate(['ADMIN', 'MANAGER']), controller.
  */
 router.post('/sales/:id/refund', authenticate(['ADMIN', 'MANAGER']), controller.refundSale);
 
-export default router; 
+export default router;

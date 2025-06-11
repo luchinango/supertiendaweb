@@ -84,7 +84,7 @@ export class POSService {
   async startSale(input: StartSaleInput) {
     const {businessId, userId} = input;
 
-    const cashRegister = await cashRegisterService.getOpenCashRegister(businessId, userId);
+    const cashRegister = await cashRegisterService.getCurrentOpenCashRegister(businessId, userId);
     if (!cashRegister) {
       throw new Error('No hay una caja registradora abierta para este usuario');
     }

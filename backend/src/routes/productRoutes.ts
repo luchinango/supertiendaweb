@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import * as productController from '../controllers/product.controller';
+import * as controller from '../controllers/productController';
 
 const router = Router();
 
@@ -26,7 +26,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Product'
  */
-router.get('/products', productController.getAll);
+router.get('/products', controller.getAll);
 
 /**
  * @swagger
@@ -52,7 +52,7 @@ router.get('/products', productController.getAll);
  *       404:
  *         description: Categoría no encontrada o sin productos
  */
-router.get('/products/category/:categoryId', productController.getByCategory);
+router.get('/products/category/:categoryId', controller.getByCategory);
 
 
 /**
@@ -73,7 +73,7 @@ router.get('/products/category/:categoryId', productController.getByCategory);
  *       404:
  *         description: No encontrado
  */
-router.get('/products/:id', productController.getById);
+router.get('/products/:id', controller.getById);
 
 /**
  * @swagger
@@ -93,7 +93,7 @@ router.get('/products/:id', productController.getById);
  *       400:
  *         description: Código de barras duplicado
  */
-router.post('/products', productController.create);
+router.post('/products', controller.create);
 
 /**
  * @swagger
@@ -117,7 +117,7 @@ router.post('/products', productController.create);
  *       200:
  *         description: Producto actualizado
  */
-router.put('/products/:id', productController.update);
+router.put('/products/:id', controller.update);
 
 /**
  * @swagger
@@ -135,6 +135,6 @@ router.put('/products/:id', productController.update);
  *       204:
  *         description: Producto eliminado
  */
-router.delete('/products/:id', productController.remove);
+router.delete('/products/:id', controller.remove);
 
 export default router;

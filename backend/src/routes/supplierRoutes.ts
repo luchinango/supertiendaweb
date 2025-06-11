@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as supplierController from '../controllers/supplier.controller';
+import * as controller from '../controllers/supplierController';
 
 const router = Router();
 
@@ -26,7 +26,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Supplier'
  */
-router.get('/suppliers', supplierController.getAll);
+router.get('/suppliers', controller.getAll);
 
 /**
  * @swagger
@@ -46,7 +46,7 @@ router.get('/suppliers', supplierController.getAll);
  *       404:
  *         description: No encontrado
  */
-router.get('/suppliers/:id', supplierController.getById);
+router.get('/suppliers/:id', controller.getById);
 
 /**
  * @swagger
@@ -66,7 +66,7 @@ router.get('/suppliers/:id', supplierController.getById);
  *       400:
  *         description: NIT duplicado
  */
-router.post('/suppliers', supplierController.create);
+router.post('/suppliers', controller.create);
 
 /**
  * @swagger
@@ -90,7 +90,7 @@ router.post('/suppliers', supplierController.create);
  *       200:
  *         description: Proveedor actualizado
  */
-router.put('/suppliers/:id', supplierController.update);
+router.put('/suppliers/:id', controller.update);
 
 /**
  * @swagger
@@ -108,6 +108,6 @@ router.put('/suppliers/:id', supplierController.update);
  *       204:
  *         description: Proveedor eliminado
  */
-router.delete('/suppliers/:id', supplierController.remove);
+router.delete('/suppliers/:id', controller.remove);
 
 export default router;

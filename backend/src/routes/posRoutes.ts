@@ -1,11 +1,9 @@
 import {Router} from 'express';
-import {posController} from '../controllers/posController';
+import * as controller from '../controllers/posController';
 import {authenticate} from '../middlewares/authMiddleware';
 
 const router = Router();
 
-
-router.use(authenticate());
 // router.use(authenticate(['ADMIN', 'MANAGER', 'CASHIER']));
 
 /**
@@ -29,7 +27,7 @@ router.use(authenticate());
  *       500:
  *         description: Error del servidor
  */
-router.post('/start-sale', posController.startSale);
+router.post('/start-sale', authenticate(), controller.startSale);
 
 /**
  * @swagger
@@ -69,7 +67,7 @@ router.post('/start-sale', posController.startSale);
  *       500:
  *         description: Error del servidor
  */
-router.post('/add-item', posController.addItemToCart);
+router.post('/add-item', authenticate(), controller.addItemToCart);
 
 /**
  * @swagger
@@ -101,7 +99,7 @@ router.post('/add-item', posController.addItemToCart);
  *       500:
  *         description: Error del servidor
  */
-router.delete('/cart/:cartId/item/:productId', posController.removeItemFromCart);
+router.delete('/cart/:cartId/item/:productId', authenticate(), controller.removeItemFromCart);
 
 /**
  * @swagger
@@ -146,7 +144,7 @@ router.delete('/cart/:cartId/item/:productId', posController.removeItemFromCart)
  *       500:
  *         description: Error del servidor
  */
-router.put('/cart/:cartId/item/:productId', posController.updateItemQuantity);
+router.put('/cart/:cartId/item/:productId', authenticate(), controller.updateItemQuantity);
 
 /**
  * @swagger
@@ -176,7 +174,7 @@ router.put('/cart/:cartId/item/:productId', posController.updateItemQuantity);
  *       500:
  *         description: Error del servidor
  */
-router.get('/cart/:cartId/summary', posController.getSaleSummary);
+router.get('/cart/:cartId/summary', authenticate(), controller.getSaleSummary);
 
 /**
  * @swagger
@@ -218,7 +216,7 @@ router.get('/cart/:cartId/summary', posController.getSaleSummary);
  *       500:
  *         description: Error del servidor
  */
-router.post('/cart/:cartId/complete', posController.completeSale);
+router.post('/cart/:cartId/complete', authenticate(), controller.completeSale);
 
 /**
  * @swagger
@@ -251,7 +249,7 @@ router.post('/cart/:cartId/complete', posController.completeSale);
  *       500:
  *         description: Error del servidor
  */
-router.post('/cart/:cartId/cancel', posController.cancelSale);
+router.post('/cart/:cartId/cancel', authenticate(), controller.cancelSale);
 
 /**
  * @swagger
@@ -281,7 +279,7 @@ router.post('/cart/:cartId/cancel', posController.cancelSale);
  *       500:
  *         description: Error del servidor
  */
-router.get('/search-products', posController.searchProducts);
+router.get('/search-products', authenticate(), controller.searchProducts);
 
 /**
  * @swagger
@@ -310,7 +308,7 @@ router.get('/search-products', posController.searchProducts);
  *       500:
  *         description: Error del servidor
  */
-router.get('/quick-products', posController.getQuickProducts);
+router.get('/quick-products', authenticate(), controller.getQuickProducts);
 
 /**
  * @swagger
@@ -348,6 +346,6 @@ router.get('/quick-products', posController.getQuickProducts);
  *       500:
  *         description: Error del servidor
  */
-router.post('/cart/:cartId/assign-customer', authenticate(), posController.assignCustomerToCart);
+router.post('/cart/:cartId/assign-customer', authenticate(), controller.assignCustomerToCart);
 
 export default router;

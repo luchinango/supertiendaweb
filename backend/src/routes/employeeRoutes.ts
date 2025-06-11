@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import * as employeeController from '../controllers/employee.controller';
+import * as controller from '../controllers/employeeController';
 import {authenticate} from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -21,7 +21,7 @@ const router = Router();
  *       200:
  *         description: Lista de empleados
  */
-router.get('/employees', employeeController.getAll);
+router.get('/employees', controller.getAll);
 
 /**
  * @swagger
@@ -40,7 +40,7 @@ router.get('/employees', employeeController.getAll);
  *       404:
  *         description: No encontrado
  */
-router.get('/employees/:id', employeeController.getById);
+router.get('/employees/:id', controller.getById);
 
 /**
  * @swagger
@@ -102,7 +102,7 @@ router.get('/employees/:id', employeeController.getById);
  *       409:
  *         description: Email ya existe o usuario ya tiene empleado asociado
  */
-router.post('/employees', authenticate(['ADMIN']), employeeController.create);
+router.post('/employees', authenticate(['ADMIN']), controller.create);
 
 /**
  * @swagger
@@ -125,7 +125,7 @@ router.post('/employees', authenticate(['ADMIN']), employeeController.create);
  *       200:
  *         description: Empleado actualizado
  */
-router.put('/employees/:id', employeeController.update);
+router.put('/employees/:id', controller.update);
 
 /**
  * @swagger
@@ -142,7 +142,7 @@ router.put('/employees/:id', employeeController.update);
  *       204:
  *         description: Eliminado exitosamente
  */
-router.delete('/employees/:id', employeeController.remove);
+router.delete('/employees/:id', controller.remove);
 
 /**
  * @swagger
@@ -166,6 +166,6 @@ router.delete('/employees/:id', employeeController.remove);
  *       404:
  *         description: Empleado no encontrado
  */
-router.get('/employees/user/:userId', authenticate(), employeeController.getByUserId);
+router.get('/employees/user/:userId', authenticate(), controller.getByUserId);
 
 export default router;

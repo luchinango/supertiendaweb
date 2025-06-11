@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import { SaleStatus, PaymentStatus, PaymentMethod, InvoiceType } from '../../prisma/generated';
+import {SaleStatus, PaymentStatus, PaymentMethod, InvoiceType} from '../../prisma/generated';
 
 interface SaleCreateData {
   businessId: number;
@@ -54,7 +54,7 @@ export const saleService = {
 
   async getById(id: number) {
     return await prisma.sale.findUnique({
-      where: { id },
+      where: {id},
       include: {
         business: true,
         cart: {
@@ -79,9 +79,8 @@ export const saleService = {
   },
 
   async create(data: SaleCreateData) {
-    // Obtener el carrito con sus ítems
     const cart = await prisma.cart.findUnique({
-      where: { id: data.cartId },
+      where: {id: data.cartId},
       include: {
         items: {
           include: {
@@ -99,15 +98,20 @@ export const saleService = {
       throw new Error('El carrito no está activo');
     }
 
-    // Calcular totales
+    const openCashRegister = await prisma.cashRegister.findFirst({
+      where: {
+        businessId: data.businessId,
+        userId: data.userId,
+        status: 'OPEN'
+      }
+    });
+
     const subtotal = cart.subtotal;
     const taxAmount = cart.taxAmount;
     const totalAmount = cart.totalAmount;
 
-    // Generar número de factura
     const invoiceNumber = await this.generateInvoiceNumber(data.businessId);
 
-    // Crear la venta
     const sale = await prisma.sale.create({
       data: {
         businessId: data.businessId,
@@ -123,6 +127,7 @@ export const saleService = {
         paymentMethod: data.paymentMethod,
         paymentStatus: PaymentStatus.PAID,
         notes: data.notes,
+        cashRegisterId: openCashRegister?.id || null,
         createdBy: data.userId,
         updatedBy: data.userId
       },
@@ -131,11 +136,11 @@ export const saleService = {
         cart: true,
         user: true,
         customer: true,
-        items: true
+        items: true,
+        CashRegister: true
       }
     });
 
-    // Crear los ítems de venta desde el carrito
     const saleItems = await Promise.all(
       cart.items.map(async (cartItem) => {
         return await prisma.saleItem.create({
@@ -152,13 +157,11 @@ export const saleService = {
       })
     );
 
-    // Actualizar el carrito a COMPLETED
     await prisma.cart.update({
-      where: { id: data.cartId },
-      data: { status: 'COMPLETED' }
+      where: {id: data.cartId},
+      data: {status: 'COMPLETED'}
     });
 
-    // Actualizar inventario
     await this.updateInventory(sale.id);
 
     return {
@@ -169,7 +172,7 @@ export const saleService = {
 
   async update(id: number, data: SaleUpdateData) {
     return await prisma.sale.update({
-      where: { id },
+      where: {id},
       data: {
         ...data,
         updatedAt: new Date()
@@ -189,10 +192,9 @@ export const saleService = {
   },
 
   async remove(id: number) {
-    // Verificar si la venta puede ser eliminada
     const sale = await prisma.sale.findUnique({
-      where: { id },
-      include: { items: true }
+      where: {id},
+      include: {items: true}
     });
 
     if (!sale) {
@@ -203,20 +205,18 @@ export const saleService = {
       throw new Error('No se puede eliminar una venta completada');
     }
 
-    // Eliminar ítems de venta
     await prisma.saleItem.deleteMany({
-      where: { saleId: id }
+      where: {saleId: id}
     });
 
-    // Eliminar la venta
     await prisma.sale.delete({
-      where: { id }
+      where: {id}
     });
   },
 
   async getByBusiness(businessId: number) {
     return await prisma.sale.findMany({
-      where: { businessId: businessId },
+      where: {businessId: businessId},
       include: {
         cart: {
           include: {
@@ -243,7 +243,7 @@ export const saleService = {
 
   async getByCustomer(customerId: number) {
     return await prisma.sale.findMany({
-      where: { customerId: customerId },
+      where: {customerId: customerId},
       include: {
         business: true,
         cart: true,
@@ -292,9 +292,8 @@ export const saleService = {
   },
 
   async processSale(data: ProcessSaleData) {
-    // Obtener información del carrito
     const cart = await prisma.cart.findUnique({
-      where: { id: data.cartId },
+      where: {id: data.cartId},
       include: {
         business: true,
         user: true,
@@ -314,7 +313,6 @@ export const saleService = {
       throw new Error('El carrito no está activo');
     }
 
-    // Crear la venta
     const saleData: SaleCreateData = {
       businessId: cart.businessId,
       cartId: data.cartId,
@@ -329,8 +327,8 @@ export const saleService = {
 
   async cancelSale(id: number, reason: string) {
     const sale = await prisma.sale.findUnique({
-      where: { id },
-      include: { items: true }
+      where: {id},
+      include: {items: true}
     });
 
     if (!sale) {
@@ -341,9 +339,8 @@ export const saleService = {
       throw new Error('Solo se pueden cancelar ventas completadas');
     }
 
-    // Actualizar estado de la venta
     const updatedSale = await prisma.sale.update({
-      where: { id },
+      where: {id},
       data: {
         status: SaleStatus.CANCELLED,
         notes: reason,
@@ -351,7 +348,6 @@ export const saleService = {
       }
     });
 
-    // Revertir inventario
     await this.revertInventory(id);
 
     return updatedSale;
@@ -359,8 +355,8 @@ export const saleService = {
 
   async refundSale(id: number, amount: number, reason: string) {
     const sale = await prisma.sale.findUnique({
-      where: { id },
-      include: { items: true }
+      where: {id},
+      include: {items: true}
     });
 
     if (!sale) {
@@ -375,11 +371,10 @@ export const saleService = {
       throw new Error('El monto de reembolso no puede ser mayor al total de la venta');
     }
 
-    // Actualizar estado de la venta
     const newStatus = amount === Number(sale.totalAmount) ? SaleStatus.REFUNDED : SaleStatus.PARTIALLY_REFUNDED;
 
     const updatedSale = await prisma.sale.update({
-      where: { id },
+      where: {id},
       data: {
         status: newStatus,
         notes: reason,
@@ -390,23 +385,20 @@ export const saleService = {
     return updatedSale;
   },
 
-  async generateInvoiceNumber(businessId: number): Promise<string> {
-    // Obtener la configuración fiscal del negocio
+  async generateInvoiceNumber(businessId: number) {
     const fiscalSettings = await prisma.fiscalSettings.findUnique({
-      where: { businessId: businessId }
+      where: {businessId: businessId}
     });
 
     if (!fiscalSettings) {
       throw new Error('Configuración fiscal no encontrada');
     }
 
-    // Generar número de factura
     const currentNumber = fiscalSettings.invoiceCurrentNumber;
     const series = fiscalSettings.invoiceSeries;
 
-    // Actualizar el número actual
     await prisma.fiscalSettings.update({
-      where: { businessId: businessId },
+      where: {businessId: businessId},
       data: {
         invoiceCurrentNumber: currentNumber + 1
       }
@@ -417,7 +409,7 @@ export const saleService = {
 
   async updateInventory(saleId: number) {
     const sale = await prisma.sale.findUnique({
-      where: { id: saleId },
+      where: {id: saleId},
       include: {
         items: {
           include: {
@@ -431,9 +423,7 @@ export const saleService = {
       throw new Error('Venta no encontrada');
     }
 
-    // Actualizar inventario para cada producto
     for (const item of sale.items) {
-      // Actualizar stock en BusinessProduct
       await prisma.businessProduct.updateMany({
         where: {
           businessId: sale.businessId,
@@ -449,14 +439,13 @@ export const saleService = {
         }
       });
 
-      // Registrar transacción de inventario
       await prisma.inventoryTransaction.create({
         data: {
           businessId: sale.businessId,
           productId: item.productId,
           userId: sale.userId,
           transactionType: 'SALE',
-          quantity: -item.quantity, // Negativo porque es una salida
+          quantity: -item.quantity,
           unitCost: item.unitPrice,
           totalCost: item.totalPrice,
           referenceId: sale.id,
@@ -469,7 +458,7 @@ export const saleService = {
 
   async revertInventory(saleId: number) {
     const sale = await prisma.sale.findUnique({
-      where: { id: saleId },
+      where: {id: saleId},
       include: {
         items: {
           include: {
@@ -483,9 +472,7 @@ export const saleService = {
       throw new Error('Venta no encontrada');
     }
 
-    // Revertir inventario para cada producto
     for (const item of sale.items) {
-      // Actualizar stock en BusinessProduct
       await prisma.businessProduct.updateMany({
         where: {
           businessId: sale.businessId,
@@ -501,14 +488,13 @@ export const saleService = {
         }
       });
 
-      // Registrar transacción de inventario de reversión
       await prisma.inventoryTransaction.create({
         data: {
           businessId: sale.businessId,
           productId: item.productId,
           userId: sale.userId,
           transactionType: 'RETURN',
-          quantity: item.quantity, // Positivo porque es una entrada
+          quantity: item.quantity,
           unitCost: item.unitPrice,
           totalCost: item.totalPrice,
           referenceId: sale.id,

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as categoryController from '../controllers/category.controller';
+import * as controller from '../controllers/categoryController';
 
 const router = Router();
 
@@ -26,7 +26,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Category'
  */
-router.get('/categories', categoryController.getAll);
+router.get('/categories', controller.getAll);
 
 /**
  * @swagger
@@ -46,7 +46,7 @@ router.get('/categories', categoryController.getAll);
  *       404:
  *         description: No encontrado
  */
-router.get('/categories/:id', categoryController.getById);
+router.get('/categories/:id', controller.getById);
 
 /**
  * @swagger
@@ -66,7 +66,7 @@ router.get('/categories/:id', categoryController.getById);
  *       400:
  *         description: Categoría duplicada
  */
-router.post('/categories', categoryController.create);
+router.post('/categories', controller.create);
 
 /**
  * @swagger
@@ -90,7 +90,7 @@ router.post('/categories', categoryController.create);
  *       200:
  *         description: Categoría actualizada
  */
-router.put('/categories/:id', categoryController.update);
+router.put('/categories/:id', controller.update);
 
 /**
  * @swagger
@@ -108,6 +108,6 @@ router.put('/categories/:id', categoryController.update);
  *       204:
  *         description: Categoría eliminada exitosamente
  */
-router.delete('/categories/:id', categoryController.remove);
+router.delete('/categories/:id', controller.remove);
 
 export default router;

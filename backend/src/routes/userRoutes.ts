@@ -1,5 +1,6 @@
-import { Router } from 'express';
-import * as userController from '../controllers/user.controller';
+import {Router, RequestHandler} from 'express';
+import * as controller from '../controllers/userController';
+import {authenticate} from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -26,7 +27,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get('/users', userController.getAll);
+router.get('/users', controller.getAll);
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ router.get('/users', userController.getAll);
  *       404:
  *         description: No encontrado
  */
-router.get('/users/:id', userController.getById);
+router.get('/users/:id', controller.getById);
 
 /**
  * @swagger
@@ -77,7 +78,7 @@ router.get('/users/:id', userController.getById);
  *       400:
  *         description: Username duplicado o datos inválidos
  */
-router.post('/users', userController.create);
+router.post('/users', controller.create);
 
 /**
  * @swagger
@@ -109,7 +110,7 @@ router.post('/users', userController.create);
  *       200:
  *         description: Usuario actualizado
  */
-router.put('/users/:id', userController.update);
+router.put('/users/:id', controller.update);
 
 /**
  * @swagger
@@ -126,6 +127,24 @@ router.put('/users/:id', userController.update);
  *       204:
  *         description: Eliminado exitosamente
  */
-router.delete('/users/:id', userController.remove);
+router.delete('/users/:id', controller.remove);
+
+/**
+ * @swagger
+ * /api/users/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ */
+router.get('/me', authenticate(), controller.getCurrentUser);
 
 export default router;

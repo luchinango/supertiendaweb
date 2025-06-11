@@ -2352,6 +2352,110 @@
           "userId",
           "action"
         ]
+      },
+      "CashRegisterOpen": {
+        "type": "object",
+        "required": [
+          "registerNumber",
+          "openingAmount"
+        ],
+        "properties": {
+          "registerNumber": {
+            "type": "string",
+            "description": "Número único de la caja registradora",
+            "example": "CAJA001"
+          },
+          "openingAmount": {
+            "type": "number",
+            "description": "Monto inicial de apertura",
+            "example": 1000
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas adicionales",
+            "example": "Caja principal del local"
+          }
+        }
+      },
+      "CashRegisterClose": {
+        "type": "object",
+        "required": [
+          "closingAmount"
+        ],
+        "properties": {
+          "closingAmount": {
+            "type": "number",
+            "description": "Monto final de cierre",
+            "example": 2500
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas del cierre",
+            "example": "Cierre normal del día"
+          }
+        }
+      },
+      "CashRegisterSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "registerNumber": {
+            "type": "string"
+          },
+          "openingAmount": {
+            "type": "number"
+          },
+          "closingAmount": {
+            "type": "number"
+          },
+          "currentAmount": {
+            "type": "number"
+          },
+          "openingDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closingDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CLOSED",
+              "SUSPENDED"
+            ]
+          },
+          "totalSales": {
+            "type": "number"
+          },
+          "totalCashSales": {
+            "type": "number"
+          },
+          "totalCardSales": {
+            "type": "number"
+          },
+          "totalOtherSales": {
+            "type": "number"
+          },
+          "salesCount": {
+            "type": "integer"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "username": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -2754,6 +2858,158 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/business-products": {
+      "get": {
+        "summary": "Listar todos los productos asignados a negocios",
+        "tags": [
+          "BusinessProducts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de asignaciones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BusinessProduct"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear una nueva asignación de producto a negocio",
+        "tags": [
+          "BusinessProducts"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "businessId",
+                  "productId"
+                ],
+                "properties": {
+                  "businessId": {
+                    "type": "integer"
+                  },
+                  "productId": {
+                    "type": "integer"
+                  },
+                  "customPrice": {
+                    "type": "number",
+                    "format": "decimal"
+                  },
+                  "actualStock": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Asignación creada"
+          },
+          "400": {
+            "description": "Asignación duplicada"
+          }
+        }
+      }
+    },
+    "/api/business-products/{id}": {
+      "get": {
+        "summary": "Obtener asignación de producto por ID",
+        "tags": [
+          "BusinessProducts"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asignación encontrada"
+          },
+          "404": {
+            "description": "No encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar asignación de producto a negocio",
+        "tags": [
+          "BusinessProducts"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customPrice": {
+                    "type": "number"
+                  },
+                  "actualStock": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asignación actualizada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar asignación de producto",
+        "tags": [
+          "BusinessProducts"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado exitosamente"
           }
         }
       }
@@ -3205,32 +3461,22 @@
         }
       }
     },
-    "/api/business-products": {
+    "/api/cart-items": {
       "get": {
-        "summary": "Listar todos los productos asignados a negocios",
+        "summary": "Listar todos los ítems de carritos",
         "tags": [
-          "BusinessProducts"
+          "CartItems"
         ],
         "responses": {
           "200": {
-            "description": "Lista de asignaciones",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BusinessProduct"
-                  }
-                }
-              }
-            }
+            "description": "Lista de ítems"
           }
         }
       },
       "post": {
-        "summary": "Crear una nueva asignación de producto a negocio",
+        "summary": "Agregar producto al carrito",
         "tags": [
-          "BusinessProducts"
+          "CartItems"
         ],
         "requestBody": {
           "required": true,
@@ -3239,22 +3485,23 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "businessId",
-                  "productId"
+                  "cart_id",
+                  "product_id",
+                  "quantity",
+                  "price_at_time"
                 ],
                 "properties": {
-                  "businessId": {
+                  "cart_id": {
                     "type": "integer"
                   },
-                  "productId": {
+                  "product_id": {
                     "type": "integer"
                   },
-                  "customPrice": {
-                    "type": "number",
-                    "format": "decimal"
-                  },
-                  "actualStock": {
+                  "quantity": {
                     "type": "integer"
+                  },
+                  "price_at_time": {
+                    "type": "number"
                   }
                 }
               }
@@ -3263,19 +3510,16 @@
         },
         "responses": {
           "201": {
-            "description": "Asignación creada"
-          },
-          "400": {
-            "description": "Asignación duplicada"
+            "description": "Ítem agregado"
           }
         }
       }
     },
-    "/api/business-products/{id}": {
+    "/api/cart-items/{id}": {
       "get": {
-        "summary": "Obtener asignación de producto por ID",
+        "summary": "Obtener ítem de carrito por ID",
         "tags": [
-          "BusinessProducts"
+          "CartItems"
         ],
         "parameters": [
           {
@@ -3289,7 +3533,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Asignación encontrada"
+            "description": "Ítem encontrado"
           },
           "404": {
             "description": "No encontrado"
@@ -3297,9 +3541,9 @@
         }
       },
       "put": {
-        "summary": "Actualizar asignación de producto a negocio",
+        "summary": "Actualizar producto en carrito",
         "tags": [
-          "BusinessProducts"
+          "CartItems"
         ],
         "parameters": [
           {
@@ -3318,11 +3562,11 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "customPrice": {
-                    "type": "number"
-                  },
-                  "actualStock": {
+                  "quantity": {
                     "type": "integer"
+                  },
+                  "price_at_time": {
+                    "type": "number"
                   }
                 }
               }
@@ -3331,14 +3575,14 @@
         },
         "responses": {
           "200": {
-            "description": "Asignación actualizada"
+            "description": "Ítem actualizado"
           }
         }
       },
       "delete": {
-        "summary": "Eliminar asignación de producto",
+        "summary": "Eliminar ítem del carrito",
         "tags": [
-          "BusinessProducts"
+          "CartItems"
         ],
         "parameters": [
           {
@@ -3352,7 +3596,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Eliminado exitosamente"
+            "description": "Ítem eliminado"
           }
         }
       }
@@ -3833,22 +4077,337 @@
         }
       }
     },
-    "/api/cart-items": {
-      "get": {
-        "summary": "Listar todos los ítems de carritos",
+    "/api/cash-register/open": {
+      "post": {
+        "summary": "Abre una nueva caja registradora",
         "tags": [
-          "CartItems"
+          "Cash Register"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashRegisterOpen"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Caja abierta exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CashRegisterSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error en los datos de entrada"
+          },
+          "401": {
+            "description": "No autorizado"
+          }
+        }
+      }
+    },
+    "/api/cash-register/{id}/close": {
+      "post": {
+        "summary": "Cierra una caja registradora",
+        "tags": [
+          "Cash Register"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de la caja registradora"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashRegisterClose"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Caja cerrada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CashRegisterSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error en los datos de entrada"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "404": {
+            "description": "Caja no encontrada"
+          }
+        }
+      }
+    },
+    "/api/cash-register/{id}/summary": {
+      "get": {
+        "summary": "Obtiene el resumen de una caja registradora",
+        "tags": [
+          "Cash Register"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de la caja registradora"
+          }
         ],
         "responses": {
           "200": {
-            "description": "Lista de ítems"
+            "description": "Resumen de la caja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CashRegisterSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caja no encontrada"
           }
         }
-      },
-      "post": {
-        "summary": "Agregar producto al carrito",
+      }
+    },
+    "/api/cash-register": {
+      "get": {
+        "summary": "Lista las cajas registradoras del negocio",
         "tags": [
-          "CartItems"
+          "Cash Register"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OPEN",
+                "CLOSED",
+                "SUSPENDED"
+              ]
+            },
+            "description": "Filtrar por estado"
+          },
+          {
+            "in": "query",
+            "name": "userId",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por usuario"
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Fecha de inicio para filtrar"
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Fecha de fin para filtrar"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Número de página"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Límite de registros por página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cajas registradoras",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cashRegisters": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CashRegisterSummary"
+                          }
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "page": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-register/current": {
+      "get": {
+        "summary": "Obtiene la caja abierta actual del usuario",
+        "tags": [
+          "Cash Register"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Caja actual abierta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CashRegisterSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No hay caja abierta"
+          }
+        }
+      }
+    },
+    "/api/cash-register/{id}/adjust": {
+      "put": {
+        "summary": "Actualiza el monto actual de la caja",
+        "tags": [
+          "Cash Register"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de la caja registradora"
+          }
         ],
         "requestBody": {
           "required": true,
@@ -3857,23 +4416,19 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "cart_id",
-                  "product_id",
-                  "quantity",
-                  "price_at_time"
+                  "newAmount",
+                  "reason"
                 ],
                 "properties": {
-                  "cart_id": {
-                    "type": "integer"
+                  "newAmount": {
+                    "type": "number",
+                    "description": "Nuevo monto actual",
+                    "example": 1200
                   },
-                  "product_id": {
-                    "type": "integer"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "price_at_time": {
-                    "type": "number"
+                  "reason": {
+                    "type": "string",
+                    "description": "Razón del ajuste",
+                    "example": "Ajuste por diferencia encontrada"
                   }
                 }
               }
@@ -3881,232 +4436,71 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Ítem agregado"
-          }
-        }
-      }
-    },
-    "/api/cart-items/{id}": {
-      "get": {
-        "summary": "Obtener ítem de carrito por ID",
-        "tags": [
-          "CartItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
           "200": {
-            "description": "Ítem encontrado"
+            "description": "Monto actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CashRegisterSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error en los datos de entrada"
+          },
+          "401": {
+            "description": "No autorizado"
           },
           "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar producto en carrito",
-        "tags": [
-          "CartItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "price_at_time": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Ítem actualizado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar ítem del carrito",
-        "tags": [
-          "CartItems"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Ítem eliminado"
+            "description": "Caja no encontrada"
           }
         }
       }
     },
-    "/api/cash-registers": {
+    "/api/cash-register/{id}/audit": {
       "get": {
-        "summary": "Listar todas las cajas",
+        "summary": "Obtiene el historial de auditoría de una caja",
         "tags": [
-          "CashRegisters"
+          "Cash Register"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de la caja registradora"
+          }
         ],
         "responses": {
           "200": {
-            "description": "Lista de cajas"
-          }
-        }
-      },
-      "post": {
-        "summary": "Abrir una nueva caja",
-        "tags": [
-          "CashRegisters"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "user_id",
-                  "opening_amount"
-                ],
-                "properties": {
-                  "user_id": {
-                    "type": "integer"
-                  },
-                  "opening_amount": {
-                    "type": "number"
-                  },
-                  "notes": {
-                    "type": "string"
-                  }
+            "description": "Historial de auditoría",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Caja abierta"
-          }
-        }
-      }
-    },
-    "/api/cash-registers/{id}": {
-      "get": {
-        "summary": "Obtener una caja por ID",
-        "tags": [
-          "CashRegisters"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Caja encontrada"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Cerrar caja",
-        "tags": [
-          "CashRegisters"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "closing_amount": {
-                    "type": "number"
-                  },
-                  "notes": {
-                    "type": "string"
-                  },
-                  "status": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Caja actualizada"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar caja",
-        "tags": [
-          "CashRegisters"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Caja eliminada"
           }
         }
       }
@@ -5542,118 +5936,6 @@
         }
       }
     },
-    "/api/purchase-orders": {
-      "get": {
-        "summary": "Listar todas las órdenes de compra",
-        "tags": [
-          "PurchaseOrders"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de órdenes de compra"
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear nueva orden de compra",
-        "tags": [
-          "PurchaseOrders"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PurchaseOrder"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Orden de compra creada"
-          }
-        }
-      }
-    },
-    "/api/purchase-orders/{id}": {
-      "get": {
-        "summary": "Obtener orden de compra por ID",
-        "tags": [
-          "PurchaseOrders"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Orden de compra encontrada"
-          },
-          "404": {
-            "description": "No encontrada"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar orden de compra",
-        "tags": [
-          "PurchaseOrders"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PurchaseOrder"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Orden de compra actualizada"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar orden de compra",
-        "tags": [
-          "PurchaseOrders"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Orden eliminada exitosamente"
-          }
-        }
-      }
-    },
     "/api/purchase-order-items": {
       "get": {
         "summary": "Listar todos los ítems de órdenes de compra",
@@ -5766,45 +6048,45 @@
         }
       }
     },
-    "/api/roles": {
+    "/api/purchase-orders": {
       "get": {
-        "summary": "Obtener todos los roles",
+        "summary": "Listar todas las órdenes de compra",
         "tags": [
-          "Roles"
+          "PurchaseOrders"
         ],
         "responses": {
           "200": {
-            "description": "Lista de roles"
+            "description": "Lista de órdenes de compra"
           }
         }
       },
       "post": {
-        "summary": "Crear un nuevo rol",
+        "summary": "Crear nueva orden de compra",
         "tags": [
-          "Roles"
+          "PurchaseOrders"
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Role"
+                "$ref": "#/components/schemas/PurchaseOrder"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Rol creado"
+            "description": "Orden de compra creada"
           }
         }
       }
     },
-    "/api/roles/{id}": {
+    "/api/purchase-orders/{id}": {
       "get": {
-        "summary": "Obtener un rol por ID",
+        "summary": "Obtener orden de compra por ID",
         "tags": [
-          "Roles"
+          "PurchaseOrders"
         ],
         "parameters": [
           {
@@ -5818,14 +6100,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Rol encontrado"
+            "description": "Orden de compra encontrada"
+          },
+          "404": {
+            "description": "No encontrada"
           }
         }
       },
       "put": {
-        "summary": "Actualizar un rol",
+        "summary": "Actualizar orden de compra",
         "tags": [
-          "Roles"
+          "PurchaseOrders"
         ],
         "parameters": [
           {
@@ -5842,21 +6127,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Role"
+                "$ref": "#/components/schemas/PurchaseOrder"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Rol actualizado"
+            "description": "Orden de compra actualizada"
           }
         }
       },
       "delete": {
-        "summary": "Eliminar un rol",
+        "summary": "Eliminar orden de compra",
         "tags": [
-          "Roles"
+          "PurchaseOrders"
         ],
         "parameters": [
           {
@@ -5870,7 +6155,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Eliminado"
+            "description": "Orden eliminada exitosamente"
           }
         }
       }
@@ -6026,6 +6311,381 @@
         "responses": {
           "204": {
             "description": "Eliminado correctamente"
+          }
+        }
+      }
+    },
+    "/api/roles": {
+      "get": {
+        "summary": "Obtener todos los roles",
+        "tags": [
+          "Roles"
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de roles"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear un nuevo rol",
+        "tags": [
+          "Roles"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Role"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rol creado"
+          }
+        }
+      }
+    },
+    "/api/roles/{id}": {
+      "get": {
+        "summary": "Obtener un rol por ID",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rol encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar un rol",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Role"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rol actualizado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar un rol",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Eliminado"
+          }
+        }
+      }
+    },
+    "/api/sale-items": {
+      "get": {
+        "summary": "Listar todos los ítems de venta",
+        "tags": [
+          "SaleItems"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de ítems de venta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SaleItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear un nuevo ítem de venta",
+        "tags": [
+          "SaleItems"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "saleId",
+                  "productId",
+                  "quantity",
+                  "unitPrice"
+                ],
+                "properties": {
+                  "saleId": {
+                    "type": "integer"
+                  },
+                  "productId": {
+                    "type": "integer"
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "unitPrice": {
+                    "type": "number"
+                  },
+                  "taxRate": {
+                    "type": "number",
+                    "default": 13
+                  },
+                  "discountAmount": {
+                    "type": "number",
+                    "default": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ítem de venta creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sale-items/{id}": {
+      "get": {
+        "summary": "Obtener ítem de venta por ID",
+        "tags": [
+          "SaleItems"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ítem de venta encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleItem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ítem de venta no encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar ítem de venta",
+        "tags": [
+          "SaleItems"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "unit_price": {
+                    "type": "number"
+                  },
+                  "tax_rate": {
+                    "type": "number"
+                  },
+                  "discount_amount": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ítem de venta actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar ítem de venta",
+        "tags": [
+          "SaleItems"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Ítem de venta eliminado exitosamente"
+          }
+        }
+      }
+    },
+    "/api/sale-items/sale/{saleId}": {
+      "get": {
+        "summary": "Obtener ítems de venta por venta",
+        "tags": [
+          "SaleItems"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "saleId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de ítems de la venta"
+          }
+        }
+      }
+    },
+    "/api/sale-items/product/{productId}": {
+      "get": {
+        "summary": "Obtener ítems de venta por producto",
+        "tags": [
+          "SaleItems"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de ítems del producto"
           }
         }
       }
@@ -6514,105 +7174,45 @@
         }
       }
     },
-    "/api/sale-items": {
+    "/api/supplier-debts": {
       "get": {
-        "summary": "Listar todos los ítems de venta",
+        "summary": "Listar todas las deudas a proveedores",
         "tags": [
-          "SaleItems"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
+          "SupplierDebts"
         ],
         "responses": {
           "200": {
-            "description": "Lista de ítems de venta",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SaleItem"
-                  }
-                }
-              }
-            }
+            "description": "Lista de deudas"
           }
         }
       },
       "post": {
-        "summary": "Crear un nuevo ítem de venta",
+        "summary": "Crear nueva deuda a proveedor",
         "tags": [
-          "SaleItems"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
+          "SupplierDebts"
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "saleId",
-                  "productId",
-                  "quantity",
-                  "unitPrice"
-                ],
-                "properties": {
-                  "saleId": {
-                    "type": "integer"
-                  },
-                  "productId": {
-                    "type": "integer"
-                  },
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "unitPrice": {
-                    "type": "number"
-                  },
-                  "taxRate": {
-                    "type": "number",
-                    "default": 13
-                  },
-                  "discountAmount": {
-                    "type": "number",
-                    "default": 0
-                  }
-                }
+                "$ref": "#/components/schemas/SupplierDebt"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Ítem de venta creado exitosamente",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SaleItem"
-                }
-              }
-            }
+            "description": "Deuda registrada"
           }
         }
       }
     },
-    "/api/sale-items/{id}": {
+    "/api/supplier-debts/{id}": {
       "get": {
-        "summary": "Obtener ítem de venta por ID",
+        "summary": "Obtener deuda de proveedor por ID",
         "tags": [
-          "SaleItems"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
+          "SupplierDebts"
         ],
         "parameters": [
           {
@@ -6626,29 +7226,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Ítem de venta encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SaleItem"
-                }
-              }
-            }
+            "description": "Deuda encontrada"
           },
           "404": {
-            "description": "Ítem de venta no encontrado"
+            "description": "No encontrado"
           }
         }
       },
       "put": {
-        "summary": "Actualizar ítem de venta",
+        "summary": "Actualizar saldo restante de deuda",
         "tags": [
-          "SaleItems"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
+          "SupplierDebts"
         ],
         "parameters": [
           {
@@ -6667,16 +7255,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "quantity": {
-                    "type": "integer"
-                  },
-                  "unit_price": {
-                    "type": "number"
-                  },
-                  "tax_rate": {
-                    "type": "number"
-                  },
-                  "discount_amount": {
+                  "remaining_amount": {
                     "type": "number"
                   }
                 }
@@ -6686,26 +7265,14 @@
         },
         "responses": {
           "200": {
-            "description": "Ítem de venta actualizado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SaleItem"
-                }
-              }
-            }
+            "description": "Deuda actualizada"
           }
         }
       },
       "delete": {
-        "summary": "Eliminar ítem de venta",
+        "summary": "Eliminar deuda de proveedor",
         "tags": [
-          "SaleItems"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
+          "SupplierDebts"
         ],
         "parameters": [
           {
@@ -6719,63 +7286,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Ítem de venta eliminado exitosamente"
-          }
-        }
-      }
-    },
-    "/api/sale-items/sale/{saleId}": {
-      "get": {
-        "summary": "Obtener ítems de venta por venta",
-        "tags": [
-          "SaleItems"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "saleId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de ítems de la venta"
-          }
-        }
-      }
-    },
-    "/api/sale-items/product/{productId}": {
-      "get": {
-        "summary": "Obtener ítems de venta por producto",
-        "tags": [
-          "SaleItems"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de ítems del producto"
+            "description": "Deuda eliminada"
           }
         }
       }
@@ -6901,123 +7412,6 @@
         "responses": {
           "204": {
             "description": "Proveedor eliminado"
-          }
-        }
-      }
-    },
-    "/api/supplier-debts": {
-      "get": {
-        "summary": "Listar todas las deudas a proveedores",
-        "tags": [
-          "SupplierDebts"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de deudas"
-          }
-        }
-      },
-      "post": {
-        "summary": "Crear nueva deuda a proveedor",
-        "tags": [
-          "SupplierDebts"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SupplierDebt"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Deuda registrada"
-          }
-        }
-      }
-    },
-    "/api/supplier-debts/{id}": {
-      "get": {
-        "summary": "Obtener deuda de proveedor por ID",
-        "tags": [
-          "SupplierDebts"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deuda encontrada"
-          },
-          "404": {
-            "description": "No encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Actualizar saldo restante de deuda",
-        "tags": [
-          "SupplierDebts"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "remaining_amount": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Deuda actualizada"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Eliminar deuda de proveedor",
-        "tags": [
-          "SupplierDebts"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Deuda eliminada"
           }
         }
       }
@@ -7223,24 +7617,20 @@
       "description": "Endpoints de autenticación"
     },
     {
-      "name": "Business",
-      "description": "Gestión de negocios"
-    },
-    {
       "name": "BusinessProducts",
       "description": "Productos personalizados por negocio"
     },
     {
-      "name": "Carts",
-      "description": "Gestión de carritos de compra"
+      "name": "Business",
+      "description": "Gestión de negocios"
     },
     {
       "name": "CartItems",
       "description": "Productos dentro de carritos de compra"
     },
     {
-      "name": "CashRegisters",
-      "description": "Gestión de apertura y cierre de cajas"
+      "name": "Carts",
+      "description": "Gestión de carritos de compra"
     },
     {
       "name": "Categories",
@@ -7267,36 +7657,36 @@
       "description": "Gestión de productos"
     },
     {
-      "name": "PurchaseOrders",
-      "description": "Gestión de órdenes de compra"
-    },
-    {
       "name": "PurchaseOrderItems",
       "description": "Detalle de productos en órdenes de compra"
     },
     {
-      "name": "Roles",
-      "description": "Gestión de roles de usuario"
+      "name": "PurchaseOrders",
+      "description": "Gestión de órdenes de compra"
     },
     {
       "name": "RolePermissions",
       "description": "Asignación de permisos a roles"
     },
     {
-      "name": "Sales",
-      "description": "Gestión de ventas"
+      "name": "Roles",
+      "description": "Gestión de roles de usuario"
     },
     {
       "name": "SaleItems",
       "description": "Gestión de ítems de venta"
     },
     {
-      "name": "Suppliers",
-      "description": "Gestión de proveedores"
+      "name": "Sales",
+      "description": "Gestión de ventas"
     },
     {
       "name": "SupplierDebts",
       "description": "Deudas con proveedores"
+    },
+    {
+      "name": "Suppliers",
+      "description": "Gestión de proveedores"
     },
     {
       "name": "Users",

@@ -1,5 +1,5 @@
-import {Request} from 'express';
 import {PrismaClient} from '../../prisma/generated'
+import { AuthenticatedUser } from '../middlewares/authMiddleware';
 
 declare global {
   namespace Express {
@@ -7,11 +7,7 @@ declare global {
       context: {
         prisma: PrismaClient;
       };
-      user?: {
-        id: number;
-        username: string;
-        role: string;
-      };
+      user?: AuthenticatedUser;
     }
   }
 }

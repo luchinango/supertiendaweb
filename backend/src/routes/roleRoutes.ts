@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as roleController from '../controllers/role.controller';
+import * as controller from '../controllers/roleController';
 
 const router = Router();
 
@@ -20,7 +20,7 @@ const router = Router();
  *       200:
  *         description: Lista de roles
  */
-router.get('/roles', roleController.getAll);
+router.get('/roles', controller.getAll);
 
 /**
  * @swagger
@@ -37,7 +37,7 @@ router.get('/roles', roleController.getAll);
  *       200:
  *         description: Rol encontrado
  */
-router.get('/roles/:id', roleController.getById);
+router.get('/roles/:id', controller.getById);
 
 /**
  * @swagger
@@ -55,7 +55,7 @@ router.get('/roles/:id', roleController.getById);
  *       201:
  *         description: Rol creado
  */
-router.post('/roles', roleController.create);
+router.post('/roles', controller.create);
 
 /**
  * @swagger
@@ -78,7 +78,7 @@ router.post('/roles', roleController.create);
  *       200:
  *         description: Rol actualizado
  */
-router.put('/roles/:id', roleController.update);
+router.put('/roles/:id', controller.update);
 
 /**
  * @swagger
@@ -95,6 +95,6 @@ router.put('/roles/:id', roleController.update);
  *       204:
  *         description: Eliminado
  */
-router.delete('/roles/:id', roleController.remove);
+router.delete('/roles/:id', controller.remove);
 
 export default router;

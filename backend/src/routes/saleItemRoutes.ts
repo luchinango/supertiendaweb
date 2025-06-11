@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as controller from '../controllers/saleItem.controller';
+import * as controller from '../controllers/saleItemController';
 import { authenticate } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -200,4 +200,4 @@ router.get('/sale-items/sale/:saleId', authenticate(['ADMIN', 'MANAGER', 'CASHIE
  */
 router.get('/sale-items/product/:productId', authenticate(['ADMIN', 'MANAGER', 'CASHIER']), controller.getByProduct);
 
-export default router; 
+export default router;

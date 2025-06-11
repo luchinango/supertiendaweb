@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as authController from '../controllers/auth.controller';
+import * as controller from '../controllers/authController';
 import { authenticate } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -53,7 +53,7 @@ const router = Router();
  *                     role:
  *                       type: string
  */
-router.post('/auth/login', authController.login);
+router.post('/auth/login', controller.login);
 
 /**
  * @swagger
@@ -83,7 +83,7 @@ router.post('/auth/login', authController.login);
  *                 token:
  *                   type: string
  */
-router.post('/auth/refresh', authController.refreshToken);
+router.post('/auth/refresh', controller.refreshToken);
 
 /**
  * @swagger
@@ -111,7 +111,7 @@ router.post('/auth/refresh', authController.refreshToken);
  *       200:
  *         description: Contraseña actualizada exitosamente
  */
-router.post('/auth/change-password', authenticate(), authController.changePassword);
+router.post('/auth/change-password', authenticate(), controller.changePassword);
 
 /**
  * @swagger
@@ -134,6 +134,6 @@ router.post('/auth/change-password', authenticate(), authController.changePasswo
  *                 user:
  *                   type: object
  */
-router.get('/auth/verify', authController.verifyToken);
+router.get('/auth/verify', controller.verifyToken);
 
 export default router;

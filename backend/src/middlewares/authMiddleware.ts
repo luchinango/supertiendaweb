@@ -1,10 +1,12 @@
-import {Request, Response, NextFunction, RequestHandler} from 'express'
+import {Request, Response, NextFunction} from 'express'
 import {UnauthorizedError, NotFoundError} from '../errors'
 import authService from '../services/authService'
 import prisma from '../config/prisma'
 
 export interface AuthenticatedUser {
   id: number
+  userId: number
+  businessId: number
   username: string
   role: string
 }
@@ -36,6 +38,8 @@ export const authenticate = (roles?: string[]) => {
 
       req.user = {
         id: decoded.userId,
+        userId: decoded.userId,
+        businessId: decoded.businessId || 1,
         username: decoded.username,
         role: decoded.role
       }
@@ -57,7 +61,9 @@ export const checkOwnershipOrAdmin = (
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (req.user?.role === 'ADMIN') return next()
+      if (req.user?.role === 'ADMIN') {
+        return next()
+      }
 
       const id = parseInt(req.params[paramName])
       const record = await (prisma[model] as any).findUnique({

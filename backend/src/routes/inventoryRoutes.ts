@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as controller from '../controllers/inventory.controller';
+import * as controller from '../controllers/inventoryController';
 import { authenticate } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -34,10 +34,7 @@ const router = Router();
  *       200:
  *         description: Stock actual del producto
  */
-router.get('/inventory/:businessId/:productId/stock', 
-  authenticate(['ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER']), 
-  controller.getCurrentStock
-);
+router.get('/inventory/:businessId/:productId/stock',controller.getCurrentStock);
 
 /**
  * @swagger
@@ -57,11 +54,11 @@ router.get('/inventory/:businessId/:productId/stock',
  *       200:
  *         description: Lista de productos con stock bajo
  */
-router.get('/inventory/:businessId/low-stock', 
-  authenticate(['ADMIN', 'MANAGER', 'WAREHOUSE']), 
+router.get('/inventory/:businessId/low-stock',
+  authenticate(['ADMIN', 'MANAGER', 'WAREHOUSE']),
   controller.getLowStockProducts
 );
- 
+
 /**
  * @swagger
  * /api/inventory/{businessId}/report:
@@ -80,10 +77,9 @@ router.get('/inventory/:businessId/low-stock',
  *       200:
  *         description: Reporte de inventario
  */
-router.get('/inventory/:businessId/report', 
-  authenticate(['ADMIN', 'MANAGER']), 
+router.get('/inventory/:businessId/report',
+  authenticate(['ADMIN', 'MANAGER']),
   controller.generateInventoryReport
 );
 
-
-export default router; 
+export default router;

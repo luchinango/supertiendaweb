@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import * as businessController from '../controllers/business.controller';
+import * as controller from '../controllers/businessController';
 import {authenticate} from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -54,7 +54,7 @@ const router = Router();
  *               type_id:
  *                 type: integer
  */
-router.post('/businesses', authenticate(['ADMIN']), businessController.create);
+router.post('/businesses', authenticate(['ADMIN']), controller.create);
 
 /**
  * @swagger
@@ -95,7 +95,7 @@ router.post('/businesses', authenticate(['ADMIN']), businessController.create);
  *       500:
  *         description: Error del servidor
  */
-router.get('/businesses', authenticate(), businessController.getAll);
+router.get('/businesses', authenticate(), controller.getAll);
 
 /**
  * @swagger
@@ -125,7 +125,7 @@ router.get('/businesses', authenticate(), businessController.getAll);
  *       500:
  *         description: Error del servidor
  */
-router.get('/businesses/:id', authenticate(), businessController.getById);
+router.get('/businesses/:id', authenticate(), controller.getById);
 
 /**
  * @swagger
@@ -155,7 +155,7 @@ router.get('/businesses/:id', authenticate(), businessController.getById);
  *       500:
  *         description: Error del servidor
  */
-router.put('/businesses/:id', authenticate(['ADMIN']), businessController.update);
+router.put('/businesses/:id', authenticate(['ADMIN']), controller.update);
 
 /**
  * @swagger
@@ -185,8 +185,8 @@ router.put('/businesses/:id', authenticate(['ADMIN']), businessController.update
  *       500:
  *         description: Error del servidor
  */
-router.delete('/businesses/:id', authenticate(['ADMIN']), businessController.remove);
- 
+router.delete('/businesses/:id', authenticate(['ADMIN']), controller.remove);
+
 /**
  * @swagger
  * /api/businesses/{businessId}/products:
@@ -215,7 +215,7 @@ router.delete('/businesses/:id', authenticate(['ADMIN']), businessController.rem
  *       500:
  *         description: Error del servidor
  */
-router.post('/businesses/:businessId/products', authenticate(['ADMIN']), businessController.addProduct);
+router.post('/businesses/:businessId/products', authenticate(['ADMIN']), controller.addProduct);
 
 /**
  * @swagger
@@ -250,7 +250,7 @@ router.post('/businesses/:businessId/products', authenticate(['ADMIN']), busines
  *       500:
  *         description: Error del servidor
  */
-router.put('/businesses/:businessId/products/:productId', authenticate(['ADMIN']), businessController.updateProduct);
+router.put('/businesses/:businessId/products/:productId', authenticate(['ADMIN']), controller.updateProduct);
 
 /**
  * @swagger
@@ -285,7 +285,7 @@ router.put('/businesses/:businessId/products/:productId', authenticate(['ADMIN']
  *       500:
  *         description: Error del servidor
  */
-router.delete('/businesses/:businessId/products/:productId', authenticate(['ADMIN']), businessController.removeProduct);
+router.delete('/businesses/:businessId/products/:productId', authenticate(['ADMIN']), controller.removeProduct);
 
 /**
  * @swagger
@@ -317,6 +317,6 @@ router.delete('/businesses/:businessId/products/:productId', authenticate(['ADMI
  *       500:
  *         description: Error del servidor
  */
-router.get('/businesses/:businessId/products', authenticate(), businessController.getProducts);
+router.get('/businesses/:businessId/products', authenticate(), controller.getProducts);
 
 export default router;

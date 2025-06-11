@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as permissionController from '../controllers/permission.controller';
+import * as controller from '../controllers/permissionController';
 
 const router = Router();
 
@@ -28,7 +28,7 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Permission'
  */
-router.get('/permissions', permissionController.getAll);
+router.get('/permissions', controller.getAll);
 
 /**
  * @swagger
@@ -54,7 +54,7 @@ router.get('/permissions', permissionController.getAll);
  *       404:
  *         description: Permiso no encontrado
  */
-router.get('/permissions/:id', permissionController.getById);
+router.get('/permissions/:id', controller.getById);
 
 /**
  * @swagger
@@ -80,7 +80,7 @@ router.get('/permissions/:id', permissionController.getById);
  *       400:
  *         description: Error de validación o datos inválidos
  */
-router.post('/permissions', permissionController.create);
+router.post('/permissions', controller.create);
 
 /**
  * @swagger
@@ -112,7 +112,7 @@ router.post('/permissions', permissionController.create);
  *       404:
  *         description: Permiso no encontrado
  */
-router.put('/permissions/:id', permissionController.update);
+router.put('/permissions/:id', controller.update);
 
 /**
  * @swagger
@@ -134,6 +134,6 @@ router.put('/permissions/:id', permissionController.update);
  *       404:
  *         description: Permiso no encontrado
  */
-router.delete('/permissions/:id', permissionController.remove);
+router.delete('/permissions/:id', controller.remove);
 
 export default router;

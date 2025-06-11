@@ -31,7 +31,6 @@ interface UpdateEmployeeData {
 
 class EmployeeService {
   async create(data: CreateEmployeeData) {
-    // Verificar si ya existe un empleado con el mismo email
     const existingEmployee = await prisma.employee.findFirst({
       where: {email: data.email}
     });
@@ -40,7 +39,6 @@ class EmployeeService {
       throw new Error('Ya existe un empleado con este email');
     }
 
-    // Si se proporciona userId, verificar que el usuario existe
     if (data.userId) {
       const user = await prisma.user.findUnique({
         where: {id: data.userId}
@@ -50,7 +48,6 @@ class EmployeeService {
         throw new NotFoundError('Usuario no encontrado');
       }
 
-      // Verificar que el usuario no tenga ya un empleado asociado
       const existingUserEmployee = await prisma.employee.findUnique({
         where: {userId: data.userId}
       });
@@ -93,7 +90,6 @@ class EmployeeService {
       throw new NotFoundError('Empleado no encontrado');
     }
 
-    // Si se está actualizando el email, verificar que no exista otro empleado con ese email
     if (data.email && data.email !== employee.email) {
       const existingEmployee = await prisma.employee.findFirst({
         where: {
@@ -107,7 +103,6 @@ class EmployeeService {
       }
     }
 
-    // Si se está actualizando el userId, verificar que el usuario existe y no tiene otro empleado
     if (data.userId && data.userId !== employee.userId) {
       const user = await prisma.user.findUnique({
         where: {id: data.userId}
@@ -226,7 +221,6 @@ class EmployeeService {
       throw new NotFoundError('Empleado no encontrado');
     }
 
-    // En lugar de eliminar, cambiamos el estado a TERMINATED
     return prisma.employee.update({
       where: {id},
       data: {

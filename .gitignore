@@ -60,3 +60,6 @@ frontend/pnpm-lock.yaml
 /backend/keys/public.pem
 /backend/scripts
 *.zip
+/backend/docs
+/backend/backups
+/backend/examples

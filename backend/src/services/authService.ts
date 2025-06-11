@@ -14,6 +14,7 @@ const writeFileAsync = promisify(fs.writeFile);
 interface TokenPayload {
   userId: number;
   username: string;
+  businessId?: number;
   role: string;
   iat?: number;
   exp?: number;
@@ -234,6 +235,7 @@ class AuthService {
         throw new UnauthorizedError('El rol del usuario ha cambiado');
       }
 
+      decoded.businessId = decoded.businessId || 1;
       return decoded;
     } catch (error) {
       console.error('Error detallado verificando token:', error);
