@@ -1,6 +1,6 @@
 import prisma from '../config/prisma';
 import {ProductStatus} from '../../prisma/generated';
-import {Decimal} from 'prisma/generated/runtime/library';
+import {Decimal} from '@prisma/client/runtime/library';
 
 import {
   ProductQueryParams,

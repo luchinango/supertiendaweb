@@ -768,118 +768,59 @@
           "id": {
             "type": "integer"
           },
-          "categoryId": {
-            "type": "integer"
-          },
-          "sku": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "barcode": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "name": {
             "type": "string"
           },
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "sku": {
+            "type": "string"
+          },
+          "barcode": {
+            "type": "string"
           },
           "brand": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "model": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "unit": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "default": "pcs"
+            "type": "string"
           },
           "weight": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": "number"
           },
           "dimensions": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "costPrice": {
-            "type": "number",
-            "default": 0
+            "type": "number"
           },
           "sellingPrice": {
-            "type": "number",
-            "default": 0
+            "type": "number"
           },
           "taxType": {
-            "type": "string",
-            "default": "IVA_13",
-            "enum": [
-              "IVA_13",
-              "IVA_0",
-              "EXENTO",
-              "ICE",
-              "IT",
-              "IUE"
-            ]
+            "type": "string"
           },
           "taxRate": {
-            "type": "number",
-            "default": 13
+            "type": "number"
           },
           "minStock": {
-            "type": "integer",
-            "default": 0
+            "type": "integer"
           },
           "maxStock": {
-            "type": [
-              "integer",
-              "null"
-            ]
+            "type": "integer"
           },
           "reorderPoint": {
-            "type": "integer",
-            "default": 0
+            "type": "integer"
           },
           "isActive": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "status": {
-            "type": "string",
-            "default": "ACTIVE",
-            "enum": [
-              "ACTIVE",
-              "INACTIVE",
-              "DISCONTINUED",
-              "OUT_OF_STOCK"
-            ]
+            "type": "string"
           },
           "expiryDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "date-time"
           },
           "createdAt": {
@@ -891,57 +832,33 @@
             "format": "date-time"
           },
           "deletedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "date-time"
           },
           "createdBy": {
-            "type": "integer",
-            "default": 0
+            "type": "integer"
           },
           "updatedBy": {
-            "type": "integer",
-            "default": 0
+            "type": "integer"
           },
           "deletedBy": {
-            "type": [
-              "integer",
-              "null"
-            ]
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
           },
           "category": {
-            "$ref": "#/components/schemas/Category"
-          },
-          "businessProducts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BusinessProduct"
-            }
-          },
-          "cartItems": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CartItem"
-            }
-          },
-          "saleItems": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SaleItem"
-            }
-          },
-          "purchaseOrderItems": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PurchaseOrderItem"
-            }
+            "$ref": "#/components/schemas/ProductCategoryBasic"
           }
         },
         "required": [
-          "categoryId",
-          "name"
+          "id",
+          "name",
+          "sellingPrice",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "category"
         ]
       },
       "BusinessProduct": {
@@ -3259,6 +3176,218 @@
         },
         "required": [
           "businesses",
+          "total",
+          "page",
+          "totalPages",
+          "limit"
+        ]
+      },
+      "ProductCategoryBasic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CreateProductRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200
+          },
+          "sku": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "weight": {
+            "type": "number"
+          },
+          "dimensions": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "costPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sellingPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "minStock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxStock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reorderPoint": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "sellingPrice",
+          "categoryId"
+        ]
+      },
+      "UpdateProductRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200
+          },
+          "sku": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "barcode": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "weight": {
+            "type": "number"
+          },
+          "dimensions": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "costPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sellingPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "taxType": {
+            "type": "string"
+          },
+          "taxRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "minStock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxStock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reorderPoint": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "ProductListResponse": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "products",
           "total",
           "page",
           "totalPages",
@@ -6758,16 +6887,100 @@
         "tags": [
           "Products"
         ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Número de página"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "description": "Número de elementos por página"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Buscar por nombre, SKU, código de barras o marca"
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por categoría"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filtrar por estado"
+          },
+          {
+            "in": "query",
+            "name": "isActive",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filtrar por productos activos/inactivos"
+          },
+          {
+            "in": "query",
+            "name": "minStock",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Stock mínimo"
+          },
+          {
+            "in": "query",
+            "name": "maxStock",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Stock máximo"
+          },
+          {
+            "in": "query",
+            "name": "minPrice",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Precio mínimo"
+          },
+          {
+            "in": "query",
+            "name": "maxPrice",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Precio máximo"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Lista de productos",
+            "description": "Lista de productos paginada",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
+                  "$ref": "#/components/schemas/ProductListResponse"
                 }
               }
             }
@@ -6784,14 +6997,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Product"
+                "$ref": "#/components/schemas/CreateProductRequest"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Producto creado"
+            "description": "Producto creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
           },
           "400": {
             "description": "Código de barras duplicado"
@@ -6821,10 +7041,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
+                  "$ref": "#/components/schemas/ProductListResponse"
                 }
               }
             }
@@ -6853,7 +7070,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Producto encontrado"
+            "description": "Producto encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
           },
           "404": {
             "description": "No encontrado"
@@ -6880,19 +7104,26 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Product"
+                "$ref": "#/components/schemas/UpdateProductRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Producto actualizado"
+            "description": "Producto actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
           }
         }
       },
       "delete": {
-        "summary": "Eliminar producto",
+        "summary": "Eliminar producto (soft delete)",
         "tags": [
           "Products"
         ],
@@ -8270,9 +8501,78 @@
     },
     "/api/suppliers": {
       "get": {
-        "summary": "Listar todos los proveedores",
+        "summary": "Listar todos los proveedores con paginación y filtros",
         "tags": [
           "Suppliers"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Buscar por nombre, código, NIT o persona de contacto"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "SUSPENDED"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "department",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LA_PAZ",
+                "COCHABAMBA",
+                "SANTA_CRUZ",
+                "ORURO",
+                "POTOSI",
+                "TARIJA",
+                "CHUQUISACA",
+                "BENI",
+                "PANDO"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "documentType",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NIT",
+                "CI",
+                "PASSPORT",
+                "FOREIGN_ID"
+              ]
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -8280,10 +8580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Supplier"
-                  }
+                  "$ref": "#/components/schemas/SupplierListResponse"
                 }
               }
             }
@@ -8300,17 +8597,94 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Supplier"
+                "$ref": "#/components/schemas/CreateSupplierRequest"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Proveedor creado"
+            "description": "Proveedor creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "NIT duplicado"
+            "description": "Datos inválidos o duplicados"
+          }
+        }
+      }
+    },
+    "/api/suppliers/search": {
+      "get": {
+        "summary": "Búsqueda rápida de proveedores",
+        "tags": [
+          "Suppliers"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Término de búsqueda (mínimo 2 caracteres)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultados de búsqueda"
+          },
+          "400": {
+            "description": "Término de búsqueda inválido"
+          }
+        }
+      }
+    },
+    "/api/suppliers/stats": {
+      "get": {
+        "summary": "Obtener estadísticas de proveedores",
+        "tags": [
+          "Suppliers"
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadísticas de proveedores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/suppliers/debt": {
+      "get": {
+        "summary": "Obtener proveedores con deuda pendiente",
+        "tags": [
+          "Suppliers"
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de proveedores con deuda",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -8333,7 +8707,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Proveedor encontrado"
+            "description": "Proveedor encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
           },
           "404": {
             "description": "No encontrado"
@@ -8360,19 +8741,32 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Supplier"
+                "$ref": "#/components/schemas/UpdateSupplierRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Proveedor actualizado"
+            "description": "Proveedor actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos o duplicados"
+          },
+          "404": {
+            "description": "Proveedor no encontrado"
           }
         }
       },
       "delete": {
-        "summary": "Eliminar proveedor",
+        "summary": "Eliminar proveedor (soft delete)",
         "tags": [
           "Suppliers"
         ],
@@ -8389,6 +8783,9 @@
         "responses": {
           "204": {
             "description": "Proveedor eliminado"
+          },
+          "404": {
+            "description": "Proveedor no encontrado"
           }
         }
       }

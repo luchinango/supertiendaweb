@@ -110,7 +110,7 @@ export const create = async (req: Request<{}, {}, CreateProductRequest>, res: Re
   res.status(201).json(product);
 };
 
-export const update = async (req: Request<ProductPathParams, {}, UpdateProductRequest>, res: Response) => {
+export const update = async (req: Request, res: Response) => {
   const {id} = req.params;
   const {
     name,

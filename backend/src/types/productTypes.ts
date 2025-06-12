@@ -1,4 +1,4 @@
-import {Decimal} from 'prisma/generated/runtime/library';
+import {Decimal} from '@prisma/client/runtime/library';
 import {ProductStatus} from 'prisma/generated';
 
 /**
