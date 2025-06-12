@@ -31,7 +31,6 @@ export const getById = async (req: Request, res: Response) => {
 export const create = async (req: Request, res: Response) => {
   const {cartId, productId, quantity, unitPrice} = req.body;
 
-  // Calcular totalPrice
   const totalPrice = quantity * unitPrice;
 
   const cartItem = await prisma.cartItem.create({

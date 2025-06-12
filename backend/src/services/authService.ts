@@ -11,10 +11,12 @@ import {EmployeeStatus, Gender, UserStatus} from '../../prisma/generated';
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
+const SALT_ROUNDS = 12;
+
 interface TokenPayload {
   userId: number;
   username: string;
-  businessId?: number;
+  businessId: number;
   role: string;
   iat?: number;
   exp?: number;
@@ -38,6 +40,7 @@ interface AuthResponse {
       email: string | null;
       address: string | null;
       phone: string | null;
+      businessId: number;
     };
   };
 }
@@ -57,8 +60,6 @@ class AuthService {
   private async initializeKeys(): Promise<void> {
     try {
       console.log('Iniciando inicialización de llaves RSA...');
-      console.log('Ruta llave privada:', this.privateKeyPath);
-      console.log('Ruta llave pública:', this.publicKeyPath);
 
       if (!fs.existsSync(this.privateKeyPath) || !fs.existsSync(this.publicKeyPath)) {
         console.log('No se encontraron las llaves, generando nuevo par...');
@@ -140,13 +141,14 @@ class AuthService {
             birthDate: true,
             email: true,
             address: true,
-            phone: true
+            phone: true,
+            businessId: true
           }
         }
       }
     });
 
-    if (!user || user.status !== 'ACTIVE') {
+    if (!user || user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedError('Credenciales inválidas');
     }
 
@@ -178,7 +180,8 @@ class AuthService {
     const payload: TokenPayload = {
       userId: user.id,
       username: user.username,
-      role: user.role.code
+      role: user.role.code,
+      businessId: user.employee?.businessId
     };
 
     return jwt.sign(payload, this.privateKey, {
@@ -195,7 +198,8 @@ class AuthService {
     const payload: TokenPayload = {
       userId: user.id,
       username: user.username,
-      role: user.role.code
+      role: user.role.code,
+      businessId: user.employee?.businessId
     };
 
     return jwt.sign(payload, this.privateKey, {
@@ -211,9 +215,7 @@ class AuthService {
     }
 
     try {
-      const decoded = jwt.verify(token, this.publicKey, {
-        algorithms: ['RS256']
-      }) as TokenPayload;
+      const decoded = jwt.verify(token, this.publicKey, {algorithms: ['RS256']}) as TokenPayload
 
       const user = await prisma.user.findUnique({
         where: {id: decoded.userId},
@@ -222,6 +224,11 @@ class AuthService {
           role: {
             select: {
               code: true
+            }
+          },
+          employee: {
+            select: {
+              businessId: true
             }
           }
         }
@@ -235,7 +242,7 @@ class AuthService {
         throw new UnauthorizedError('El rol del usuario ha cambiado');
       }
 
-      decoded.businessId = decoded.businessId || 1;
+      // decoded.businessId = decoded.businessId || user.employee?.businessId
       return decoded;
     } catch (error) {
       console.error('Error detallado verificando token:', error);
@@ -297,7 +304,7 @@ class AuthService {
       throw new UnauthorizedError('Contraseña actual incorrecta');
     }
 
-    const salt = await bcrypt.genSalt(12);
+    const salt = await bcrypt.genSalt(SALT_ROUNDS);
     const newPasswordHash = await bcrypt.hash(newPassword, salt);
 
     await prisma.user.update({
@@ -323,7 +330,7 @@ class AuthService {
       throw new Error('El nombre de usuario ya está en uso');
     }
 
-    const salt = await bcrypt.genSalt(12);
+    const salt = await bcrypt.genSalt(SALT_ROUNDS);
     const passwordHash = await bcrypt.hash(userData.password, salt);
 
     await prisma.user.create({
@@ -331,7 +338,7 @@ class AuthService {
         username: userData.username,
         passwordHash: passwordHash,
         roleId: userData.roleId,
-        status: userData.status || 'ACTIVE' as UserStatus,
+        status: userData.status || UserStatus.ACTIVE,
       }
     });
   }

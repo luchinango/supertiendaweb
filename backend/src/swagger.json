@@ -1,13 +1,17 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "API Documentation",
+    "title": "🏪 Super Tienda API",
     "version": "1.0.0",
-    "description": "API Super Tienda",
+    "description": "",
     "contact": {
-      "name": "Super    Tienda",
-      "url": "https://www.superTienda.com",
-      "email": "superTienda@gmail.com"
+      "name": "Super Tienda",
+      "url": "https://www.supertienda.com",
+      "email": "contacto@supertienda.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
     }
   },
   "components": {
@@ -62,12 +66,12 @@
             "format": "date-time"
           },
           "role": {
-            "$ref": "#/definitions/Role"
+            "$ref": "#/components/schemas/Role"
           },
           "employee": {
             "anyOf": [
               {
-                "$ref": "#/definitions/Employee"
+                "$ref": "#/components/schemas/Employee"
               },
               {
                 "type": "null"
@@ -77,37 +81,37 @@
           "auditLogs": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/AuditLog"
+              "$ref": "#/components/schemas/AuditLog"
             }
           },
           "cashRegisters": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/CashRegister"
+              "$ref": "#/components/schemas/CashRegister"
             }
           },
           "sales": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Sale"
+              "$ref": "#/components/schemas/Sale"
             }
           },
           "carts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Cart"
+              "$ref": "#/components/schemas/Cart"
             }
           },
           "purchaseOrders": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/PurchaseOrder"
+              "$ref": "#/components/schemas/PurchaseOrder"
             }
           },
           "auditCashRegisters": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/AuditCashRegister"
+              "$ref": "#/components/schemas/AuditCashRegister"
             }
           }
         },
@@ -150,13 +154,13 @@
           "users": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/User"
+              "$ref": "#/components/schemas/User"
             }
           },
           "permissions": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/RolePermission"
+              "$ref": "#/components/schemas/RolePermission"
             }
           }
         },
@@ -198,7 +202,7 @@
           "roles": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/RolePermission"
+              "$ref": "#/components/schemas/RolePermission"
             }
           }
         },
@@ -224,10 +228,10 @@
             "format": "date-time"
           },
           "role": {
-            "$ref": "#/definitions/Role"
+            "$ref": "#/components/schemas/Role"
           },
           "permission": {
-            "$ref": "#/definitions/Permission"
+            "$ref": "#/components/schemas/Permission"
           }
         },
         "required": [
@@ -395,31 +399,31 @@
           "cashRegisters": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/CashRegister"
+              "$ref": "#/components/schemas/CashRegister"
             }
           },
           "sales": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Sale"
+              "$ref": "#/components/schemas/Sale"
             }
           },
           "carts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Cart"
+              "$ref": "#/components/schemas/Cart"
             }
           },
           "purchaseOrders": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/PurchaseOrder"
+              "$ref": "#/components/schemas/PurchaseOrder"
             }
           },
           "fiscalSettings": {
             "anyOf": [
               {
-                "$ref": "#/definitions/FiscalSettings"
+                "$ref": "#/components/schemas/FiscalSettings"
               },
               {
                 "type": "null"
@@ -429,31 +433,31 @@
           "auditLogs": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/AuditLog"
+              "$ref": "#/components/schemas/AuditLog"
             }
           },
           "employees": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Employee"
+              "$ref": "#/components/schemas/Employee"
             }
           },
           "businessProducts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/BusinessProduct"
+              "$ref": "#/components/schemas/BusinessProduct"
             }
           },
           "suppliers": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Supplier"
+              "$ref": "#/components/schemas/Supplier"
             }
           },
           "customers": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Customer"
+              "$ref": "#/components/schemas/Customer"
             }
           }
         },
@@ -543,7 +547,7 @@
             ]
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           }
         },
         "required": [
@@ -696,10 +700,10 @@
             ]
           },
           "user": {
-            "$ref": "#/definitions/User"
+            "$ref": "#/components/schemas/User"
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           }
         },
         "required": [
@@ -770,7 +774,7 @@
           "parent": {
             "anyOf": [
               {
-                "$ref": "#/definitions/Category"
+                "$ref": "#/components/schemas/Category"
               },
               {
                 "type": "null"
@@ -780,13 +784,13 @@
           "childrens": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Category"
+              "$ref": "#/components/schemas/Category"
             }
           },
           "products": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Product"
+              "$ref": "#/components/schemas/Product"
             }
           }
         },
@@ -944,30 +948,30 @@
             ]
           },
           "category": {
-            "$ref": "#/definitions/Category"
+            "$ref": "#/components/schemas/Category"
           },
           "businessProducts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/BusinessProduct"
+              "$ref": "#/components/schemas/BusinessProduct"
             }
           },
           "cartItems": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/CartItem"
+              "$ref": "#/components/schemas/CartItem"
             }
           },
           "saleItems": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/SaleItem"
+              "$ref": "#/components/schemas/SaleItem"
             }
           },
           "purchaseOrderItems": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/PurchaseOrderItem"
+              "$ref": "#/components/schemas/PurchaseOrderItem"
             }
           }
         },
@@ -1019,10 +1023,10 @@
             "format": "date-time"
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           },
           "product": {
-            "$ref": "#/definitions/Product"
+            "$ref": "#/components/schemas/Product"
           }
         },
         "required": [
@@ -1183,18 +1187,18 @@
             ]
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           },
           "purchaseOrders": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/PurchaseOrder"
+              "$ref": "#/components/schemas/PurchaseOrder"
             }
           },
           "supplierDebts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/SupplierDebt"
+              "$ref": "#/components/schemas/SupplierDebt"
             }
           }
         },
@@ -1337,24 +1341,24 @@
             ]
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           },
           "carts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Cart"
+              "$ref": "#/components/schemas/Cart"
             }
           },
           "sales": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Sale"
+              "$ref": "#/components/schemas/Sale"
             }
           },
           "customerDebts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/CustomerDebt"
+              "$ref": "#/components/schemas/CustomerDebt"
             }
           }
         },
@@ -1466,27 +1470,27 @@
             ]
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           },
           "supplier": {
-            "$ref": "#/definitions/Supplier"
+            "$ref": "#/components/schemas/Supplier"
           },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/PurchaseOrderItem"
+              "$ref": "#/components/schemas/PurchaseOrderItem"
             }
           },
           "supplierDebts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/SupplierDebt"
+              "$ref": "#/components/schemas/SupplierDebt"
             }
           },
           "User": {
             "anyOf": [
               {
-                "$ref": "#/definitions/User"
+                "$ref": "#/components/schemas/User"
               },
               {
                 "type": "null"
@@ -1531,10 +1535,10 @@
             "format": "date-time"
           },
           "purchaseOrder": {
-            "$ref": "#/definitions/PurchaseOrder"
+            "$ref": "#/components/schemas/PurchaseOrder"
           },
           "product": {
-            "$ref": "#/definitions/Product"
+            "$ref": "#/components/schemas/Product"
           }
         },
         "required": [
@@ -1586,12 +1590,12 @@
             "format": "date-time"
           },
           "supplier": {
-            "$ref": "#/definitions/Supplier"
+            "$ref": "#/components/schemas/Supplier"
           },
           "purchaseOrder": {
             "anyOf": [
               {
-                "$ref": "#/definitions/PurchaseOrder"
+                "$ref": "#/components/schemas/PurchaseOrder"
               },
               {
                 "type": "null"
@@ -1654,15 +1658,15 @@
             "format": "date-time"
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           },
           "user": {
-            "$ref": "#/definitions/User"
+            "$ref": "#/components/schemas/User"
           },
           "customer": {
             "anyOf": [
               {
-                "$ref": "#/definitions/Customer"
+                "$ref": "#/components/schemas/Customer"
               },
               {
                 "type": "null"
@@ -1672,13 +1676,13 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/CartItem"
+              "$ref": "#/components/schemas/CartItem"
             }
           },
           "sale": {
             "anyOf": [
               {
-                "$ref": "#/definitions/Sale"
+                "$ref": "#/components/schemas/Sale"
               },
               {
                 "type": "null"
@@ -1729,10 +1733,10 @@
             "format": "date-time"
           },
           "cart": {
-            "$ref": "#/definitions/Cart"
+            "$ref": "#/components/schemas/Cart"
           },
           "product": {
-            "$ref": "#/definitions/Product"
+            "$ref": "#/components/schemas/Product"
           }
         },
         "required": [
@@ -1877,18 +1881,18 @@
             ]
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           },
           "cart": {
-            "$ref": "#/definitions/Cart"
+            "$ref": "#/components/schemas/Cart"
           },
           "user": {
-            "$ref": "#/definitions/User"
+            "$ref": "#/components/schemas/User"
           },
           "customer": {
             "anyOf": [
               {
-                "$ref": "#/definitions/Customer"
+                "$ref": "#/components/schemas/Customer"
               },
               {
                 "type": "null"
@@ -1898,19 +1902,19 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/SaleItem"
+              "$ref": "#/components/schemas/SaleItem"
             }
           },
           "customerDebts": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/CustomerDebt"
+              "$ref": "#/components/schemas/CustomerDebt"
             }
           },
           "CashRegister": {
             "anyOf": [
               {
-                "$ref": "#/definitions/CashRegister"
+                "$ref": "#/components/schemas/CashRegister"
               },
               {
                 "type": "null"
@@ -1972,10 +1976,10 @@
             "format": "date-time"
           },
           "sale": {
-            "$ref": "#/definitions/Sale"
+            "$ref": "#/components/schemas/Sale"
           },
           "product": {
-            "$ref": "#/definitions/Product"
+            "$ref": "#/components/schemas/Product"
           }
         },
         "required": [
@@ -2029,12 +2033,12 @@
             "format": "date-time"
           },
           "customer": {
-            "$ref": "#/definitions/Customer"
+            "$ref": "#/components/schemas/Customer"
           },
           "sale": {
             "anyOf": [
               {
-                "$ref": "#/definitions/Sale"
+                "$ref": "#/components/schemas/Sale"
               },
               {
                 "type": "null"
@@ -2131,21 +2135,21 @@
             ]
           },
           "business": {
-            "$ref": "#/definitions/Business"
+            "$ref": "#/components/schemas/Business"
           },
           "user": {
-            "$ref": "#/definitions/User"
+            "$ref": "#/components/schemas/User"
           },
           "sales": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/Sale"
+              "$ref": "#/components/schemas/Sale"
             }
           },
           "auditLogs": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/AuditCashRegister"
+              "$ref": "#/components/schemas/AuditCashRegister"
             }
           }
         },
@@ -2291,7 +2295,7 @@
           "business": {
             "anyOf": [
               {
-                "$ref": "#/definitions/Business"
+                "$ref": "#/components/schemas/Business"
               },
               {
                 "type": "null"
@@ -2299,7 +2303,7 @@
             ]
           },
           "user": {
-            "$ref": "#/definitions/User"
+            "$ref": "#/components/schemas/User"
           }
         },
         "required": [
@@ -2341,10 +2345,10 @@
             "format": "date-time"
           },
           "cashRegister": {
-            "$ref": "#/definitions/CashRegister"
+            "$ref": "#/components/schemas/CashRegister"
           },
           "user": {
-            "$ref": "#/definitions/User"
+            "$ref": "#/components/schemas/User"
           }
         },
         "required": [
@@ -2462,7 +2466,8 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "JWT token obtenido del endpoint de login"
       }
     }
   },
@@ -2471,6 +2476,112 @@
       "bearerAuth": []
     }
   ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Endpoints de autenticación y autorización"
+    },
+    {
+      "name": "Users",
+      "description": "Gestión de usuarios, roles y permisos"
+    },
+    {
+      "name": "POS",
+      "description": "Sistema de punto de venta y carritos de compra"
+    },
+    {
+      "name": "Cash Register",
+      "description": "Gestión de cajas registradoras y apertura/cierre"
+    },
+    {
+      "name": "Products",
+      "description": "Gestión de productos, categorías e inventario"
+    },
+    {
+      "name": "Sales",
+      "description": "Historial de ventas, reportes y análisis"
+    },
+    {
+      "name": "Reports",
+      "description": "Reportes, estadísticas y métricas del negocio"
+    },
+    {
+      "name": "AuditCashRegisters",
+      "description": "Auditoría de acciones sobre cajas"
+    },
+    {
+      "name": "AuditLogs",
+      "description": "Auditoría general del sistema"
+    },
+    {
+      "name": "BusinessProducts",
+      "description": "Productos personalizados por negocio"
+    },
+    {
+      "name": "Business",
+      "description": "Gestión de negocios"
+    },
+    {
+      "name": "CartItems",
+      "description": "Productos dentro de carritos de compra"
+    },
+    {
+      "name": "Carts",
+      "description": "Gestión de carritos de compra"
+    },
+    {
+      "name": "Categories",
+      "description": "Gestión de categorías de productos"
+    },
+    {
+      "name": "Customers",
+      "description": "Gestión de clientes"
+    },
+    {
+      "name": "Employees",
+      "description": "Endpoints para gestión de empleados"
+    },
+    {
+      "name": "Inventory",
+      "description": "Gestión de inventario y stock"
+    },
+    {
+      "name": "Permissions",
+      "description": "Endpoints para gestión de permisos del sistema"
+    },
+    {
+      "name": "PurchaseOrderItems",
+      "description": "Detalle de productos en órdenes de compra"
+    },
+    {
+      "name": "PurchaseOrders",
+      "description": "Gestión de órdenes de compra"
+    },
+    {
+      "name": "RolePermissions",
+      "description": "Asignación de permisos a roles"
+    },
+    {
+      "name": "Roles",
+      "description": "Gestión de roles de usuario"
+    },
+    {
+      "name": "SaleItems",
+      "description": "Gestión de ítems de venta"
+    },
+    {
+      "name": "SupplierDebts",
+      "description": "Deudas con proveedores"
+    },
+    {
+      "name": "Suppliers",
+      "description": "Gestión de proveedores"
+    }
+  ],
+  "externalDocs": {
+    "description": "Documentación adicional",
+    "url": "https://docs.supertienda.com"
+  },
   "paths": {
     "/api/audit-cash-registers": {
       "get": {
@@ -7485,6 +7596,31 @@
         }
       }
     },
+    "/api/users/me": {
+      "get": {
+        "summary": "Get current user profile",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/{id}": {
       "get": {
         "summary": "Obtener usuario por ID",
@@ -7576,121 +7712,6 @@
           }
         }
       }
-    },
-    "/api/users/me": {
-      "get": {
-        "summary": "Get current user profile",
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current user data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          }
-        }
-      }
     }
-  },
-  "tags": [
-    {
-      "name": "AuditCashRegisters",
-      "description": "Auditoría de acciones sobre cajas"
-    },
-    {
-      "name": "AuditLogs",
-      "description": "Auditoría general del sistema"
-    },
-    {
-      "name": "Auth",
-      "description": "Endpoints de autenticación"
-    },
-    {
-      "name": "BusinessProducts",
-      "description": "Productos personalizados por negocio"
-    },
-    {
-      "name": "Business",
-      "description": "Gestión de negocios"
-    },
-    {
-      "name": "CartItems",
-      "description": "Productos dentro de carritos de compra"
-    },
-    {
-      "name": "Carts",
-      "description": "Gestión de carritos de compra"
-    },
-    {
-      "name": "Categories",
-      "description": "Gestión de categorías de productos"
-    },
-    {
-      "name": "Customers",
-      "description": "Gestión de clientes"
-    },
-    {
-      "name": "Employees",
-      "description": "Endpoints para gestión de empleados"
-    },
-    {
-      "name": "Inventory",
-      "description": "Gestión de inventario y stock"
-    },
-    {
-      "name": "Permissions",
-      "description": "Endpoints para gestión de permisos del sistema"
-    },
-    {
-      "name": "Products",
-      "description": "Gestión de productos"
-    },
-    {
-      "name": "PurchaseOrderItems",
-      "description": "Detalle de productos en órdenes de compra"
-    },
-    {
-      "name": "PurchaseOrders",
-      "description": "Gestión de órdenes de compra"
-    },
-    {
-      "name": "RolePermissions",
-      "description": "Asignación de permisos a roles"
-    },
-    {
-      "name": "Roles",
-      "description": "Gestión de roles de usuario"
-    },
-    {
-      "name": "SaleItems",
-      "description": "Gestión de ítems de venta"
-    },
-    {
-      "name": "Sales",
-      "description": "Gestión de ventas"
-    },
-    {
-      "name": "SupplierDebts",
-      "description": "Deudas con proveedores"
-    },
-    {
-      "name": "Suppliers",
-      "description": "Gestión de proveedores"
-    },
-    {
-      "name": "Users",
-      "description": "Gestión de usuarios"
-    }
-  ]
+  }
 }

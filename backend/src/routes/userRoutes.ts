@@ -31,6 +31,24 @@ router.get('/users', controller.getAll);
 
 /**
  * @swagger
+ * /api/users/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ */
+router.get('/users/me', authenticate(), controller.getCurrentUser);
+
+/**
+ * @swagger
  * /api/users/{id}:
  *   get:
  *     summary: Obtener usuario por ID
@@ -128,23 +146,5 @@ router.put('/users/:id', controller.update);
  *         description: Eliminado exitosamente
  */
 router.delete('/users/:id', controller.remove);
-
-/**
- * @swagger
- * /api/users/me:
- *   get:
- *     summary: Get current user profile
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Current user data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- */
-router.get('/me', authenticate(), controller.getCurrentUser);
 
 export default router;
