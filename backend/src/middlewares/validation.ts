@@ -1,11 +1,20 @@
 import {Request, Response, NextFunction} from 'express';
 import {userSchemas} from '../schemas/userSchemas';
 import {businessSchemas} from '../schemas/businessSchemas';
+import {productSchemas} from '../schemas/productSchemas';
 
-const allSchemas = {...userSchemas, ...businessSchemas};
+const allSchemas = {...userSchemas, ...businessSchemas, ...productSchemas};
+
+function hasType(fieldSchema: any): fieldSchema is { type: string; [key: string]: any } {
+  return 'type' in fieldSchema && !('$ref' in fieldSchema);
+}
+
+function hasRef(fieldSchema: any): fieldSchema is { $ref: string; [key: string]: any } {
+  return '$ref' in fieldSchema;
+}
 
 /**
- * Middleware de validación para esquemas de usuarios.
+ * Middleware de validación para esquemas de entrada.
  */
 export const validateRequest = (schemaName: string) => {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -35,6 +44,14 @@ export const validateRequest = (schemaName: string) => {
         for (const [field, fieldSchema] of Object.entries(schema.properties)) {
           if (data[field] !== undefined && data[field] !== null) {
             const value = data[field];
+
+            if (hasRef(fieldSchema)) {
+              continue;
+            }
+
+            if (!hasType(fieldSchema)) {
+              continue;
+            }
 
             if (fieldSchema.type === 'string') {
               if (typeof value !== 'string') {
