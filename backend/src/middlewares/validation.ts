@@ -1,5 +1,8 @@
 import {Request, Response, NextFunction} from 'express';
 import {userSchemas} from '../schemas/userSchemas';
+import {businessSchemas} from '../schemas/businessSchemas';
+
+const allSchemas = {...userSchemas, ...businessSchemas};
 
 /**
  * Middleware de validación para esquemas de usuarios.
@@ -7,7 +10,7 @@ import {userSchemas} from '../schemas/userSchemas';
 export const validateRequest = (schemaName: string) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const schema = userSchemas[schemaName as keyof typeof userSchemas];
+      const schema = allSchemas[schemaName as keyof typeof allSchemas];
 
       if (!schema) {
         res.status(400).json({
@@ -37,13 +40,13 @@ export const validateRequest = (schemaName: string) => {
               if (typeof value !== 'string') {
                 validationErrors.push(`El campo '${field}' debe ser una cadena de texto`);
               } else {
-                if (fieldSchema.minLength && value.length < fieldSchema.minLength) {
+                if ('minLength' in fieldSchema && typeof fieldSchema.minLength === 'number' && value.length < fieldSchema.minLength) {
                   validationErrors.push(`El campo '${field}' debe tener al menos ${fieldSchema.minLength} caracteres`);
                 }
-                if (fieldSchema.maxLength && value.length > fieldSchema.maxLength) {
+                if ('maxLength' in fieldSchema && typeof fieldSchema.maxLength === 'number' && value.length > fieldSchema.maxLength) {
                   validationErrors.push(`El campo '${field}' debe tener máximo ${fieldSchema.maxLength} caracteres`);
                 }
-                if (fieldSchema.format === 'email') {
+                if ('format' in fieldSchema && fieldSchema.format === 'email') {
                   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                   if (!emailRegex.test(value)) {
                     validationErrors.push(`El campo '${field}' debe ser un email válido`);
@@ -54,10 +57,10 @@ export const validateRequest = (schemaName: string) => {
               if (!Number.isInteger(value)) {
                 validationErrors.push(`El campo '${field}' debe ser un número entero`);
               } else {
-                if (fieldSchema.minimum !== undefined && value < fieldSchema.minimum) {
+                if ('minimum' in fieldSchema && typeof fieldSchema.minimum === 'number' && value < fieldSchema.minimum) {
                   validationErrors.push(`El campo '${field}' debe ser mayor o igual a ${fieldSchema.minimum}`);
                 }
-                if (fieldSchema.maximum !== undefined && value > fieldSchema.maximum) {
+                if ('maximum' in fieldSchema && typeof fieldSchema.maximum === 'number' && value > fieldSchema.maximum) {
                   validationErrors.push(`El campo '${field}' debe ser menor o igual a ${fieldSchema.maximum}`);
                 }
               }
@@ -65,10 +68,10 @@ export const validateRequest = (schemaName: string) => {
               if (typeof value !== 'number' || isNaN(value)) {
                 validationErrors.push(`El campo '${field}' debe ser un número`);
               } else {
-                if (fieldSchema.minimum !== undefined && value < fieldSchema.minimum) {
+                if ('minimum' in fieldSchema && typeof fieldSchema.minimum === 'number' && value < fieldSchema.minimum) {
                   validationErrors.push(`El campo '${field}' debe ser mayor o igual a ${fieldSchema.minimum}`);
                 }
-                if (fieldSchema.maximum !== undefined && value > fieldSchema.maximum) {
+                if ('maximum' in fieldSchema && typeof fieldSchema.maximum === 'number' && value > fieldSchema.maximum) {
                   validationErrors.push(`El campo '${field}' debe ser menor o igual a ${fieldSchema.maximum}`);
                 }
               }
@@ -78,7 +81,7 @@ export const validateRequest = (schemaName: string) => {
               }
             }
 
-            if (fieldSchema.enum && !fieldSchema.enum.includes(value)) {
+            if ('enum' in fieldSchema && Array.isArray(fieldSchema.enum) && !fieldSchema.enum.includes(value)) {
               validationErrors.push(`El campo '${field}' debe ser uno de: ${fieldSchema.enum.join(', ')}`);
             }
           }

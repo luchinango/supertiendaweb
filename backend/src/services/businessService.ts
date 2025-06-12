@@ -1,60 +1,14 @@
 import prisma from '../config/prisma';
 import {BusinessStatus, BusinessType, Department, Currency} from '../../prisma/generated';
-
 import {NotFoundError} from '../errors';
-
-// Usar los enums desde Prisma
-interface CreateBusinessData {
-  name: string;
-  legalName?: string;
-  description?: string;
-  nit?: string;
-  businessType?: BusinessType;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  department?: Department;
-  country?: string;
-  postalCode?: string;
-  logoUrl?: string;
-  website?: string;
-  timezone?: string;
-  currency?: Currency;
-  defaultTaxRate?: number;
-  status?: BusinessStatus;
-  createdBy?: number;
-  updatedBy?: number;
-}
-
-interface UpdateBusinessData {
-  name?: string;
-  legalName?: string;
-  description?: string;
-  nit?: string;
-  businessType?: BusinessType;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  department?: Department;
-  country?: string;
-  postalCode?: string;
-  logoUrl?: string;
-  website?: string;
-  timezone?: string;
-  currency?: Currency;
-  defaultTaxRate?: number;
-  status?: BusinessStatus;
-  updatedBy?: number;
-}
+import {CreateBusinessData, UpdateBusinessData, BusinessFilters} from '../types/businessTypes';
 
 class BusinessService {
   async create(data: CreateBusinessData) {
     return prisma.business.create({
       data: {
         ...data,
-        status: data.status || 'ACTIVE',
+        status: data.status || BusinessStatus.ACTIVE,
         businessType: data.businessType || 'PERSONA_NATURAL',
         department: data.department || 'LA_PAZ',
         country: data.country || 'Bolivia',
@@ -119,53 +73,51 @@ class BusinessService {
     return business;
   }
 
-  async getAll(filters?: {
-    status?: BusinessStatus;
-    businessType?: BusinessType;
-    department?: Department;
-    search?: string;
-  }) {
-    const where = {
-      ...(filters?.status && {status: filters.status}),
-      ...(filters?.businessType && {businessType: filters.businessType}),
-      ...(filters?.department && {department: filters.department}),
-      ...(filters?.search && {
-        OR: [
-          {name: {contains: filters.search}},
-          {legalName: {contains: filters.search}},
-          {nit: {contains: filters.search}}
-        ]
-      })
-    };
-
-    return prisma.business.findMany({
-      where,
-      include: {
-        businessProducts: {
-          include: {
-            product: {
-              include: {
-                category: true
-              }
+  async getBusinesses(filters: BusinessFilters = {}) {
+    const {
+      status,
+      businessType,
+      department,
+      search,
+      page = 1,
+      limit = 10
+    } = filters;
+    const skip = (page - 1) * limit;
+    const where: any = {};
+    if (status) where.status = status;
+    if (businessType) where.businessType = businessType;
+    if (department) where.department = department;
+    if (search) {
+      where.OR = [
+        {name: {contains: search, mode: 'insensitive'}},
+        {legalName: {contains: search, mode: 'insensitive'}},
+        {nit: {contains: search, mode: 'insensitive'}}
+      ];
+    }
+    const [businesses, total] = await Promise.all([
+      prisma.business.findMany({
+        where,
+        include: {
+          businessProducts: {
+            include: {
+              product: {include: {category: true}}
             }
-          }
+          },
+          employees: {
+            include: {
+              user: {select: {id: true, username: true}}
+            }
+          },
+          fiscalSettings: true
         },
-        employees: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: [
-        {status: 'asc'},
-        {name: 'asc'}
-      ]
-    });
+        skip,
+        take: limit,
+        orderBy: [{status: 'asc'}, {name: 'asc'}]
+      }),
+      prisma.business.count({where})
+    ]);
+    const totalPages = Math.ceil(total / limit);
+    return {businesses, total, page, totalPages, limit};
   }
 
   async delete(id: number) {
@@ -177,7 +129,6 @@ class BusinessService {
       throw new NotFoundError('Negocio no encontrado');
     }
 
-    // En lugar de eliminar, cambiamos el estado a INACTIVE
     return prisma.business.update({
       where: {id},
       data: {

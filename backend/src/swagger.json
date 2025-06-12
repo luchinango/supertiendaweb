@@ -340,123 +340,55 @@
             "type": "string"
           },
           "legalName": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "nit": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "businessType": {
-            "type": "string",
-            "default": "PERSONA_NATURAL",
-            "enum": [
-              "EMPRESA_UNIPERSONAL",
-              "SOCIEDAD_ANONIMA",
-              "SOCIEDAD_LIMITADA",
-              "SOCIEDAD_COOPERATIVA",
-              "EMPRESA_PUBLICA",
-              "ORGANIZACION_NO_LUCRATIVA",
-              "PERSONA_NATURAL"
-            ]
+            "type": "string"
           },
           "email": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "phone": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "address": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "city": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "department": {
-            "type": "string",
-            "default": "LA_PAZ",
-            "enum": [
-              "LA_PAZ",
-              "COCHABAMBA",
-              "SANTA_CRUZ",
-              "ORURO",
-              "POTOSI",
-              "CHUQUISACA",
-              "TARIJA",
-              "BENI",
-              "PANDO"
-            ]
+            "type": "string"
           },
           "country": {
-            "type": "string",
-            "default": "Bolivia"
+            "type": "string"
           },
           "postalCode": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "logoUrl": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "website": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "timezone": {
-            "type": "string",
-            "default": "America/La_Paz"
+            "type": "string"
           },
           "currency": {
-            "type": "string",
-            "default": "BOB",
-            "enum": [
-              "BOB",
-              "USD",
-              "EUR"
-            ]
+            "type": "string"
           },
           "defaultTaxRate": {
-            "type": "number",
-            "default": 13
+            "type": "number"
           },
           "status": {
-            "type": "string",
-            "default": "ACTIVE",
-            "enum": [
-              "ACTIVE",
-              "INACTIVE",
-              "SUSPENDED",
-              "PENDING"
-            ]
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -467,93 +399,34 @@
             "format": "date-time"
           },
           "deletedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "date-time"
           },
           "createdBy": {
-            "type": "integer",
-            "default": 0
+            "type": "integer"
           },
           "updatedBy": {
-            "type": "integer",
-            "default": 0
+            "type": "integer"
           },
           "deletedBy": {
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
-          "cashRegisters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CashRegister"
-            }
-          },
-          "sales": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Sale"
-            }
-          },
-          "carts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Cart"
-            }
-          },
-          "purchaseOrders": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PurchaseOrder"
-            }
-          },
-          "fiscalSettings": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/FiscalSettings"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "auditLogs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuditLog"
-            }
+            "type": "integer"
           },
           "employees": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Employee"
+              "$ref": "#/components/schemas/EmployeeBasic"
             }
           },
-          "businessProducts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BusinessProduct"
-            }
-          },
-          "suppliers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Supplier"
-            }
-          },
-          "customers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Customer"
-            }
+          "fiscalSettings": {
+            "$ref": "#/components/schemas/FiscalSettingsBasic"
           }
         },
         "required": [
-          "name"
+          "id",
+          "name",
+          "status",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "FiscalSettings": {
@@ -3122,6 +2995,276 @@
           "statusCode"
         ]
       },
+      "EmployeeBasic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "position",
+          "status"
+        ]
+      },
+      "FiscalSettingsBasic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "authorizationNumber": {
+            "type": "string"
+          },
+          "activityCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "authorizationNumber",
+          "activityCode"
+        ]
+      },
+      "CreateBusinessRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "legalName": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string"
+          },
+          "nit": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "businessType": {
+            "type": "string",
+            "enum": [
+              "PERSONA_NATURAL",
+              "PERSONA_JURIDICA"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "department": {
+            "type": "string",
+            "enum": [
+              "LA_PAZ",
+              "COCHABAMBA",
+              "SANTA_CRUZ",
+              "ORURO",
+              "POTOSI",
+              "TARIJA",
+              "CHUQUISACA",
+              "BENI",
+              "PANDO"
+            ]
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "postalCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BOB",
+              "USD"
+            ]
+          },
+          "defaultTaxRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateBusinessRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "legalName": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "description": {
+            "type": "string"
+          },
+          "nit": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "businessType": {
+            "type": "string",
+            "enum": [
+              "PERSONA_NATURAL",
+              "PERSONA_JURIDICA"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "department": {
+            "type": "string",
+            "enum": [
+              "LA_PAZ",
+              "COCHABAMBA",
+              "SANTA_CRUZ",
+              "ORURO",
+              "POTOSI",
+              "TARIJA",
+              "CHUQUISACA",
+              "BENI",
+              "PANDO"
+            ]
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "postalCode": {
+            "type": "string",
+            "maxLength": 10
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BOB",
+              "USD"
+            ]
+          },
+          "defaultTaxRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED"
+            ]
+          }
+        }
+      },
+      "BusinessListResponse": {
+        "type": "object",
+        "properties": {
+          "businesses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Business"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "businesses",
+          "total",
+          "page",
+          "totalPages",
+          "limit"
+        ]
+      },
       "CashRegisterOpen": {
         "type": "object",
         "required": [
@@ -3245,10 +3388,6 @@
     {
       "name": "Auth",
       "description": "Endpoints de autenticación y autorización"
-    },
-    {
-      "name": "Usuarios",
-      "description": "Gestión de usuarios del sistema"
     },
     {
       "name": "Users",
@@ -3843,51 +3982,30 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "type_id"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "legal_name": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "tax_id": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string"
-                  },
-                  "phone": {
-                    "type": "string"
-                  },
-                  "address": {
-                    "type": "string"
-                  },
-                  "logo_url": {
-                    "type": "string"
-                  },
-                  "website": {
-                    "type": "string"
-                  },
-                  "timezone": {
-                    "type": "string"
-                  },
-                  "currency": {
-                    "type": "string"
-                  },
-                  "type_id": {
-                    "type": "integer"
-                  }
+                "$ref": "#/components/schemas/CreateBusinessRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Negocio creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Business"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "500": {
+            "description": "Error interno del servidor"
           }
         }
       },
@@ -3917,11 +4035,23 @@
           },
           {
             "in": "query",
-            "name": "type_id",
+            "name": "businessType",
             "schema": {
-              "type": "integer"
+              "type": "string",
+              "enum": [
+                "PERSONA_NATURAL",
+                "PERSONA_JURIDICA"
+              ]
             },
             "description": "Filtrar por tipo de negocio"
+          },
+          {
+            "in": "query",
+            "name": "department",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filtrar por departamento"
           },
           {
             "in": "query",
@@ -3930,6 +4060,27 @@
               "type": "string"
             },
             "description": "Buscar por nombre, razón social o NIT"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Número de página"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "description": "Número de elementos por página"
           }
         ],
         "responses": {
@@ -3938,10 +4089,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object"
-                  }
+                  "$ref": "#/components/schemas/BusinessListResponse"
                 }
               }
             }
@@ -3982,7 +4130,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/Business"
                 }
               }
             }
@@ -4018,13 +4166,23 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBusinessRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Negocio actualizado exitosamente",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/Business"
                 }
               }
             }
@@ -4066,7 +4224,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Negocio desactivado exitosamente"
+                    }
+                  }
                 }
               }
             }
@@ -8233,7 +8397,7 @@
       "post": {
         "summary": "Crear un nuevo usuario",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8298,7 +8462,7 @@
       "get": {
         "summary": "Obtener lista de usuarios",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8387,7 +8551,7 @@
       "get": {
         "summary": "Obtener estadísticas de usuarios",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8420,7 +8584,7 @@
       "get": {
         "summary": "Verificar disponibilidad de username",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8478,7 +8642,7 @@
       "get": {
         "summary": "Obtener usuario por username",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8532,7 +8696,7 @@
       "get": {
         "summary": "Obtener perfil del usuario actual",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8571,7 +8735,7 @@
       "get": {
         "summary": "Obtener usuario por ID",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8623,7 +8787,7 @@
       "put": {
         "summary": "Actualizar usuario",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8689,7 +8853,7 @@
       "delete": {
         "summary": "Eliminar usuario (soft delete)",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8744,7 +8908,7 @@
       "post": {
         "summary": "Cambiar contraseña del usuario",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {
@@ -8812,7 +8976,7 @@
       "post": {
         "summary": "Resetear contraseña del usuario (solo administradores)",
         "tags": [
-          "Usuarios"
+          "Users"
         ],
         "security": [
           {

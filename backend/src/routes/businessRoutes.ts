@@ -1,6 +1,7 @@
 import {Router} from 'express';
 import * as controller from '../controllers/businessController';
 import {authenticate} from '../middlewares/authMiddleware';
+import {validateRequest} from '../middlewares/validation';
 
 const router = Router();
 
@@ -24,37 +25,22 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *               - type_id
- *             properties:
- *               name:
- *                 type: string
- *               legal_name:
- *                 type: string
- *               description:
- *                 type: string
- *               tax_id:
- *                 type: string
- *               email:
- *                 type: string
- *               phone:
- *                 type: string
- *               address:
- *                 type: string
- *               logo_url:
- *                 type: string
- *               website:
- *                 type: string
- *               timezone:
- *                 type: string
- *               currency:
- *                 type: string
- *               type_id:
- *                 type: integer
+ *             $ref: '#/components/schemas/CreateBusinessRequest'
+ *     responses:
+ *       201:
+ *         description: Negocio creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Business'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
-router.post('/businesses', authenticate(['ADMIN']), controller.create);
+router.post('/businesses', authenticate(['ADMIN']), validateRequest('CreateBusinessRequest'), controller.create);
 
 /**
  * @swagger
@@ -72,24 +58,43 @@ router.post('/businesses', authenticate(['ADMIN']), controller.create);
  *           enum: [ACTIVE, INACTIVE, SUSPENDED]
  *         description: Filtrar por estado
  *       - in: query
- *         name: type_id
+ *         name: businessType
  *         schema:
- *           type: integer
+ *           type: string
+ *           enum: [PERSONA_NATURAL, PERSONA_JURIDICA]
  *         description: Filtrar por tipo de negocio
+ *       - in: query
+ *         name: department
+ *         schema:
+ *           type: string
+ *         description: Filtrar por departamento
  *       - in: query
  *         name: search
  *         schema:
  *           type: string
  *         description: Buscar por nombre, razón social o NIT
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Número de elementos por página
  *     responses:
  *       200:
  *         description: Lista de negocios obtenida exitosamente
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
+ *               $ref: '#/components/schemas/BusinessListResponse'
  *       401:
  *         description: No autorizado
  *       500:
@@ -117,7 +122,7 @@ router.get('/businesses', authenticate(), controller.getAll);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               $ref: '#/components/schemas/Business'
  *       401:
  *         description: No autorizado
  *       404:
@@ -141,13 +146,19 @@ router.get('/businesses/:id', authenticate(), controller.getById);
  *         required: true
  *         schema:
  *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateBusinessRequest'
  *     responses:
  *       200:
  *         description: Negocio actualizado exitosamente
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               $ref: '#/components/schemas/Business'
  *       401:
  *         description: No autorizado
  *       404:
@@ -155,7 +166,7 @@ router.get('/businesses/:id', authenticate(), controller.getById);
  *       500:
  *         description: Error del servidor
  */
-router.put('/businesses/:id', authenticate(['ADMIN']), controller.update);
+router.put('/businesses/:id', authenticate(['ADMIN']), validateRequest('UpdateBusinessRequest'), controller.update);
 
 /**
  * @swagger
@@ -178,6 +189,10 @@ router.put('/businesses/:id', authenticate(['ADMIN']), controller.update);
  *           application/json:
  *             schema:
  *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Negocio desactivado exitosamente
  *       401:
  *         description: No autorizado
  *       404:

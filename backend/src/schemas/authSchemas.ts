@@ -1,4 +1,4 @@
-import {AuthResponse, LoginRequest, ChangePasswordRequest, RefreshTokenRequest} from '../types/auth.types';
+import {AuthResponse, LoginRequest, ChangePasswordRequest, RefreshTokenRequest} from '../types/authTypes';
 
 export const authSchemas = {
   AuthResponse: {

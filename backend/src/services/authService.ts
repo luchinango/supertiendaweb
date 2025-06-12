@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma';
 import {UnauthorizedError} from '../errors';
 import {EmployeeStatus, Gender, UserStatus} from '../../prisma/generated';
-import {TokenPayload, AuthResponse} from '../types/auth.types';
+import {TokenPayload, AuthResponse} from '../types/authTypes';
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);

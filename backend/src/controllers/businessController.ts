@@ -45,29 +45,15 @@ export const getById = async (req: Request, res: Response, next: NextFunction) =
 export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filters: any = {};
-
-    if (req.query.status) {
-      filters.status = req.query.status;
-      console.log('Status filtrado:', filters.status);
-    }
-
-    if (req.query.businessType) {
-      filters.businessType = req.query.businessType;
-      console.log('Business Type filtrado:', filters.businessType);
-    }
-
-    if (req.query.search && typeof req.query.search === 'string') {
-      filters.search = req.query.search.trim();
-      console.log('Search filtrado:', filters.search);
-    }
-
-    const businesses = await businessService.getAll(
-      Object.keys(filters).length > 0 ? filters : undefined
-    );
-
-    res.json(businesses);
+    if (req.query.status) filters.status = req.query.status;
+    if (req.query.businessType) filters.businessType = req.query.businessType;
+    if (req.query.department) filters.department = req.query.department;
+    if (req.query.search && typeof req.query.search === 'string') filters.search = req.query.search.trim();
+    if (req.query.page) filters.page = parseInt(req.query.page as string) || 1;
+    if (req.query.limit) filters.limit = parseInt(req.query.limit as string) || 10;
+    const result = await businessService.getBusinesses(filters);
+    res.json(result);
   } catch (error) {
-    console.error('Error en getAll businesses:', error);
     next(error);
   }
 };
