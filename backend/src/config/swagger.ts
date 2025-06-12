@@ -3,7 +3,8 @@ import swaggerUi from 'swagger-ui-express'
 import {Express} from 'express'
 import path from "path";
 import fs from "fs";
-import { authSchemas } from '../schemas/auth.schemas';
+import {authSchemas} from '../schemas/authSchemas';
+import {userSchemas} from '../schemas/userSchemas';
 
 const SCHEMA_FILE = path.resolve(__dirname, '../../prisma/schemas/json-schema.json');
 const API_PATHS = [
@@ -57,6 +58,7 @@ const options: swaggerJsdoc.Options = {
       schemas: {
         ...prismaSchemas,
         ...authSchemas,
+        ...userSchemas,
       },
       securitySchemes: {
         bearerAuth: {
@@ -136,6 +138,7 @@ function swaggerDocs(app: Express, port: number) {
         schemas: {
           ...prismaSchemas,
           ...authSchemas,
+          ...userSchemas,
         },
         securitySchemes: {
           bearerAuth: {

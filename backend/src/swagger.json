@@ -20,105 +20,196 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer"
+            "type": "integer",
+            "example": 1
           },
           "username": {
-            "type": "string"
-          },
-          "passwordHash": {
-            "type": "string"
+            "type": "string",
+            "example": "juan.perez"
           },
           "phone": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true,
+            "example": "+591 70012345"
           },
           "status": {
             "type": "string",
-            "default": "PENDING_VERIFICATION",
             "enum": [
-              "PENDING_VERIFICATION",
               "ACTIVE",
               "INACTIVE",
               "SUSPENDED",
-              "LOCKED",
-              "PASSWORD_RESET",
-              "DELETED"
-            ]
+              "PENDING_VERIFICATION"
+            ],
+            "example": "ACTIVE"
           },
           "roleId": {
-            "type": "integer"
+            "type": "integer",
+            "example": 2
           },
           "createdAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00Z"
           },
           "updatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00Z"
           },
           "lastLogin": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-01-15T09:00:00Z"
           },
           "role": {
-            "$ref": "#/components/schemas/Role"
-          },
-          "employee": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Employee"
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 2
               },
-              {
-                "type": "null"
+              "code": {
+                "type": "string",
+                "example": "EMP"
+              },
+              "name": {
+                "type": "string",
+                "example": "Empleado"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "example": "Empleado del negocio"
               }
+            },
+            "required": [
+              "id",
+              "code",
+              "name"
             ]
           },
-          "auditLogs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuditLog"
-            }
-          },
-          "cashRegisters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CashRegister"
-            }
-          },
-          "sales": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Sale"
-            }
-          },
-          "carts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Cart"
-            }
-          },
-          "purchaseOrders": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PurchaseOrder"
-            }
-          },
-          "auditCashRegisters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AuditCashRegister"
-            }
+          "employee": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 1
+              },
+              "firstName": {
+                "type": "string",
+                "example": "Juan"
+              },
+              "lastName": {
+                "type": "string",
+                "nullable": true,
+                "example": "Pérez"
+              },
+              "position": {
+                "type": "string",
+                "example": "Vendedor"
+              },
+              "department": {
+                "type": "string",
+                "nullable": true,
+                "example": "Ventas"
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2024-01-01"
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true
+              },
+              "salary": {
+                "type": "number",
+                "nullable": true,
+                "example": 5000
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "INACTIVE",
+                  "ON_LEAVE",
+                  "TERMINATED"
+                ],
+                "example": "ACTIVE"
+              },
+              "gender": {
+                "type": "string",
+                "enum": [
+                  "MALE",
+                  "FEMALE",
+                  "OTHER"
+                ],
+                "example": "MALE"
+              },
+              "birthDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "example": "1990-05-15"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "nullable": true,
+                "example": "juan.perez@empresa.com"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true,
+                "example": "+591 70012345"
+              },
+              "address": {
+                "type": "string",
+                "nullable": true,
+                "example": "Av. Principal 123"
+              },
+              "emergencyContact": {
+                "type": "string",
+                "nullable": true,
+                "example": "María Pérez"
+              },
+              "emergencyPhone": {
+                "type": "string",
+                "nullable": true,
+                "example": "+591 70054321"
+              },
+              "ciNumber": {
+                "type": "string",
+                "nullable": true,
+                "example": "12345678"
+              },
+              "businessId": {
+                "type": "integer",
+                "example": 1
+              }
+            },
+            "required": [
+              "id",
+              "firstName",
+              "position",
+              "startDate",
+              "status",
+              "gender",
+              "businessId"
+            ]
           }
         },
         "required": [
+          "id",
           "username",
-          "passwordHash",
-          "roleId"
+          "status",
+          "roleId",
+          "createdAt",
+          "updatedAt",
+          "role"
         ]
       },
       "Role": {
@@ -2357,6 +2448,680 @@
           "action"
         ]
       },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT token de acceso",
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Token para renovar el acceso",
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "ID del usuario",
+                "example": 1
+              },
+              "username": {
+                "type": "string",
+                "description": "Nombre de usuario",
+                "example": "admin"
+              },
+              "role": {
+                "type": "string",
+                "description": "Rol del usuario",
+                "example": "ADMIN"
+              },
+              "employee": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "description": "Nombre del empleado",
+                    "example": "Juan"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Apellido del empleado",
+                    "example": "Pérez"
+                  },
+                  "position": {
+                    "type": "string",
+                    "description": "Cargo del empleado",
+                    "example": "Gerente"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Fecha de inicio",
+                    "example": "2024-01-01T00:00:00Z"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE",
+                      "ON_LEAVE",
+                      "TERMINATED",
+                      "RETIRED"
+                    ],
+                    "description": "Estado del empleado",
+                    "example": "ACTIVE"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "MALE",
+                      "FEMALE",
+                      "OTHER",
+                      "UNSPECIFIED"
+                    ],
+                    "description": "Género del empleado",
+                    "example": "MALE"
+                  },
+                  "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Fecha de nacimiento",
+                    "example": "1990-01-01T00:00:00Z"
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Email del empleado",
+                    "example": "juan.perez@empresa.com"
+                  },
+                  "address": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Dirección del empleado",
+                    "example": "Av. Principal 123"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Teléfono del empleado",
+                    "example": "+591 70012345"
+                  },
+                  "businessId": {
+                    "type": "integer",
+                    "description": "ID del negocio",
+                    "example": 1
+                  }
+                }
+              }
+            },
+            "required": [
+              "id",
+              "username",
+              "role"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "refreshToken",
+          "user"
+        ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Nombre de usuario",
+            "example": "admin"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña",
+            "example": "password123"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Contraseña actual",
+            "example": "oldpassword123"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "Nueva contraseña",
+            "example": "newpassword123"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "RefreshTokenRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Token de renovación",
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "UserBasic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "example": "juan.perez"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+591 70012345"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED",
+              "PENDING_VERIFICATION"
+            ],
+            "example": "ACTIVE"
+          },
+          "roleId": {
+            "type": "integer",
+            "example": 2
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00Z"
+          },
+          "lastLogin": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-01-15T09:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "status",
+          "roleId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "juan.perez",
+            "minLength": 3,
+            "maxLength": 50
+          },
+          "password": {
+            "type": "string",
+            "example": "Contraseña123!",
+            "minLength": 8
+          },
+          "phone": {
+            "type": "string",
+            "example": "+591 70012345"
+          },
+          "roleId": {
+            "type": "integer",
+            "example": 2
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED",
+              "PENDING_VERIFICATION"
+            ],
+            "example": "ACTIVE"
+          },
+          "employee": {
+            "type": "object",
+            "properties": {
+              "firstName": {
+                "type": "string",
+                "example": "Juan",
+                "minLength": 2,
+                "maxLength": 50
+              },
+              "lastName": {
+                "type": "string",
+                "example": "Pérez",
+                "maxLength": 50
+              },
+              "position": {
+                "type": "string",
+                "example": "Vendedor",
+                "minLength": 2,
+                "maxLength": 100
+              },
+              "department": {
+                "type": "string",
+                "example": "Ventas",
+                "maxLength": 100
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2024-01-01"
+              },
+              "salary": {
+                "type": "number",
+                "example": 5000,
+                "minimum": 0
+              },
+              "gender": {
+                "type": "string",
+                "enum": [
+                  "MALE",
+                  "FEMALE",
+                  "OTHER"
+                ],
+                "example": "MALE"
+              },
+              "birthDate": {
+                "type": "string",
+                "format": "date",
+                "example": "1990-05-15"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "juan.perez@empresa.com"
+              },
+              "phone": {
+                "type": "string",
+                "example": "+591 70012345"
+              },
+              "address": {
+                "type": "string",
+                "example": "Av. Principal 123"
+              },
+              "emergencyContact": {
+                "type": "string",
+                "example": "María Pérez"
+              },
+              "emergencyPhone": {
+                "type": "string",
+                "example": "+591 70054321"
+              },
+              "ciNumber": {
+                "type": "string",
+                "example": "12345678"
+              },
+              "businessId": {
+                "type": "integer",
+                "example": 1
+              }
+            },
+            "required": [
+              "firstName",
+              "position",
+              "startDate",
+              "gender",
+              "businessId"
+            ]
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "roleId"
+        ]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "+591 70012345"
+          },
+          "roleId": {
+            "type": "integer",
+            "example": 2
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED",
+              "PENDING_VERIFICATION"
+            ]
+          },
+          "employee": {
+            "type": "object",
+            "properties": {
+              "firstName": {
+                "type": "string",
+                "example": "Juan",
+                "minLength": 2,
+                "maxLength": 50
+              },
+              "lastName": {
+                "type": "string",
+                "example": "Pérez",
+                "maxLength": 50
+              },
+              "position": {
+                "type": "string",
+                "example": "Vendedor",
+                "minLength": 2,
+                "maxLength": 100
+              },
+              "department": {
+                "type": "string",
+                "example": "Ventas",
+                "maxLength": 100
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2024-01-01"
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "salary": {
+                "type": "number",
+                "example": 5000,
+                "minimum": 0
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "INACTIVE",
+                  "ON_LEAVE",
+                  "TERMINATED"
+                ]
+              },
+              "gender": {
+                "type": "string",
+                "enum": [
+                  "MALE",
+                  "FEMALE",
+                  "OTHER"
+                ]
+              },
+              "birthDate": {
+                "type": "string",
+                "format": "date",
+                "example": "1990-05-15"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "juan.perez@empresa.com"
+              },
+              "phone": {
+                "type": "string",
+                "example": "+591 70012345"
+              },
+              "address": {
+                "type": "string",
+                "example": "Av. Principal 123"
+              },
+              "emergencyContact": {
+                "type": "string",
+                "example": "María Pérez"
+              },
+              "emergencyPhone": {
+                "type": "string",
+                "example": "+591 70054321"
+              },
+              "ciNumber": {
+                "type": "string",
+                "example": "12345678"
+              },
+              "businessId": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          }
+        }
+      },
+      "ChangeUserPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "ContraseñaActual123!",
+            "minLength": 1
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NuevaContraseña456!",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "ResetUserPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "example": "NuevaContraseña456!",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "newPassword"
+        ]
+      },
+      "UserFilters": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "SUSPENDED",
+              "PENDING_VERIFICATION"
+            ]
+          },
+          "roleId": {
+            "type": "integer",
+            "example": 2
+          },
+          "businessId": {
+            "type": "integer",
+            "example": 1
+          },
+          "search": {
+            "type": "string",
+            "example": "juan",
+            "description": "Buscar por username o nombre de empleado"
+          },
+          "page": {
+            "type": "integer",
+            "example": 1,
+            "minimum": 1,
+            "default": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10,
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          }
+        }
+      },
+      "UserListResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 25
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          }
+        },
+        "required": [
+          "users",
+          "total",
+          "page",
+          "totalPages",
+          "limit"
+        ]
+      },
+      "UserStats": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "example": 25
+          },
+          "active": {
+            "type": "integer",
+            "example": 20
+          },
+          "inactive": {
+            "type": "integer",
+            "example": 3
+          },
+          "suspended": {
+            "type": "integer",
+            "example": 1
+          },
+          "pendingVerification": {
+            "type": "integer",
+            "example": 1
+          },
+          "byRole": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "roleName": {
+                  "type": "string",
+                  "example": "Empleado"
+                },
+                "count": {
+                  "type": "integer",
+                  "example": 15
+                }
+              },
+              "required": [
+                "roleName",
+                "count"
+              ]
+            }
+          },
+          "byBusiness": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "businessName": {
+                  "type": "string",
+                  "example": "Mi Negocio"
+                },
+                "count": {
+                  "type": "integer",
+                  "example": 10
+                }
+              },
+              "required": [
+                "businessName",
+                "count"
+              ]
+            }
+          }
+        },
+        "required": [
+          "total",
+          "active",
+          "inactive",
+          "suspended",
+          "pendingVerification",
+          "byRole",
+          "byBusiness"
+        ]
+      },
+      "UserError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Usuario no encontrado"
+          },
+          "message": {
+            "type": "string",
+            "example": "El usuario con ID 123 no existe"
+          },
+          "statusCode": {
+            "type": "integer",
+            "example": 404
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "statusCode"
+        ]
+      },
       "CashRegisterOpen": {
         "type": "object",
         "required": [
@@ -2480,6 +3245,10 @@
     {
       "name": "Auth",
       "description": "Endpoints de autenticación y autorización"
+    },
+    {
+      "name": "Usuarios",
+      "description": "Gestión de usuarios del sistema"
     },
     {
       "name": "Users",
@@ -2804,19 +3573,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "username",
-                  "password"
-                ],
-                "properties": {
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
           }
@@ -2827,29 +3584,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "number"
-                        },
-                        "username": {
-                          "type": "string"
-                        },
-                        "role": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthResponse"
                 }
               }
             }
@@ -2868,15 +3603,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "refreshToken"
-                ],
-                "properties": {
-                  "refreshToken": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/RefreshTokenRequest"
               }
             }
           }
@@ -2887,12 +3614,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthResponse"
                 }
               }
             }
@@ -2916,19 +3638,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "currentPassword",
-                  "newPassword"
-                ],
-                "properties": {
-                  "currentPassword": {
-                    "type": "string"
-                  },
-                  "newPassword": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/ChangePasswordRequest"
               }
             }
           }
@@ -2957,15 +3667,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "valid": {
-                      "type": "boolean"
-                    },
-                    "user": {
-                      "type": "object"
-                    }
-                  }
+                  "$ref": "#/components/schemas/VerifyTokenResponse"
                 }
               }
             }
@@ -7528,79 +8230,164 @@
       }
     },
     "/api/users": {
-      "get": {
-        "summary": "Listar todos los usuarios",
-        "tags": [
-          "Users"
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de usuarios",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/User"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
       "post": {
-        "summary": "Crear nuevo usuario",
+        "summary": "Crear un nuevo usuario",
         "tags": [
-          "Users"
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "username",
-                  "password",
-                  "role_id"
-                ],
-                "properties": {
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "role_id": {
-                    "type": "integer"
-                  },
-                  "status": {
-                    "type": "string"
-                  },
-                  "avatar_url": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/CreateUserRequest"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Usuario creado"
+            "description": "Usuario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Usuario creado exitosamente"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Username duplicado o datos inválidos"
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Usuario ya existe",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        }
+      },
+      "get": {
+        "summary": "Obtener lista de usuarios",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "SUSPENDED",
+                "PENDING_VERIFICATION"
+              ]
+            },
+            "description": "Filtrar por estado del usuario"
+          },
+          {
+            "in": "query",
+            "name": "roleId",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por ID del rol"
+          },
+          {
+            "in": "query",
+            "name": "businessId",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por ID del negocio"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Buscar por username o nombre de empleado"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Número de página"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "description": "Número de elementos por página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor"
           }
         }
       }
     },
-    "/api/users/me": {
+    "/api/users/stats": {
       "get": {
-        "summary": "Get current user profile",
+        "summary": "Obtener estadísticas de usuarios",
         "tags": [
-          "Users"
+          "Usuarios"
         ],
         "security": [
           {
@@ -7609,14 +8396,173 @@
         ],
         "responses": {
           "200": {
-            "description": "Current user data",
+            "description": "Estadísticas obtenidas exitosamente",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "type": "object",
+                  "properties": {
+                    "stats": {
+                      "$ref": "#/components/schemas/UserStats"
+                    }
+                  }
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        }
+      }
+    },
+    "/api/users/check-username/{username}": {
+      "get": {
+        "summary": "Verificar disponibilidad de username",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Username a verificar"
+          },
+          {
+            "in": "query",
+            "name": "excludeId",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de usuario a excluir de la verificación"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verificación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string"
+                    },
+                    "available": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Username requerido"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        }
+      }
+    },
+    "/api/users/username/{username}": {
+      "get": {
+        "summary": "Obtener usuario por username",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Username del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "summary": "Obtener perfil del usuario actual",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Perfil del usuario actual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "500": {
+            "description": "Error interno del servidor"
           }
         }
       }
@@ -7625,7 +8571,12 @@
       "get": {
         "summary": "Obtener usuario por ID",
         "tags": [
-          "Users"
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -7634,22 +8585,50 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "ID del usuario"
           }
         ],
         "responses": {
           "200": {
-            "description": "Usuario encontrado"
+            "description": "Usuario obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "No encontrado"
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor"
           }
         }
       },
       "put": {
         "summary": "Actualizar usuario",
         "tags": [
-          "Users"
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -7658,7 +8637,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "ID del usuario"
           }
         ],
         "requestBody": {
@@ -7666,35 +8646,55 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "role_id": {
-                    "type": "integer"
-                  },
-                  "status": {
-                    "type": "string"
-                  },
-                  "is_active": {
-                    "type": "boolean"
-                  },
-                  "avatar_url": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateUserRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Usuario actualizado"
+            "description": "Usuario actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Usuario actualizado exitosamente"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor"
           }
         }
       },
       "delete": {
-        "summary": "Eliminar usuario",
+        "summary": "Eliminar usuario (soft delete)",
         "tags": [
-          "Users"
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -7703,12 +8703,165 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "ID del usuario"
           }
         ],
         "responses": {
-          "204": {
-            "description": "Eliminado exitosamente"
+          "200": {
+            "description": "Usuario eliminado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Usuario eliminado exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        }
+      }
+    },
+    "/api/users/{id}/change-password": {
+      "post": {
+        "summary": "Cambiar contraseña del usuario",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeUserPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contraseña cambiada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Contraseña cambiada exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contraseña actual incorrecta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        }
+      }
+    },
+    "/api/users/{id}/reset-password": {
+      "post": {
+        "summary": "Resetear contraseña del usuario (solo administradores)",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetUserPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contraseña reseteada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Contraseña reseteada exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "500": {
+            "description": "Error interno del servidor"
           }
         }
       }
