@@ -28,15 +28,6 @@ import saleItemRoutes from './routes/saleItemRoutes';
 import inventoryRoutes from './routes/inventoryRoutes';
 import posRoutes from './routes/posRoutes';
 
-/*
-import salesControlRouter from './routes/salesControl';
-import perishablesRouter from './routes/perishables';
-import reportRoutes from './routes/reports';
-import alarmRoutes from './routes/alarms';
-import inventoryReportRoutes from './routes/inventoryReports';
-import movimientosRouter from './routes/movimientosRouter';
-*/
-
 const app: Express = express()
 app.use(express.json())
 app.use(async (req, res, next) => {
@@ -68,17 +59,6 @@ app.use('/api', saleRoutes);
 app.use('/api', saleItemRoutes);
 app.use('/api', inventoryRoutes);
 app.use('/api/pos', posRoutes);
-
-/*
-app.use('/api/sales-control', salesControlRouter);
-app.use('/api/perishables', perishablesRouter);
-app.use('/api/reports', reportRoutes);
-app.use('/api/alarms', alarmRoutes);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/inventory-report', inventoryReportRoutes);
-app.use('/api/movimientos', movimientosRouter); // Para /api/movimientos/:movimientoId
-*/
-
 
 app.get('/swagger.json', (_req, res) => {
   res.setHeader('Content-Type', 'application/json');
