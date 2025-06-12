@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express'
 import {Express} from 'express'
 import path from "path";
 import fs from "fs";
+import { authSchemas } from '../schemas/auth.schemas';
 
 const SCHEMA_FILE = path.resolve(__dirname, '../../prisma/schemas/json-schema.json');
 const API_PATHS = [
@@ -29,10 +30,10 @@ try {
     console.log('Esquemas Prisma cargados y convertidos correctamente');
     console.log(`Esquemas cargados: ${Object.keys(convertedSchemas).length}`);
   } else {
-    console.warn('⚠️ Archivo de esquemas Prisma no encontrado:', SCHEMA_FILE);
+    console.warn('Archivo de esquemas Prisma no encontrado:', SCHEMA_FILE);
   }
 } catch (error) {
-  console.error('❌ Error al cargar esquemas Prisma:', error);
+  console.error('Error al cargar esquemas Prisma:', error);
 }
 
 const options: swaggerJsdoc.Options = {
@@ -53,7 +54,10 @@ const options: swaggerJsdoc.Options = {
       },
     },
     components: {
-      schemas: prismaSchemas,
+      schemas: {
+        ...prismaSchemas,
+        ...authSchemas,
+      },
       securitySchemes: {
         bearerAuth: {
           type: "http",
@@ -129,7 +133,10 @@ function swaggerDocs(app: Express, port: number) {
         },
       },
       components: {
-        schemas: prismaSchemas,
+        schemas: {
+          ...prismaSchemas,
+          ...authSchemas,
+        },
         securitySchemes: {
           bearerAuth: {
             type: "http",
@@ -179,25 +186,12 @@ function swaggerDocs(app: Express, port: number) {
       tryItOutEnabled: true,
       defaultModelsExpandDepth: -1,
       defaultModelExpandDepth: -1,
-      requestInterceptor: (req: any) => {
-        req.headers['Content-Type'] = 'application/json';
-        return req;
-      },
-
-      docExpansion: 'list',
-
-      responseInterceptor: (res: any) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`API Response: ${res.status} - ${res.url}`);
-        }
-        return res;
-      },
 
       showMutatedRequest: true,
       showRequestHeaders: true,
       showResponseHeaders: true,
-
       apisSorter: 'alpha',
+
       operationsSorter: (a: any, b: any) => {
         const order = ['get', 'post', 'put', 'delete', 'patch'];
         const aIndex = order.indexOf(a.get('method'));

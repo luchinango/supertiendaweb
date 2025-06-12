@@ -7,43 +7,12 @@ import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma';
 import {UnauthorizedError} from '../errors';
 import {EmployeeStatus, Gender, UserStatus} from '../../prisma/generated';
+import {TokenPayload, AuthResponse} from '../types/auth.types';
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
 const SALT_ROUNDS = 12;
-
-interface TokenPayload {
-  userId: number;
-  username: string;
-  businessId: number;
-  role: string;
-  iat?: number;
-  exp?: number;
-}
-
-interface AuthResponse {
-  token: string;
-  refreshToken: string;
-  user: {
-    id: number;
-    username: string;
-    role: string;
-    employee?: {
-      firstName: string;
-      lastName: string | null;
-      position: string;
-      startDate: Date;
-      status: EmployeeStatus;
-      gender: Gender;
-      birthDate: Date | null;
-      email: string | null;
-      address: string | null;
-      phone: string | null;
-      businessId: number;
-    };
-  };
-}
 
 class AuthService {
   private readonly privateKeyPath: string;

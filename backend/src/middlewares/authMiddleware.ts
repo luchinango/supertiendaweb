@@ -39,7 +39,7 @@ export const authenticate = (roles?: string[]) => {
       req.user = {
         id: decoded.userId,
         userId: decoded.userId,
-        businessId: decoded.businessId || 1,
+        businessId: decoded.businessId,
         username: decoded.username,
         role: decoded.role
       }

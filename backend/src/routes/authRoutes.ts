@@ -22,36 +22,14 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - username
- *               - password
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
+ *             $ref: '#/components/schemas/LoginRequest'
  *     responses:
  *       200:
  *         description: Login exitoso
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *                 refreshToken:
- *                   type: string
- *                 user:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: number
- *                     username:
- *                       type: string
- *                     role:
- *                       type: string
+ *               $ref: '#/components/schemas/AuthResponse'
  */
 router.post('/auth/login', controller.login);
 
@@ -66,22 +44,14 @@ router.post('/auth/login', controller.login);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - refreshToken
- *             properties:
- *               refreshToken:
- *                 type: string
+ *             $ref: '#/components/schemas/RefreshTokenRequest'
  *     responses:
  *       200:
  *         description: Token refrescado exitosamente
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
+ *               $ref: '#/components/schemas/AuthResponse'
  */
 router.post('/auth/refresh', controller.refreshToken);
 
@@ -98,15 +68,7 @@ router.post('/auth/refresh', controller.refreshToken);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - currentPassword
- *               - newPassword
- *             properties:
- *               currentPassword:
- *                 type: string
- *               newPassword:
- *                 type: string
+ *             $ref: '#/components/schemas/ChangePasswordRequest'
  *     responses:
  *       200:
  *         description: Contraseña actualizada exitosamente
@@ -127,12 +89,7 @@ router.post('/auth/change-password', authenticate(), controller.changePassword);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 valid:
- *                   type: boolean
- *                 user:
- *                   type: object
+ *               $ref: '#/components/schemas/VerifyTokenResponse'
  */
 router.get('/auth/verify', controller.verifyToken);
 
