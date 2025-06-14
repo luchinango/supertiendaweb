@@ -18,7 +18,13 @@ import {Product} from "@/types/Product";
 import {useCategories} from "@/hooks/useCategories";
 import {useProducts} from "@/hooks/useProducts";
 
+interface ProductWithPrices extends Product {
+  costPrice: number;
+  sellingPrice: number;
+}
+
 export default function Inventario() {
+  const [products, setProducts] = useState<ProductWithPrices[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [showCategories, setShowCategories] = useState(false)
   const [showAddProduct, setShowAddProduct] = useState(false)
@@ -28,10 +34,24 @@ export default function Inventario() {
   const [showEditProduct, setShowEditProduct] = useState(false)
   const { openProductForm } = useProductForm()
   const [mounted, setMounted] = useState(false)
-  const {products, isLoading: isLoadingProducts} = useProducts();
+  const {products: apiProducts, isLoading: isLoadingProducts} = useProducts();
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then(res => res.json())
+      .then(data => {
+        // Asegúrate de usar sólo el array:
+        const list = Array.isArray(data.products) ? data.products : []
+        setProducts(list)
+      })
+      .catch(err => {
+        console.error(err)
+        setProducts([])
+      })
   }, [])
 
   const filteredProducts = products.filter((product) =>
@@ -177,47 +197,15 @@ export default function Inventario() {
         </div>
 
         <div className="divide-y">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="grid grid-cols-[1fr_200px_200px_200px_200px_160px] gap-4 p-4 items-center hover:bg-gray-50 cursor-pointer"
-              onClick={() => handleProductClick(product)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center">
-                  <span className="text-xs text-gray-500">P</span>
-                </div>
-                <span>{product.name}</span>
-              </div>
-              <div className="text-right">
-                <Input value={`Bs. ${product.price}`} className="text-right" readOnly />
-              </div>
-              <div className="text-right">
-                <Input value={`Bs. ${product.cost}`} className="text-right" readOnly />
-              </div>
-              <div className="text-right">
-                <Input value={product.stock.toString()} className="text-right" readOnly />
-              </div>
-              <div className="text-right">
-                {/* Puedes reemplazar 5 por el valor real de stock mínimo si lo tienes en tu modelo */}
-                <Input value={"5"} className="text-right" readOnly />
-              </div>
-              <div className="text-right flex items-center justify-end">
-                <span className="mr-2">Bs {product.profit}</span>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    product.profit_perc >= 25
-                      ? "bg-green-100 text-green-800"
-                      : product.profit_perc >= 15
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {product.profit_perc}%
-                </span>
-              </div>
-            </div>
-          ))}
+          {filteredProducts.map((product, idx) => {
+  const key = product.id != null ? String(product.id) : `no-id-${idx}`
+  return (
+    <tr key={key}>
+      <td>{product.costPrice ?? "—"}</td>
+      {/* …más celdas… */}
+    </tr>
+  )
+})}
         </div>
       </div>
 

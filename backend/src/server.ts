@@ -75,7 +75,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 const PORT: number = parseInt(process.env.PORT || '5000', 10);
 
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
   swaggerDocs(app, PORT)
 })
 

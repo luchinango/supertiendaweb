@@ -6,7 +6,7 @@ import { Sidebar } from "../components/Sidebar"
 import { ProductFormProvider } from "../contexts/ProductFormContext"
 import { CashRegisterProvider } from "../contexts/CashRegisterContext"
 import { SalesFormProvider } from "../contexts/SalesFormContext"
-import { CartProvider } from "../contexts/CartContext"
+import { CartProvider } from "@/contexts/CartContext"
 import { ExpenseFormProvider } from "../contexts/ExpenseFormContext"
 import { GlobalProductForm } from "../components/GlobalProductForm"
 
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${inter.className} bg-gray-100 m-0 p-0`}>
         <ProductFormProvider>
           <CashRegisterProvider>

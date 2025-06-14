@@ -1,6 +1,6 @@
 "use client"
 
-import {useState} from "react"
+import {useState, useEffect} from "react"
 import {Button} from "@/components/ui/button"
 import {Input} from "@/components/ui/input"
 import {Search, Plus} from "lucide-react"
@@ -14,16 +14,43 @@ import {useCart} from "@/contexts/CartContext"
 import {Category} from "@/types/Category";
 import {useCategories} from "@/hooks/useCategories";
 import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
-import {useProducts} from "@/hooks/useProducts";
+
+export function useProducts(categoryId?: number) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    let url = `/api/products?page=1&limit=17`;
+    if (categoryId) {
+      url += `&categoryId=${categoryId}`;
+    }
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        // Asegúrate de que data.products exista y sea un arreglo
+        setProducts(data.products || []);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setIsLoading(false);
+      });
+  }, [categoryId]);
+
+  return { products, isLoading, error };
+}
 
 export default function VentasPage() {
+  const { addItem } = useCart()
+  
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const {products, isLoading: isLoadingProducts} = useProducts(selectedCategory?.id);
   const {categories, isLoading: isLoadingCategories, error, editCategory, mutate} = useCategories()
   // const [selectedCategory, setSelectedCategory] = useState("Todos")
   const [searchTerm, setSearchTerm] = useState("")
   const {openProductForm} = useProductForm()
-  const {addItem, items} = useCart()
 
   const filteredProducts = products.filter(
     (product) => product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -96,45 +123,32 @@ export default function VentasPage() {
                 </div>
               </div>
 
-              {filteredProducts.map((product) => {
-                const inCart = items.find((item) => item.id === product.id)
+              {filteredProducts.map(product => {
                 return (
                   <div
                     key={product.id}
-                    className="border rounded-lg p-4 h-64 flex flex-col cursor-pointer hover:bg-gray-50 relative"
-                    /*onClick={() =>
+                    className="border rounded-lg p-4 h-64 flex flex-col cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
                       addItem({
                         id: product.id,
                         name: product.name,
-                        price: product.price,
-                        image: product.image,
-                        available: product.stock,
+                        price: Number(product.sellingPrice),
+                        image: product.image || "/placeholder.png",
+                        available: product.maxStock
                       })
-                    }*/
+                    }}
                   >
-                    {inCart && (
-                      <div
-                        className="absolute top-2 right-2 h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
-                        {inCart.quantity}
-                      </div>
-                    )}
-                    <div className="flex justify-center mb-2">
-                      <img
-                        src={product.image || "/placeholder.png"}
-                        alt={product.name}
-                        className="h-24 w-24 object-contain"
-                      />
-                    </div>
-                    <div className="mt-auto">
-                      <p className="font-bold text-center mb-1">Bs {product.price}</p>
-                      <p className="text-sm text-center mb-2">{product.name}</p>
-                      <p className="text-xs text-center text-gray-500">
-                        {product.stock === 0 ? (
-                          <span className="text-red-500">{product.stock} disponibles</span>
-                        ) : (
-                          `${product.stock} disponibles`
-                        )}
-                      </p>
+                    {/* Imagen y nombre */}
+                    <img
+                      src={product.image || "/placeholder.png"}
+                      alt={product.name}
+                      className="mb-2 h-24 object-contain"
+                    />
+                    <p className="text-sm font-medium">{product.name}</p>
+
+                    {/* Mostrar stock disponible */}
+                    <div className="mt-auto text-sm text-gray-500">
+                      {product.maxStock} disponibles
                     </div>
                   </div>
                 )
