@@ -25,6 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body className={`${inter.className} bg-gray-100 m-0 p-0`}>
         <ProductFormProvider>
           <CashRegisterProvider>

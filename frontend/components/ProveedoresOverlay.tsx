@@ -33,7 +33,7 @@ export function ProveedoresOverlay({ open, onOpenChange, suppliers: initialSuppl
       supplier.phone.includes(searchTerm)
   )
 
-  const handleAddSupplier = (newSupplier: { name: string; phone: string }) => {
+  const handleAddSupplier = async (newSupplier: { name: string; phone: string }) => {
     const initials = newSupplier.name
       .split(" ")
       .map((word) => word[0])

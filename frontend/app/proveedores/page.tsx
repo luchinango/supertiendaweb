@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react";
+// Eliminamos la URL externa y usamos proxy local
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MoreVertical, Pencil } from "lucide-react";
@@ -14,27 +16,54 @@ import {
 import { NewSupplierDialog } from "../../components/NewSupplierDialog";
 import { EditSupplierDialog } from "../../components/EditSupplierDialog";
 import { ProveedoresOverlay } from "../../components/ProveedoresOverlay";
-import { Supplier } from "@/types/types";
+import { Supplier as SupplierBase } from "@/types/types";
 
-const sampleSupplierPurchases = [
-  { id: 1, supplierId: 1, date: "2025-04-20", amount: 1050, items: 10, paymentType: "Contado" }, // 7 días
-  { id: 2, supplierId: 2, date: "2025-03-01", amount: 400, items: 5, paymentType: "Crédito" }, // 2 meses
-  { id: 3, supplierId: 3, date: "2024-06-01", amount: 400, items: 8, paymentType: "Contado" }, // 11 meses
-  // ...más compras
-];
+// Extiende Supplier para incluir 'code'
+interface Supplier extends SupplierBase {
+  code?: string | null;
+}
 
-const initialSuppliers = [
-  { id: 1, name: "Ariana Hipermaxi paneton", phone: "+591 70332997", initials: "AH", hasDebt: false, debtAmount: 0, contact: "", email: "" },
-  { id: 2, name: "Cobolde", phone: "", initials: "C", hasDebt: true, debtAmount: 300, contact: "", email: "" },
-  { id: 3, name: "Delizia", phone: "", initials: "D", hasDebt: false, debtAmount: 0, contact: "", email: "" },
-  // ...más proveedores
-];
-
-// Función para calcular el estado de la última compra
-function getLastPurchaseStatus(lastPurchase: string | null): { label: string; color: string } {
-  if (!lastPurchase) {
-    return { label: "Sin compras", color: "text-gray-400" }
-  }
+// --- Nuevos tipos y función utilitaria ---
+interface APIResponse {
+  suppliers: {
+    id: number
+    code: string | null
+    name: string
+    documentType: string
+    documentNumber: string | null
+    contactPerson: string | null
+    email: string | null
+    phone: string | null
+    address: string | null
+    city: string | null
+    department: string | null
+    country: string | null
+    status: string
+  }[]
+}
+interface SupplierDetail {
+  id: number
+  name: string
+  phone: string | null
+  // …otros campos de /api/suppliers/:id
+}
+interface DebtSupplier {
+  id: number
+  name: string
+  phone?: string
+  // …otros campos de /api/suppliers/debt
+}
+interface SupplierStats {
+  totalSuppliers: number
+  activeSuppliers: number
+  inactiveSuppliers: number
+  totalCreditLimit: string
+  totalCurrentBalance: string
+  suppliersWithDebt: number
+  averagePaymentTerms: number
+}
+function getLastPurchaseStatus(lastPurchase: string | null) {
+  if (!lastPurchase) return { label: "Sin compras", color: "text-gray-400" }
   const now = new Date()
   const last = new Date(lastPurchase)
   const diffMonths = (now.getFullYear() - last.getFullYear()) * 12 + (now.getMonth() - last.getMonth())
@@ -45,45 +74,146 @@ function getLastPurchaseStatus(lastPurchase: string | null): { label: string; co
   return { label: `${diffMonths} meses`, color: "text-red-600 font-bold" }
 }
 
+// --- 1) declara el array de compras de ejemplo y su tipo ---
+interface Purchase {
+  id: number
+  supplierId: number
+  date: string
+  amount: number
+  items: number
+  paymentType: string
+}
+const sampleSupplierPurchases: Purchase[] = [
+  { id: 1, supplierId: 1, date: "2025-04-20", amount: 1050, items: 10, paymentType: "Contado" },
+  { id: 2, supplierId: 2, date: "2025-03-01", amount: 400, items: 5, paymentType: "Crédito" },
+  { id: 3, supplierId: 3, date: "2024-06-01", amount: 400, items: 8, paymentType: "Contado" },
+]
+
+// --- Inicio del componente ---
 export default function Proveedores() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-  const [showKardex, setShowKardex] = useState(false);
-  const [showNewSupplier, setShowNewSupplier] = useState(false);
-  const [kardexStart, setKardexStart] = useState("");
-  const [showSuppliersDialog, setShowSuppliersDialog] = useState(false);
-  const [kardexEnd, setKardexEnd] = useState("");
-  const [filterStart, setFilterStart] = useState("");
-  const [filterEnd, setFilterEnd] = useState("");
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
 
-  const filteredSuppliers = suppliers.filter((supplier) =>
+  // filtros, dialogs y selección
+  const [searchTerm, setSearchTerm]       = useState<string>("")
+  const [filterStart, setFilterStart]     = useState<string>("")
+  const [filterEnd, setFilterEnd]         = useState<string>("")
+  const [showOverlay, setShowOverlay]     = useState<boolean>(false)
+
+  const [selectedSupplier, setSelectedSupplier]       = useState<Supplier|null>(null)
+  const [showKardex, setShowKardex]                   = useState<boolean>(false)
+  const [editingSupplier, setEditingSupplier]         = useState<Supplier|null>(null)
+  const [showNewSupplier, setShowNewSupplier]         = useState<boolean>(false)
+  const [kardexStart, setKardexStart] = useState<string>("")
+  const [kardexEnd,   setKardexEnd]   = useState<string>("")
+  const [selectedId, setSelectedId]   = useState<number|null>(null)
+  const [detail, setDetail]           = useState<SupplierDetail|null>(null)
+  const [debtSuppliers, setDebtSuppliers] = useState<DebtSupplier[]>([])
+  const [stats, setStats]             = useState<SupplierStats|null>(null)
+
+  // 1) Lista de proveedores paginada
+  useEffect(() => {
+    fetch("/api/suppliers?page=1&limit=30")
+      .then(r => r.json())
+      .then((data: APIResponse) => {
+        const list = data.suppliers.map(s => ({
+          id: s.id,
+          name: s.name,
+          phone: s.phone || "",
+          initials: s.name
+            .split(" ")
+            .map(w => w[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase(),
+          hasDebt: false,
+          debtAmount: 0,
+          contact: s.contactPerson || "",
+          email: s.email || "",
+        }))
+        setSuppliers(list)
+      })
+  }, [])
+
+  // 2) Detalle al click
+  useEffect(() => {
+    if (selectedId != null) {
+      fetch(`/api/suppliers/${selectedId}`)
+        .then(r => r.json())
+        .then((d: SupplierDetail) => setDetail(d))
+        .catch(() => setDetail(null))
+    }
+  }, [selectedId])
+
+  // 3) Proveedores con deuda
+  useEffect(() => {
+    fetch("/api/suppliers/debt")
+      .then(r => r.json())
+      .then((d: DebtSupplier[]) => setDebtSuppliers(d))
+      .catch(() => setDebtSuppliers([]))
+  }, [])
+
+  // 4) Estadísticas
+  useEffect(() => {
+    fetch("/api/suppliers/stats")
+      .then(r => r.json())
+      .then((st: SupplierStats) => setStats(st))
+      .catch(() => setStats(null))
+  }, [])
+
+  // --- 2) añade tipos a los filtros/maps ---
+  const filteredSuppliers = suppliers.filter((supplier: Supplier) =>
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  )
 
-  const filteredPurchases = sampleSupplierPurchases.filter((purchase) => {
-    if (!selectedSupplier) return false;
-    const purchaseDate = new Date(purchase.date);
-    const start = kardexStart ? new Date(kardexStart) : null;
-    const end = kardexEnd ? new Date(kardexEnd) : null;
-    if (purchase.supplierId !== selectedSupplier.id) return false;
-    if (start && purchaseDate < start) return false;
-    if (end && purchaseDate > end) return false;
-    return true;
-  });
+  const filteredPurchasesMain = sampleSupplierPurchases.filter((p: Purchase) => {
+    const purchaseDate = new Date(p.date)
+    const start = filterStart ? new Date(filterStart) : null
+    const end   = filterEnd   ? new Date(filterEnd)   : null
+    if (start && purchaseDate < start) return false
+    if (end   && purchaseDate > end)   return false
+    return true
+  })
 
-  const filteredPurchasesMain = sampleSupplierPurchases.filter((purchase) => {
-    const purchaseDate = new Date(purchase.date);
-    const start = filterStart ? new Date(filterStart) : null;
-    const end = filterEnd ? new Date(filterEnd) : null;
-    if (start && purchaseDate < start) return false;
-    if (end && purchaseDate > end) return false;
-    return true;
-  });
+  // Define el tipo para el payload de nuevo proveedor
+  interface NewSupplierPayload {
+    name: string;
+    phone?: string;
+    contactPerson?: string;
+    email?: string;
+    // Agrega aquí otros campos requeridos por tu backend
+  }
 
-  const totalAmount = filteredPurchases.reduce((sum, p) => sum + p.amount, 0);
-  const totalPurchases = filteredPurchases.length;
+  async function handleAddSupplier(data: {
+    code: string
+    name: string
+    documentType: string
+    documentNumber: string
+    contactPerson: string
+    email: string
+    phone: string
+    address: string
+    city: string
+    department: string
+    country: string
+    postalCode: string
+    paymentTerms: number
+    creditLimit: number
+    status: string
+    notes: string
+  }) {
+    console.log("📤 POST /api/suppliers:", data)
+    const res = await fetch("/api/suppliers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      throw new Error(json?.message || "Error al crear proveedor")
+    }
+    console.log("✅ Creado en backend:", json)
+    // Aquí refresca tu lista con setSuppliers o similar
+  }
 
   return (
     <div className="space-y-6">
@@ -112,7 +242,7 @@ export default function Proveedores() {
           />
           <Button
             className="bg-black text-white border border-gray-300"
-            onClick={() => setShowSuppliersDialog(true)}
+            onClick={() => setShowOverlay(true)}
           >
             Ver proveedores
           </Button>
@@ -193,9 +323,17 @@ export default function Proveedores() {
 
       {/* Overlay de proveedores */}
       <ProveedoresOverlay
-        open={showSuppliersDialog}
-        onOpenChange={setShowSuppliersDialog}
-        suppliers={suppliers}
+        open={showOverlay}
+        onOpenChange={setShowOverlay}
+        suppliers={suppliers.map((s) => ({
+          id: s.id,
+          code: s.code ?? "",      // asegúrate de mapearlo
+          name: s.name,
+          phone: s.phone ?? "",
+          initials: s.initials,
+          hasDebt: s.hasDebt,
+          debtAmount: s.debtAmount,
+        }))}
       />
 
       {editingSupplier && (
@@ -242,85 +380,101 @@ export default function Proveedores() {
                 ×
               </Button>
             </div>
-            <div className="p-4 flex-1 flex flex-col gap-4 overflow-auto">
-              {/* Filtros de fecha */}
-              <div className="flex gap-2 items-end">
-                <div>
-                  <label className="block text-xs mb-1">Desde</label>
-                  <Input
-                    type="date"
-                    value={kardexStart}
-                    onChange={e => setKardexStart(e.target.value)}
-                    className="w-36"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs mb-1">Hasta</label>
-                  <Input
-                    type="date"
-                    value={kardexEnd}
-                    onChange={e => setKardexEnd(e.target.value)}
-                    className="w-36"
-                  />
-                </div>
-              </div>
-              {/* Resumen de compras */}
-              <div className="bg-gray-50 rounded-lg p-3 flex flex-col gap-2">
-                <div className="font-medium">
-                  Total de compras: <span className="text-blue-700">{totalPurchases}</span>
-                </div>
-                <div className="font-medium">
-                  Monto total: <span className="text-green-700">Bs {totalAmount}</span>
-                </div>
-              </div>
-              {/* Resumen de deuda y tipo de última compra */}
-              <div className="bg-yellow-50 rounded-lg p-3 flex flex-col gap-2 border border-yellow-200">
-                <div className="font-medium flex items-center gap-2">
-                  Deuda actual:
-                  {selectedSupplier.hasDebt && selectedSupplier.debtAmount && selectedSupplier.debtAmount > 0 ? (
-                    <span className="text-yellow-800 font-bold">Bs {selectedSupplier.debtAmount}</span>
-                  ) : (
-                    <span className="text-green-700 font-semibold">Sin deuda</span>
-                  )}
-                </div>
-                {/* Tipo de la última compra */}
-                <div className="text-xs text-gray-700">
-                  Última compra:&nbsp;
-                  {(() => {
-                    const supplierPurchases = sampleSupplierPurchases
-                      .filter(p => p.supplierId === selectedSupplier.id)
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                    if (supplierPurchases.length === 0) return "Sin compras";
-                    return supplierPurchases[0].paymentType;
-                  })()}
-                </div>
-              </div>
-              {/* Historial de compras */}
-              <div>
-                <div className="font-semibold mb-2">Historial de compras</div>
-                <div className="space-y-2">
-                  {filteredPurchases.length === 0 && (
-                    <div className="text-sm text-muted-foreground">No hay compras en este rango de fechas.</div>
-                  )}
-                  {filteredPurchases.map((purchase) => (
-                    <div key={purchase.id} className="flex justify-between items-center bg-gray-100 rounded px-3 py-2">
-                      <div>
-                        <div className="font-medium">Compra #{purchase.id}</div>
-                        <div className="text-xs text-muted-foreground">{new Date(purchase.date).toLocaleDateString()}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-green-700">Bs {purchase.amount}</div>
-                        <div className="text-xs text-gray-500">{purchase.items} productos</div>
-                        <div className="text-xs text-gray-500">{purchase.paymentType}</div>
-                      </div>
+            {showKardex && selectedSupplier && (() => {
+              const filteredPurchases: Purchase[] = sampleSupplierPurchases.filter((purchase: Purchase) => {
+                const pd = new Date(purchase.date)
+                const ks = kardexStart ? new Date(kardexStart) : null
+                const ke = kardexEnd   ? new Date(kardexEnd)   : null
+                if (purchase.supplierId !== selectedSupplier.id) return false
+                if (ks && pd < ks) return false
+                if (ke && pd > ke) return false
+                return true
+              })
+              const totalAmount: number = filteredPurchases.reduce((sum: number, p: Purchase) => sum + p.amount, 0)
+              const totalPurchases: number = filteredPurchases.length
+
+              return (
+                <div className="p-4 flex-1 overflow-auto">
+                  {/* Filtros de fecha */}
+                  <div className="flex gap-2 items-end">
+                    <div>
+                      <label className="block text-xs mb-1">Desde</label>
+                      <Input
+                        type="date"
+                        value={kardexStart}
+                        onChange={e => setKardexStart(e.target.value)}
+                        className="w-36"
+                      />
                     </div>
-                  ))}
+                    <div>
+                      <label className="block text-xs mb-1">Hasta</label>
+                      <Input
+                        type="date"
+                        value={kardexEnd}
+                        onChange={e => setKardexEnd(e.target.value)}
+                        className="w-36"
+                      />
+                    </div>
+                  </div>
+                  {/* Resumen de compras */}
+                  <div className="bg-gray-50 rounded-lg p-3 flex flex-col gap-2">
+                    <div className="font-medium">
+                      Total de compras: <span className="text-blue-700">{totalPurchases}</span>
+                    </div>
+                    <div className="font-medium">
+                      Monto total: <span className="text-green-700">Bs {totalAmount}</span>
+                    </div>
+                  </div>
+                  {/* Resumen de deuda y tipo de última compra */}
+                  <div className="bg-yellow-50 rounded-lg p-3 flex flex-col gap-2 border border-yellow-200">
+                    <div className="font-medium flex items-center gap-2">
+                      Deuda actual:
+                      {selectedSupplier.hasDebt && selectedSupplier.debtAmount && selectedSupplier.debtAmount > 0 ? (
+                        <span className="text-yellow-800 font-bold">Bs {selectedSupplier.debtAmount}</span>
+                      ) : (
+                        <span className="text-green-700 font-semibold">Sin deuda</span>
+                      )}
+                    </div>
+                    {/* Tipo de la última compra */}
+                    <div className="text-xs text-gray-700">
+                      Última compra:&nbsp;
+                      {(() => {
+                        const supplierPurchases = sampleSupplierPurchases
+                          .filter(p => p.supplierId === selectedSupplier.id)
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                        if (supplierPurchases.length === 0) return "Sin compras";
+                        return supplierPurchases[0].paymentType;
+                      })()}
+                    </div>
+                  </div>
+                  {/* Historial de compras */}
+                  <div>
+                    <div className="font-semibold mb-2">Historial de compras</div>
+                    <div className="space-y-2">
+                      {filteredPurchases.length === 0 && (
+                        <div className="text-sm text-muted-foreground">No hay compras en este rango de fechas.</div>
+                      )}
+                      {filteredPurchases.map((purchase) => (
+                        <div key={purchase.id} className="flex justify-between items-center bg-gray-100 rounded px-3 py-2">
+                          <div>
+                            <div className="font-medium">Compra #{purchase.id}</div>
+                            <div className="text-xs text-muted-foreground">{new Date(purchase.date).toLocaleDateString()}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-green-700">Bs {purchase.amount}</div>
+                            <div className="text-xs text-gray-500">{purchase.items} productos</div>
+                            <div className="text-xs text-gray-500">{purchase.paymentType}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-4 text-xs text-gray-400">
+                    Usa este historial para controlar compras y deudas con proveedores.
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4 text-xs text-gray-400">
-                Usa este historial para controlar compras y deudas con proveedores.
-              </div>
-            </div>
+              )
+            })()}
           </div>
         </>
       )}
@@ -346,19 +500,7 @@ export default function Proveedores() {
               <NewSupplierDialog
                 open={showNewSupplier}
                 onOpenChange={setShowNewSupplier}
-                onAdd={(newSupplier: { name: string; phone: string; contact: string; email: string }) => {
-                  const initials = newSupplier.name
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
-                  setSuppliers([
-                    ...suppliers,
-                    { id: suppliers.length + 1, ...newSupplier, initials, hasDebt: false, debtAmount: 0 },
-                  ]);
-                  setShowNewSupplier(false);
-                }}
+                onAdd={handleAddSupplier} // << usa la función padre
               />
             </div>
           </div>
