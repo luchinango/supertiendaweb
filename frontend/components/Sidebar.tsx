@@ -36,8 +36,8 @@ const menuItems = [
 
 export function Sidebar() {
   return (
-    <div style={{ 
-      width: '250px', 
+    <div style={{
+      width: '250px',
       backgroundColor: '#000', // fondo negro
       color: 'white',
       minHeight: '100vh'
@@ -71,4 +71,3 @@ export function Sidebar() {
     </div>
   );
 }
-

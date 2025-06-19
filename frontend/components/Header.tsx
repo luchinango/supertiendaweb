@@ -14,8 +14,8 @@ export default function Header() {
   return (
     <>
       {isCashRegisterOpen && (
-        <CashRegister 
-          isOpen={isCashRegisterOpen} 
+        <CashRegister
+          isOpen={isCashRegisterOpen}
           onClose={() => setIsCashRegisterOpen(false)}
           status={cashRegisterStatus}
           onStatusChange={setCashRegisterStatus}
@@ -24,4 +24,3 @@ export default function Header() {
     </>
   )
 }
-
