@@ -206,6 +206,11 @@ export default function Proveedores() {
     // Aquí refresca tu lista con setSuppliers o similar
   }
 
+  function handleEditSupplier(supplier: Supplier) {
+    setEditId(supplier.id)
+    setIsEditOpen(true)
+  }
+
   function openEdit(id: number) {
     console.log("click edit row id:", id)
     setEditId(id)
@@ -276,7 +281,10 @@ export default function Proveedores() {
           const supplierPurchases = filteredPurchasesMain.filter(p => p.supplierId === supplier.id)
           const totalComprado = supplierPurchases.reduce((sum, p) => sum + p.amount, 0)
           const totalDeuda = supplier.hasDebt && supplier.debtAmount ? supplier.debtAmount : 0
-          const lastPurchaseStatus = getLastPurchaseStatus(/* tu lógica */)
+          const lastPurchase = supplierPurchases
+  .map(p => p.date)
+  .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null
+const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
 
           return (
             <div
