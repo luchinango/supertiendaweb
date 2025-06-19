@@ -2,26 +2,21 @@
 
 // Eliminamos la URL externa y usamos proxy local
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, MoreVertical, Pencil } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import React, { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Search, MoreVertical, Pencil } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { NewSupplierDialog } from "../../components/NewSupplierDialog";
-import { EditSupplierDialog } from "../../components/EditSupplierDialog";
-import { ProveedoresOverlay } from "../../components/ProveedoresOverlay";
-import { Supplier as SupplierBase } from "@/types/types";
-
-// Extiende Supplier para incluir 'code'
-interface Supplier extends SupplierBase {
-  code?: string | null;
-}
+} from "@/components/ui/dropdown-menu"
+import { NewSupplierDialog } from "../../components/NewSupplierDialog"
+import { EditSupplierDialog } from "../../components/EditSupplierDialog"
+import { ProveedoresOverlay } from "../../components/ProveedoresOverlay"
+import { Supplier } from "@/types/types" // Ajusta la ruta según tu proyecto
 
 // --- Nuevos tipos y función utilitaria ---
 interface APIResponse {
@@ -91,10 +86,19 @@ const sampleSupplierPurchases: Purchase[] = [
 
 // --- Inicio del componente ---
 export default function Proveedores() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [suppliers, setSuppliers]   = useState<Supplier[]>([])
+  const [editId, setEditId]         = useState<number | null>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+
+  // + nuevos estados para búsqueda y “ver más”
+  const [searchTerm, setSearchTerm]     = useState<string>("")
+  const [pageSize, setPageSize]         = useState<number>(10)
+  const [visibleCount, setVisibleCount] = useState<number>(10)
+  const [page, setPage]                 = useState<number>(1)
+  const [totalPages, setTotalPages]     = useState<number>(0)
+  const pageSizeOptions = [10, 20, 30, 50, 100]
 
   // filtros, dialogs y selección
-  const [searchTerm, setSearchTerm]       = useState<string>("")
   const [filterStart, setFilterStart]     = useState<string>("")
   const [filterEnd, setFilterEnd]         = useState<string>("")
   const [showOverlay, setShowOverlay]     = useState<boolean>(false)
@@ -110,28 +114,15 @@ export default function Proveedores() {
   const [debtSuppliers, setDebtSuppliers] = useState<DebtSupplier[]>([])
   const [stats, setStats]             = useState<SupplierStats|null>(null)
 
-  // 1) Lista de proveedores paginada
+  // fetch inicial (mantén tu lógica)
   useEffect(() => {
-    fetch("/api/suppliers?page=1&limit=30")
+    fetch("/api/suppliers")
       .then(r => r.json())
-      .then((data: APIResponse) => {
-        const list = data.suppliers.map(s => ({
-          id: s.id,
-          name: s.name,
-          phone: s.phone || "",
-          initials: s.name
-            .split(" ")
-            .map(w => w[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase(),
-          hasDebt: false,
-          debtAmount: 0,
-          contact: s.contactPerson || "",
-          email: s.email || "",
-        }))
+      .then((data: Supplier[] | { suppliers: Supplier[] }) => {
+        const list = Array.isArray(data) ? data : data.suppliers
         setSuppliers(list)
       })
+      .catch(console.error)
   }, [])
 
   // 2) Detalle al click
@@ -215,6 +206,38 @@ export default function Proveedores() {
     // Aquí refresca tu lista con setSuppliers o similar
   }
 
+  function openEdit(id: number) {
+    console.log("click edit row id:", id)
+    setEditId(id)
+    setIsEditOpen(true)
+  }
+  function onEdit(upd: Supplier) {
+    setSuppliers(prev => prev.map(x => x.id === upd.id ? upd : x))
+  }
+
+  // filtrar siempre sobre todo el array
+  const filtered = suppliers
+
+  // al cambiar término/tamaño o lista, reinicio el conteo visible
+  useEffect(() => {
+    setVisibleCount(pageSize)
+  }, [searchTerm, pageSize, suppliers])
+
+  // solo muestro los primeros `visibleCount`
+  const visible = filtered.slice(0, visibleCount)
+
+  // En el useEffect de fetch, añade page/limit/search en la URL
+  useEffect(() => {
+     const params = new URLSearchParams({ page: String(page), limit: String(pageSize) })
+     if (searchTerm.length>=2) params.set("search", searchTerm)
+     fetch(`/api/suppliers?${params}`)
+       .then(r=>r.json())
+       .then(d=>{
+         setSuppliers(d.suppliers)
+         setTotalPages(d.totalPages)
+       })
+  }, [page, pageSize, searchTerm])
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -226,20 +249,6 @@ export default function Proveedores() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 w-52"
           />
-          <Input
-            type="date"
-            value={filterStart}
-            onChange={e => setFilterStart(e.target.value)}
-            className="w-36"
-            placeholder="Desde"
-          />
-          <Input
-            type="date"
-            value={filterEnd}
-            onChange={e => setFilterEnd(e.target.value)}
-            className="w-36"
-            placeholder="Hasta"
-          />
           <Button
             className="bg-black text-white border border-gray-300"
             onClick={() => setShowOverlay(true)}
@@ -250,70 +259,112 @@ export default function Proveedores() {
       </div>
 
       {/* Header alineado */}
-      <div className="grid grid-cols-5 gap-6 min-w-[1300px] w-[1300px] mx-auto pr-8">
+      <div className="grid grid-cols-8 gap-6 min-w-[1300px] w-[1300px] mx-auto pr-8">
         <div className="text-sm font-semibold text-left pl-2">Proveedor</div>
-        <div /> {/* Columna vacía para el lápiz */}
+        <div className="text-sm font-semibold text-left">Código</div>
+        <div className="text-sm font-semibold text-left">Dirección</div>
+        <div className="text-sm font-semibold text-right">Teléfono</div>
         <div className="text-sm font-semibold text-right min-w-[120px]">Total comprado</div>
         <div className="text-sm font-semibold text-right min-w-[120px]">Deuda total</div>
         <div className="text-sm font-semibold text-right min-w-[120px]">Última compra</div>
+        <div className="text-sm font-semibold text-right">Editar</div>
       </div>
 
       <div className="space-y-2">
-        {filteredSuppliers.map((supplier) => {
-          const supplierPurchases = filteredPurchasesMain.filter(p => p.supplierId === supplier.id);
-          const totalComprado = supplierPurchases.reduce((sum, p) => sum + p.amount, 0);
-          const lastPurchase = supplierPurchases
-            .map(p => p.date)
-            .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null;
-          const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase);
+        {visible.map((supplier) => {
+          // Filtra compras hechas a este proveedor
+          const supplierPurchases = filteredPurchasesMain.filter(p => p.supplierId === supplier.id)
+          const totalComprado = supplierPurchases.reduce((sum, p) => sum + p.amount, 0)
+          const totalDeuda = supplier.hasDebt && supplier.debtAmount ? supplier.debtAmount : 0
+          const lastPurchaseStatus = getLastPurchaseStatus(/* tu lógica */)
 
           return (
             <div
               key={supplier.id}
-              className="grid grid-cols-5 gap-6 min-w-[1300px] w-[1300px] items-center mx-auto pr-8 bg-transparent hover:bg-accent rounded-lg cursor-pointer"
-              onClick={() => { setSelectedSupplier(supplier); setShowKardex(true); }}
+              className="grid grid-cols-8 gap-6 min-w-[1300px] w-[1300px] items-center mx-auto pr-8 hover:bg-accent rounded-lg cursor-pointer"
+              onClick={() => {
+                setSelectedSupplier(supplier)
+                setShowKardex(true)
+              }}
             >
               {/* Proveedor */}
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8 bg-gray-200">
-                  <AvatarFallback>{supplier.initials}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium">{supplier.name}</div>
-                  {supplier.phone && <div className="text-sm text-muted-foreground">{supplier.phone}</div>}
-                </div>
-              </div>
-              {/* Lápiz alineado */}
-              <div className="flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setEditingSupplier(supplier);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </div>
+              <div className="pl-2 text-sm">{supplier.name}</div>
+              {/* Código */}
+              <div className="text-sm">{supplier.code ?? "—"}</div>
+              {/* Dirección */}
+              <div className="text-sm">{supplier.address ?? "—"}</div>
+              {/* Teléfono */}
+              <div className="text-sm text-right">{supplier.phone ?? "—"}</div>
               {/* Total comprado */}
-              <div className="text-sm text-right min-w-[120px]">
-                <div className="text-blue-700 font-semibold">Bs {totalComprado}</div>
+              <div className="text-sm text-right text-blue-700 font-semibold">
+                Bs {totalComprado}
               </div>
               {/* Deuda total */}
-              <div className="text-sm text-right min-w-[120px]">
-                <div className="text-muted-foreground">
-                  {supplier.hasDebt && supplier.debtAmount ? `Bs ${supplier.debtAmount}` : "Sin deuda"}
-                </div>
+              <div className="text-sm text-right">
+                {totalDeuda > 0 ? `Bs ${totalDeuda}` : "Sin deuda"}
               </div>
               {/* Última compra */}
-              <div className="text-sm text-right min-w-[120px]">
+              <div className="text-sm text-right">
                 <span className={lastPurchaseStatus.color}>{lastPurchaseStatus.label}</span>
+              </div>
+              {/* Lápiz (evita que abra el Kardex con e.stopPropagation()) */}
+              <div className="text-right">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEditSupplier(supplier)
+                  }}
+                  className="p-1 text-gray-600 hover:text-gray-800"
+                >
+                  ✏️
+                </button>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Añade los controles de paginación */}
+      <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center gap-2">
+          <label htmlFor="pageSize">Mostrar</label>
+          <select
+            id="pageSize"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value))
+              setPage(1)
+            }}
+            className="border px-2 py-1"
+          >
+            {pageSizeOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+          <span>proveedores</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+          >
+            Anterior
+          </Button>
+          <span>
+            Página {page} de {totalPages}
+          </span>
+          <Button
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            Siguiente
+          </Button>
+        </div>
+      </div>
+      {/* Fin de los controles de paginación */}
+
       <Button
         className="w-full bg-black text-white border border-gray-300"
         onClick={() => setShowNewSupplier(true)}
@@ -327,18 +378,18 @@ export default function Proveedores() {
         onOpenChange={setShowOverlay}
         suppliers={suppliers.map((s) => ({
           id: s.id,
-          code: s.code ?? "",      // asegúrate de mapearlo
+          code: s.code ?? "",
           name: s.name,
           phone: s.phone ?? "",
-          initials: s.initials,
-          hasDebt: s.hasDebt,
-          debtAmount: s.debtAmount,
+          initials: s.initials ?? "",
+          hasDebt: s.hasDebt ?? false,
+          debtAmount: s.debtAmount ?? 0,
         }))}
       />
 
       {editingSupplier && (
         <EditSupplierDialog
-          supplier={editingSupplier}
+          supplierId={editingSupplier.id}
           open={true}
           onOpenChange={() => setEditingSupplier(null)}
           onEdit={(updatedSupplier: Supplier) => {
@@ -507,5 +558,5 @@ export default function Proveedores() {
         </>
       )}
     </div>
-  );
+  )
 }
