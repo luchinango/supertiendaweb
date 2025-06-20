@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import {Category} from "@/types/Category";
+import type {Category} from "@/types/Category";
 import {
   getCategories,
   createCategory,

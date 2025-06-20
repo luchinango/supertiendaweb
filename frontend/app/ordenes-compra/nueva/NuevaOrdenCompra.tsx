@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useSafeSearchParams } from "@/hooks/use-safe-search-params"
+import { useSafeSearchParams } from "@/hooks/useSafeSearchParams"
 
 interface Product {
   id: number
@@ -87,7 +87,7 @@ export default function NuevaOrdenCompra() {
           <div className="flex-1">
             <Label htmlFor="producto">Producto</Label>
             <Select
-              value={selectedProduct?.toString()}
+              value={selectedProduct?.toString() || ""}
               onValueChange={(value) => setSelectedProduct(Number.parseInt(value))}
             >
               <SelectTrigger>

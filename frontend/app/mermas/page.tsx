@@ -1,14 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Download, Plus, AlertTriangle, Ban, PackageX } from "lucide-react"
-import { RegisterLossPanel } from "../../components/RegisterLossPanel"
-import { DownloadReportPanel } from "../../components/DownloadReportPanel"
+import { Search, Download, Plus, AlertTriangle, Ban, PackageX, Trash2 } from "lucide-react"
+import { RegisterLossPanel } from "@/components/features/inventory/RegisterLossPanel"
+import { DownloadReportPanel } from "@/components/features/reports/DownloadReportPanel"
 
 interface ProductLoss {
   id: number

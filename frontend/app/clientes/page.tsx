@@ -3,18 +3,11 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NewClientPanel } from "@/components/features/customers/NewClientPanel"
+import { EditClientPanel } from "@/components/features/customers/EditClientPanel"
+import { ClientesOverlay } from "@/components/features/customers/ClientesOverlay"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { NewClientPanel } from "@/components/NewClientPanel"
-import { EditClientPanel } from "@/components/EditClientPanel"
-import { ClientesOverlay } from "@/components/ClientesOverlay"
-import { MoreVertical } from "lucide-react"
-import { Customer } from "@/types/Customer";
+import type { Customer } from "@/types/Customer";
 import { useCustomers } from "@/hooks/useCustomers";
 
 
@@ -40,7 +33,7 @@ function getLastPurchaseStatus(lastPurchase: string | null): { label: string; co
 }
 
 export default function Clientes() {
-  const { customers, addCustomer, isLoading, error, editCustomer, mutate } = useCustomers()
+  const { customers, addCustomer } = useCustomers()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedClient, setSelectedClient] = useState<Customer | null>(null)
   const [editingClient, setEditingClient] = useState<Customer | null>(null)
@@ -51,7 +44,6 @@ export default function Clientes() {
   const [kardexEnd, setKardexEnd] = useState("")
   const [filterStart, setFilterStart] = useState("")
   const [filterEnd, setFilterEnd] = useState("")
-  const [activeTab, setActiveTab] = useState<"clientes" | "proveedores">("clientes")
 
   const filteredClients = (customers ?? []).filter(
     (customer) =>
@@ -207,10 +199,10 @@ export default function Clientes() {
 
       {editingClient && (
         <EditClientPanel
-          client={editingClient}
+          customer={editingClient}
           open={true}
           onOpenChange={() => setEditingClient(null)}
-          onEdit={(updatedClient) => {
+          onEdit={() => {
             // Aquí puedes actualizar el cliente en tu estado o backend
             setEditingClient(null)
           }}
@@ -279,7 +271,9 @@ export default function Clientes() {
                       .filter(p => p.clientId === selectedClient.id)
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     if (clientPurchases.length === 0) return "Sin compras"
-                    return clientPurchases[0].paymentType
+                    const lastPurchase = clientPurchases[0]
+                    if (!lastPurchase) return "Sin información"
+                    return lastPurchase.paymentType
                   })()}
                 </div>
               </div>

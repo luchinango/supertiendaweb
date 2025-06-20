@@ -1,19 +1,21 @@
 "use client"
 
-import {useState, useEffect} from "react"
+import {useState, useEffect, useMemo} from "react"
 import {Button} from "@/components/ui/button"
 import {Input} from "@/components/ui/input"
 import {Search, Plus} from "lucide-react"
-import {ProductFormWrapper} from "@/components/ProductFormWrapper"
+import {ProductFormWrapper} from "@/components/features/products/ProductFormWrapper"
 import {useProductForm} from "@/contexts/ProductFormContext"
-import {CashRegisterManager} from "@/components/CashRegisterManager"
-import {SalesFormManager} from "@/components/SalesFormManager"
-import {ExpenseFormManager} from "@/components/ExpenseFormManager"
-import {ShoppingCart} from "@/components/ShoppingCart"
+import {CashRegisterManager} from "@/components/features/cash-register/CashRegisterManager"
+import {SalesFormManager} from "@/components/features/sales/SalesFormManager"
+import {ExpenseFormManager} from "@/components/features/expenses/ExpenseFormManager"
+import {ShoppingCart} from "@/components/features/sales/ShoppingCart"
 import {useCart} from "@/contexts/CartContext"
-import {Category} from "@/types/Category";
+import type {Category} from "@/types/Category"
 import {useCategories} from "@/hooks/useCategories";
 import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
+import {useDebounce} from "@/hooks/useDebounce"
+import {OptimizedImage} from "@/components/ui/optimized-image"
 
 export default function VentasPage() {
   function useProducts(categoryId?: number) {
@@ -49,9 +51,13 @@ export default function VentasPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const {openProductForm} = useProductForm()
 
-  const filteredProducts = products.filter(
-    (product) => product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(
+      (product) => product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    )
+  }, [products, debouncedSearchTerm])
 
   return (
     <div className="flex h-full">
@@ -136,10 +142,13 @@ export default function VentasPage() {
                     }}
                   >
                     {/* Imagen y nombre */}
-                    <img
-                      src={product.image || "/placeholder.png"}
+                    <OptimizedImage
+                      src={product.image}
                       alt={product.name}
+                      width={96}
+                      height={96}
                       className="mb-2 h-24 object-contain"
+                      fallbackSrc="/placeholder.png"
                     />
                     <p className="text-sm font-medium">{product.name}</p>
 

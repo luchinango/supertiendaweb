@@ -1,4 +1,4 @@
-interface EmployeeDto {
+export interface EmployeeDto {
   id: number
   first_name: string
   last_name: string
@@ -12,5 +12,3 @@ interface EmployeeDto {
   address: string
   mobile_phone: string
 }
-
-export default EmployeeDto

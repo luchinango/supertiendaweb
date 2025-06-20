@@ -7,9 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertTriangle, Package, CreditCard, Calendar, ShoppingCart, XCircle, Check } from "lucide-react"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ProductRemovalPanel } from "../../components/ProductRemovalPanel"
-import { CreatePromotionPanel } from "../../components/CreatePromotionPanel"
-import { toast } from "@/components/ui/use-toast"
+import { ProductRemovalPanel } from "@/components/features/products/ProductRemovalPanel"
+import { CreatePromotionPanel } from "@/components/features/promotions/CreatePromotionPanel"
+import { toast } from "@/hooks/useToast"
 
 interface Product {
   id: number
@@ -339,7 +339,7 @@ export default function Alertas() {
     // Agrega aquí otros campos si son necesarios
   }
 
-  const handleSavePromotion = (productId: number, data: PromotionData) => {
+  const handleSavePromotion = (_productId: number, data: PromotionData) => {
     toast({
       title: "Promoción creada",
       description: `Se ha creado una promoción para ${selectedProduct?.nombre} con un precio de Bs ${data.precioPromocion.toFixed(2)}`,

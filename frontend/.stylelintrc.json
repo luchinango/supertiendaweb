@@ -4,7 +4,9 @@
         "stylelint-config-tailwindcss"
     ],
     "rules": {
-        "at-rule-no-unknown": null
+        "at-rule-no-unknown": null,
+        "no-unused-vars": "off",
+        "no-undef": "off"
     },
     "overrides": [
         {

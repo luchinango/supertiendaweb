@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { openCashRegister as openCashRegisterService } from "@/services/cashRegisterService";
 
 interface CashRegisterContextType {

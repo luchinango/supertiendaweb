@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Download, Grid2X2, Plus } from "lucide-react"
-import { CategoriesDialog } from "@/components/CategoriesDialog"
-import { ProductFormWrapper } from "@/components/ProductFormWrapper"
+import { CategoriesDialog } from '@/components/features/products/CategoriesDialog'
+import { ProductFormWrapper } from '@/components/features/products/ProductFormWrapper'
 import { useProductForm } from "@/contexts/ProductFormContext"
+import { useDebounce } from "@/hooks/useDebounce"
+import { OptimizedImage } from "@/components/ui/optimized-image"
 
 interface Product {
   id: number
@@ -60,9 +62,13 @@ export default function Inventario() {
   const [showCategories, setShowCategories] = useState(false)
   const { openProductForm } = useProductForm()
 
-  const filteredProducts = productosFicticios.filter((product) =>
-    product.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  const filteredProducts = useMemo(() => {
+    return productosFicticios.filter((product) =>
+      product.nombre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()),
+    )
+  }, [debouncedSearchTerm])
 
   return (
     <div className="space-y-6">
@@ -157,10 +163,13 @@ export default function Inventario() {
           <Card key={product.id} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="aspect-square relative bg-gray-50">
-                <img
-                  src={product.imagen || "/placeholder.png"}
+                <OptimizedImage
+                  src={product.imagen}
                   alt={product.nombre}
+                  width={200}
+                  height={200}
                   className="absolute inset-0 w-full h-full object-contain p-4"
+                  fallbackSrc="/placeholder.png"
                 />
               </div>
               <div className="p-3 space-y-2">

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { CashRegisterManager } from "@/components/CashRegisterManager";
+import { CashRegisterManager } from '@/components/features/cash-register/CashRegisterManager'
 import useSWR from "swr";
 
 interface ReportData {

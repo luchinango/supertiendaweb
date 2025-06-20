@@ -1,5 +1,5 @@
 import { fetcher } from "@/lib/fetcher";
-import { Customer } from "@/types/Customer";
+import type {Customer} from "@/types/Customer";
 
 const BASE_URL = "/api/customers";
 

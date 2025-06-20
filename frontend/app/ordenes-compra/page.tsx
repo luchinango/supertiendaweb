@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Plus, FileText } from "lucide-react"
+import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { OrderDetailPanel } from "../../components/OrderDetailPanel"
+import { OrderDetailPanel } from "@/components/features/inventory/OrderDetailPanel"
 import { Badge } from "@/components/ui/badge"
 
 interface PurchaseOrder {
@@ -201,7 +201,7 @@ export default function OrdenesCompra() {
             className="flex items-center gap-1"
             onClick={() => handleViewDetails(order)}
           >
-            <FileText className="h-4 w-4" />
+            <Eye className="h-4 w-4" />
             Ver detalles
           </Button>
           </TableCell>

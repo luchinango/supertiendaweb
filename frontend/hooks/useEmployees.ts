@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import {Employee} from "@/types/Employee";
+import type {Employee} from "@/types/Employee";
 import {getEmployees, createEmployee, updateEmployee, deleteEmployee} from "@/services/employeesService";
 
 export function useEmployees() {
