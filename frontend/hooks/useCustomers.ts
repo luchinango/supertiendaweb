@@ -44,7 +44,11 @@ export function useCustomers() {
   };
 
   return {
-    customers: data || [],
+    customers: data ? data.map((c: any) => ({
+      ...c,
+      first_name: c.firstName,
+      last_name: c.lastName,
+    })) : [],
     error,
     isLoading,
     mutate,

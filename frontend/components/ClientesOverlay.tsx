@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, MoreVertical, X } from "lucide-react"
@@ -14,23 +14,8 @@ interface Client {
   initials: string
   hasDebt: boolean
   debtAmount?: number
+  address?: string
 }
-
-// Sample clients data matching the screenshot
-const initialClients: Client[] = [
-  {
-    id: 1,
-    name: "Luis Alberto Martínez Barrientos",
-    phone: "+591 72944911",
-    initials: "LA",
-    hasDebt: false,
-    debtAmount: 0,
-  },
-  { id: 2, name: "Mateo", phone: "+591 75454698", initials: "M", hasDebt: false, debtAmount: 0 },
-  { id: 3, name: "SOCODEVI", phone: "+591 69258592", initials: "S", hasDebt: false, debtAmount: 0 },
-  { id: 4, name: "Telma", phone: "+591 70000000", initials: "T", hasDebt: false, debtAmount: 0 },
-  { id: 5, name: "TODITO", phone: "+591 71111111", initials: "T", hasDebt: false, debtAmount: 0 },
-]
 
 interface ClientesOverlayProps {
   open: boolean
@@ -38,9 +23,27 @@ interface ClientesOverlayProps {
 }
 
 export function ClientesOverlay({ open, onOpenChange }: ClientesOverlayProps) {
-  const [clients, setClients] = useState<Client[]>(initialClients)
+  const [clients, setClients] = useState<Client[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [showNewClient, setShowNewClient] = useState(false)
+
+  // Cargar clientes reales del endpoint
+  useEffect(() => {
+    fetch("/api/customers")
+      .then((res) => res.json())
+      .then((data) => {
+        const mapped = data.map((c: any) => ({
+          id: c.id,
+          name: `${c.firstName ?? c.first_name ?? ""} ${c.lastName ?? c.last_name ?? ""}`.trim(),
+          phone: c.phone ?? "",
+          initials: `${(c.firstName ?? c.first_name ?? "")[0] ?? ""}${(c.lastName ?? c.last_name ?? "")[0] ?? ""}`.toUpperCase(),
+          hasDebt: false, // Ajusta si tienes campo real de deuda
+          debtAmount: 0, // Ajusta si tienes campo real de deuda
+          address: c.address ?? "",
+        }))
+        setClients(mapped)
+      })
+  }, [])
 
   const filteredClients = clients.filter(
     (client) => client.name.toLowerCase().includes(searchTerm.toLowerCase()) || client.phone.includes(searchTerm),
@@ -109,6 +112,7 @@ export function ClientesOverlay({ open, onOpenChange }: ClientesOverlayProps) {
                   </Avatar>
                   <div>
                     <div className="font-medium">{client.name}</div>
+                    <div className="text-xs text-muted-foreground">{client.address || "Sin dirección"}</div>
                     <div className="text-sm text-muted-foreground">{client.phone}</div>
                   </div>
                 </div>

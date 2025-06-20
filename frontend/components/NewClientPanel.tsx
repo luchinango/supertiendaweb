@@ -15,14 +15,36 @@ interface NewClientPanelProps {
 }
 
 export function NewClientPanel({ open, onOpenChange, onAdd }: NewClientPanelProps) {
-  const [name, setName] = useState("")
-  const [phone, setPhone] = useState("")
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    address: "",
+    phone: "",
+    company_name: "",
+    tax_id: "",
+    email: "",
+    status: "",
+    credit_balance: "",
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onAdd({ name, phone })
-    setName("")
-    setPhone("")
+    onAdd({ name: `${form.first_name} ${form.last_name}`.trim(), phone: form.phone })
+    setForm({
+      first_name: "",
+      last_name: "",
+      address: "",
+      phone: "",
+      company_name: "",
+      tax_id: "",
+      email: "",
+      status: "",
+      credit_balance: "",
+    })
     onOpenChange(false)
   }
 
@@ -55,21 +77,47 @@ export function NewClientPanel({ open, onOpenChange, onAdd }: NewClientPanelProp
           <div className="flex-1 overflow-auto p-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nombre completo</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                <Label htmlFor="first_name">Nombre</Label>
+                <Input id="first_name" name="first_name" value={form.first_name} onChange={handleChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last_name">Apellido</Label>
+                <Input id="last_name" name="last_name" value={form.last_name} onChange={handleChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Dirección</Label>
+                <Input id="address" name="address" value={form.address} onChange={handleChange} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Teléfono</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                <Input id="phone" name="phone" value={form.phone} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company_name">Empresa</Label>
+                <Input id="company_name" name="company_name" value={form.company_name} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tax_id">NIT</Label>
+                <Input id="tax_id" name="tax_id" value={form.tax_id} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={form.email} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Estado</Label>
+                <Input id="status" name="status" value={form.status} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="credit_balance">Crédito</Label>
+                <Input id="credit_balance" name="credit_balance" type="number" value={form.credit_balance} onChange={handleChange} />
+              </div>
+              <div className="pt-2">
+                <Button type="submit" className="w-full bg-[#1e293b] text-white hover:bg-[#334155]">
+                  Crear cliente
+                </Button>
               </div>
             </form>
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t mt-auto">
-            <Button onClick={handleSubmit} className="w-full bg-[#1e293b] text-white hover:bg-[#334155]">
-              Crear cliente
-            </Button>
           </div>
         </div>
       </div>

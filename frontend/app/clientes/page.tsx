@@ -14,8 +14,8 @@ import { NewClientPanel } from "@/components/NewClientPanel"
 import { EditClientPanel } from "@/components/EditClientPanel"
 import { ClientesOverlay } from "@/components/ClientesOverlay"
 import { MoreVertical } from "lucide-react"
-import {Customer} from "@/types/Customer";
-import {useCustomers} from "@/hooks/useCustomers";
+import { Customer } from "@/types/Customer";
+import { useCustomers } from "@/hooks/useCustomers";
 
 
 const sampleClientPurchases = [
@@ -40,7 +40,7 @@ function getLastPurchaseStatus(lastPurchase: string | null): { label: string; co
 }
 
 export default function Clientes() {
-  const {customers, isLoading, error, editCustomer, mutate} = useCustomers()
+  const { customers, addCustomer, isLoading, error, editCustomer, mutate } = useCustomers()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedClient, setSelectedClient] = useState<Customer | null>(null)
   const [editingClient, setEditingClient] = useState<Customer | null>(null)
@@ -53,8 +53,11 @@ export default function Clientes() {
   const [filterEnd, setFilterEnd] = useState("")
   const [activeTab, setActiveTab] = useState<"clientes" | "proveedores">("clientes")
 
-  const filteredClients = customers.filter(
-    (customer) => customer.first_name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.phone?.includes(searchTerm),
+  const filteredClients = (customers ?? []).filter(
+    (customer) =>
+      ((customer.first_name && customer.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+       (customer.last_name && customer.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+       (customer.phone && customer.phone.includes(searchTerm)))
   )
 
   const filteredPurchasesMain = sampleClientPurchases.filter((purchase) => {
@@ -129,6 +132,9 @@ export default function Clientes() {
             .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null
           const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
 
+          // Obtener iniciales del cliente
+          const initials = `${(client.first_name?.[0] ?? "")}${(client.last_name?.[0] ?? "")}`.toUpperCase()
+
           return (
             <div
               key={client.id}
@@ -140,10 +146,11 @@ export default function Clientes() {
             >
               <div className="flex items-center gap-3 flex-1">
                 <Avatar className="h-8 w-8 bg-gray-200">
-                  <AvatarFallback>{client.first_name}</AvatarFallback>
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-medium">{client.first_name}</div>
+                  <div className="font-medium">{client.first_name} {client.last_name}</div>
+                  <div className="text-xs text-muted-foreground">{client.address ?? "Sin dirección"}</div>
                   <div className="text-sm text-muted-foreground">{client.phone}</div>
                 </div>
               </div>
@@ -169,7 +176,6 @@ export default function Clientes() {
                 <div className="text-sm text-right min-w-[120px]">
                   <div className="text-muted-foreground">
                     Sin Deuda
-                    {/*{client.hasDebt && client.debtAmount ? `Bs ${client.debtAmount}` : "Sin deuda"}*/}
                   </div>
                 </div>
                 <div className="text-sm text-right min-w-[120px]">
@@ -193,43 +199,19 @@ export default function Clientes() {
       <NewClientPanel
         open={showNewClient}
         onOpenChange={setShowNewClient}
-        onAdd={(newClient) => {
-          const initials = newClient.name
-            .split(" ")
-            .map((word) => word[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2)
-          // setClients([...clients, { id: clients.length + 1, ...newClient, initials, hasDebt: false, debtAmount: 0 }])
+        onAdd={async (newClient) => {
+          await addCustomer(newClient)
+          setShowNewClient(false)
         }}
       />
 
       {editingClient && (
         <EditClientPanel
-          customer={editingClient}
+          client={editingClient}
           open={true}
           onOpenChange={() => setEditingClient(null)}
           onEdit={(updatedClient) => {
-            /*
-            setClients(
-              clients.map((c) =>
-                c.id === updatedClient.id
-                  ? {
-                      ...c,
-                      ...updatedClient,
-                      initials: updatedClient.name
-                        .split(" ")
-                        .map((word) => word[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2),
-                      hasDebt: updatedClient.hasDebt !== undefined ? updatedClient.hasDebt : c.hasDebt,
-                      debtAmount: updatedClient.debtAmount !== undefined ? updatedClient.debtAmount : c.debtAmount,
-                    }
-                  : c
-              )
-            )
-            */
+            // Aquí puedes actualizar el cliente en tu estado o backend
             setEditingClient(null)
           }}
         />
@@ -243,7 +225,9 @@ export default function Clientes() {
           />
           <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 transition-transform duration-300 animate-slide-in-from-right flex flex-col">
             <div className="flex items-center justify-between border-b p-4">
-              <h2 className="text-xl font-semibold">Kardex de {selectedClient.first_name}</h2>
+              <h2 className="text-xl font-semibold">
+                Kardex de {selectedClient?.first_name} {selectedClient?.last_name}
+              </h2>
               <Button variant="ghost" size="icon" onClick={() => setShowKardex(false)}>
                 <span className="sr-only">Cerrar</span>
                 ×
