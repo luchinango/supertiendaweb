@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "app/components/ui/button"
-import { Input } from "app/components/ui/input"
-import { Label } from "app/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "app/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "app/components/ui/table"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useSafeSearchParams } from "@/hooks/use-safe-search-params"
 
 interface Product {
   id: number
@@ -40,21 +41,23 @@ export default function NuevaOrdenCompra() {
 
 function NuevaOrdenCompraContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const { searchParams, isClient } = useSafeSearchParams()
   const [proveedor, setProveedor] = useState("")
   const [items, setItems] = useState<OrderItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null)
   const [quantity, setQuantity] = useState("")
 
   useEffect(() => {
-    const productId = searchParams.get("productId")
-    if (productId) {
-      const product = sampleProducts.find((p) => p.id === Number.parseInt(productId))
-      if (product) {
-        setItems([{ productId: product.id, quantity: product.stockMinimo - product.stock }])
+    if (isClient && searchParams) {
+      const productId = searchParams.get("productId")
+      if (productId) {
+        const product = sampleProducts.find((p) => p.id === Number.parseInt(productId))
+        if (product) {
+          setItems([{ productId: product.id, quantity: product.stockMinimo - product.stock }])
+        }
       }
     }
-  }, [searchParams])
+  }, [searchParams, isClient])
 
   const addItem = () => {
     if (selectedProduct && quantity) {
@@ -159,4 +162,3 @@ function NuevaOrdenCompraContent() {
     </div>
   )
 }
-

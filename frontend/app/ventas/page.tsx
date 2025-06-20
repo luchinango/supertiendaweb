@@ -15,40 +15,37 @@ import {Category} from "@/types/Category";
 import {useCategories} from "@/hooks/useCategories";
 import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
 
-export function useProducts(categoryId?: number) {
-  const [products, setProducts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    let url = `/api/products?page=1&limit=17`;
-    if (categoryId) {
-      url += `&categoryId=${categoryId}`;
-    }
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        // Asegúrate de que data.products exista y sea un arreglo
-        setProducts(data.products || []);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setIsLoading(false);
-      });
-  }, [categoryId]);
-
-  return { products, isLoading, error };
-}
-
 export default function VentasPage() {
+  function useProducts(categoryId?: number) {
+    const [products, setProducts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+      setIsLoading(true);
+      let url = `/api/products?page=1&limit=17`;
+      if (categoryId) {
+        url += `&categoryId=${categoryId}`;
+      }
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          setProducts(data.products || []);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          setError(err.message);
+          setIsLoading(false);
+        });
+    }, [categoryId]);
+
+    return { products, isLoading, error };
+  }
+
   const { addItem } = useCart()
-  
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const {products, isLoading: isLoadingProducts} = useProducts(selectedCategory?.id);
   const {categories, isLoading: isLoadingCategories, error, editCategory, mutate} = useCategories()
-  // const [selectedCategory, setSelectedCategory] = useState("Todos")
   const [searchTerm, setSearchTerm] = useState("")
   const {openProductForm} = useProductForm()
 
