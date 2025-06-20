@@ -1,19 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Plus, Pencil, Calendar, ArrowRight } from "lucide-react"
-import { NewCreditDialog } from "../../components/NewCreditDialog"
-import { EditCreditDialog } from "../../components/EditCreditDialog"
-import { NewClientCreditPanel } from "../../components/NewClientCreditPanel"
-import { EditClientCreditPanel } from "../../components/EditClientCreditPanel"
-import { RegisterPaymentPanel } from "../../components/RegisterPaymentPanel"
-import { CreditHistoryPanel } from "../../components/CreditHistoryPanel"
+import { Search, Plus, Edit, Trash2, Eye, CreditCard, UserPlus, DollarSign, Pencil, ArrowRight, Calendar } from "lucide-react"
+import { NewCreditDialog } from "@/components/features/customers/NewCreditDialog"
+import { EditCreditDialog } from "@/components/features/customers/EditCreditDialog"
+import { NewClientCreditPanel } from "@/components/features/customers/NewClientCreditPanel"
+import { EditClientCreditPanel } from "@/components/features/customers/EditClientCreditPanel"
+import { RegisterPaymentPanel } from "@/components/features/sales/RegisterPaymentPanel"
+import { CreditHistoryPanel } from "@/components/features/customers/CreditHistoryPanel"
 
 // Tipos estrictos para créditos a proveedores y clientes
 type SupplierCreditStatus = "comision" | "concesion" | "pagado"
@@ -202,7 +203,7 @@ export default function Creditos() {
               ...credit,
               payments: newPayments,
               status: totalPaid >= credit.amount ? "pagado" : credit.status,
-              paidDate: totalPaid >= credit.amount ? payment.date : undefined,
+              ...(totalPaid >= credit.amount ? { paidDate: payment.date } : {})
             }
           }
           return credit
@@ -346,7 +347,7 @@ export default function Creditos() {
                                 onClick={() => setEditingSupplierCredit(credit)}
                                 title="Editar crédito"
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -362,7 +363,7 @@ export default function Creditos() {
                                 title="Registrar pago"
                                 disabled={credit.status === "pagado"}
                               >
-                                <ArrowRight className="h-4 w-4" />
+                                <CreditCard className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -377,7 +378,7 @@ export default function Creditos() {
                                 }
                                 title="Ver historial de pagos"
                               >
-                                <Calendar className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -500,7 +501,7 @@ export default function Creditos() {
                                 onClick={() => setEditingClientCredit(credit)}
                                 title="Editar crédito"
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -516,7 +517,7 @@ export default function Creditos() {
                                 title="Registrar pago"
                                 disabled={credit.status === "pagado"}
                               >
-                                <ArrowRight className="h-4 w-4" />
+                                <CreditCard className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -531,7 +532,7 @@ export default function Creditos() {
                                 }
                                 title="Ver historial de pagos"
                               >
-                                <Calendar className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>

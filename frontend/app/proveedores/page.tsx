@@ -13,10 +13,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { NewSupplierDialog } from "../../components/NewSupplierDialog"
-import { EditSupplierDialog } from "../../components/EditSupplierDialog"
-import { ProveedoresOverlay } from "../../components/ProveedoresOverlay"
-import { Supplier } from "@/types/types" // Ajusta la ruta según tu proyecto
+import { NewSupplierDialog } from '@/components/features/suppliers/NewSupplierDialog'
+import { EditSupplierDialog } from '@/components/features/suppliers/EditSupplierDialog'
+import { ProveedoresOverlay } from '@/components/features/suppliers/ProveedoresOverlay'
+import type {Supplier} from "@/types/types"; // Ajusta la ruta según tu proyecto
+// Ajusta la ruta según tu proyecto
 
 // --- Nuevos tipos y función utilitaria ---
 interface APIResponse {
@@ -90,7 +91,7 @@ export default function Proveedores() {
   const [editId, setEditId]         = useState<number | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
-  // + nuevos estados para búsqueda y “ver más”
+  // + nuevos estados para búsqueda y "ver más"
   const [searchTerm, setSearchTerm]     = useState<string>("")
   const [pageSize, setPageSize]         = useState<number>(10)
   const [visibleCount, setVisibleCount] = useState<number>(10)
@@ -408,12 +409,11 @@ const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
                       id: s.id,
                       name: updatedSupplier.name,
                       phone: updatedSupplier.phone,
-                      contact: updatedSupplier.contact,
                       email: updatedSupplier.email,
-                      // Aseguramos que se conserven o actualicen estas propiedades:
-                      initials: updatedSupplier.initials || s.initials,
-                      hasDebt: updatedSupplier.hasDebt !== undefined ? updatedSupplier.hasDebt : s.hasDebt,
-                      debtAmount: updatedSupplier.debtAmount !== undefined ? updatedSupplier.debtAmount : s.debtAmount,
+                      ...(updatedSupplier.contact !== undefined ? { contact: updatedSupplier.contact } : {}),
+                      ...(updatedSupplier.initials !== undefined ? { initials: updatedSupplier.initials } : {}),
+                      ...(updatedSupplier.hasDebt !== undefined ? { hasDebt: updatedSupplier.hasDebt } : {}),
+                      ...(updatedSupplier.debtAmount !== undefined ? { debtAmount: updatedSupplier.debtAmount } : {}),
                     }
                   : s
               )
@@ -502,7 +502,9 @@ const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
                           .filter(p => p.supplierId === selectedSupplier.id)
                           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                         if (supplierPurchases.length === 0) return "Sin compras";
-                        return supplierPurchases[0].paymentType;
+                        const lastPurchase = supplierPurchases[0];
+                        if (!lastPurchase) return "Sin información";
+                        return lastPurchase.paymentType;
                       })()}
                     </div>
                   </div>

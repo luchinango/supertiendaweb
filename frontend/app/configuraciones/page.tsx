@@ -13,8 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Card } from "@/components/ui/card"
 import { PenLine } from "lucide-react"
-import { NewBusinessDialog, type BusinessFormData } from "../../components/NewBusinessDialog"
-import { BusinessSwitcher } from "../../components/BusinessSwitcher"
+import { NewBusinessDialog, type BusinessFormData } from "@/components/features/business/NewBusinessDialog"
+import { BusinessSwitcher } from "@/components/features/business/BusinessSwitcher"
 
 export default function Configuraciones() {
   const [businesses, setBusinesses] = useState<Business[]>([
@@ -79,112 +79,116 @@ export default function Configuraciones() {
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
-          <Card className="p-6">
-            <div className="grid gap-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                      {currentBusiness.logo ? (
-                        <img
-                          src={currentBusiness.logo || "/placeholder.png"}
-                          alt="Logo"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-5xl font-bold text-gray-300">{currentBusiness.name.charAt(0)}</div>
-                      )}
+          {currentBusiness ? (
+            <Card className="p-6">
+              <div className="grid gap-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                        {currentBusiness.logo ? (
+                          <img
+                            src={currentBusiness.logo || "/placeholder.png"}
+                            alt="Logo"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-5xl font-bold text-gray-300">{currentBusiness.name.charAt(0)}</div>
+                        )}
+                      </div>
+                      <label
+                        htmlFor="logo-upload"
+                        className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary/90"
+                      >
+                        <PenLine className="h-4 w-4" />
+                      </label>
+                      <input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoChange}
+                      />
                     </div>
-                    <label
-                      htmlFor="logo-upload"
-                      className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary/90"
-                    >
-                      <PenLine className="h-4 w-4" />
-                    </label>
-                    <input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleLogoChange}
+                    <div>
+                      <h2 className="text-xl font-semibold">{currentBusiness.name}</h2>
+                      <p className="text-sm text-muted-foreground">
+                        {currentBusiness.type === "minimercado"
+                          ? "Minimercado (1 caja registradora)"
+                          : currentBusiness.type}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-full md:w-auto">
+                    <BusinessSwitcher
+                      businesses={businesses}
+                      currentBusiness={currentBusiness}
+                      onBusinessChange={handleBusinessChange}
+                      onAddBusiness={() => setShowNewBusiness(true)}
                     />
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold">{currentBusiness.name}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {currentBusiness.type === "minimercado"
-                        ? "Minimercado (1 caja registradora)"
-                        : currentBusiness.type}
-                    </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="business-type">Tipo de negocio *</Label>
+                    <Select value={currentBusiness.type} disabled>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar tipo de negocio" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="minimercado">Minimercado (1 caja registradora)</SelectItem>
+                        <SelectItem value="supermercado">Supermercado (múltiples cajas)</SelectItem>
+                        <SelectItem value="tienda">Tienda de barrio</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-                <div className="w-full md:w-auto">
-                  <BusinessSwitcher
-                    businesses={businesses}
-                    currentBusiness={currentBusiness}
-                    onBusinessChange={handleBusinessChange}
-                    onAddBusiness={() => setShowNewBusiness(true)}
-                  />
-                </div>
-              </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="business-type">Tipo de negocio *</Label>
-                  <Select value={currentBusiness.type} disabled>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar tipo de negocio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="minimercado">Minimercado (1 caja registradora)</SelectItem>
-                      <SelectItem value="supermercado">Supermercado (múltiples cajas)</SelectItem>
-                      <SelectItem value="tienda">Tienda de barrio</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="business-name">Nombre del negocio *</Label>
+                    <Input id="business-name" value={currentBusiness.name} readOnly />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="business-name">Nombre del negocio *</Label>
-                  <Input id="business-name" value={currentBusiness.name} readOnly />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Dirección del negocio</Label>
+                    <Input id="address" value={currentBusiness.address} readOnly />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address">Dirección del negocio</Label>
-                  <Input id="address" value={currentBusiness.address} readOnly />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Ciudad donde se ubica el negocio</Label>
+                    <Input id="city" value={currentBusiness.city} readOnly />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="city">Ciudad donde se ubica el negocio</Label>
-                  <Input id="city" value={currentBusiness.city} readOnly />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Número de celular</Label>
-                  <div className="flex">
-                    <div className="flex items-center justify-center w-[100px] border border-input rounded-l-md bg-background px-3">
-                      <div className="flex items-center gap-2">
-                        <img src="/images/flag-bolivia.svg" alt="Bolivia" className="h-4 w-6" />
-                        <span className="text-sm">+591</span>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Número de celular</Label>
+                    <div className="flex">
+                      <div className="flex items-center justify-center w-[100px] border border-input rounded-l-md bg-background px-3">
+                        <div className="flex items-center gap-2">
+                          <img src="/images/flag-bolivia.svg" alt="Bolivia" className="h-4 w-6" />
+                          <span className="text-sm">+591</span>
+                        </div>
                       </div>
+                      <Input id="phone" value={currentBusiness.phone} readOnly className="flex-1 rounded-l-none" />
                     </div>
-                    <Input id="phone" value={currentBusiness.phone} readOnly className="flex-1 rounded-l-none" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo electrónico</Label>
+                    <Input id="email" type="email" value={currentBusiness.email} readOnly />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="document">Documento</Label>
+                    <Input id="document" value={currentBusiness.document} readOnly />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo electrónico</Label>
-                  <Input id="email" type="email" value={currentBusiness.email} readOnly />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="document">Documento</Label>
-                  <Input id="document" value={currentBusiness.document} readOnly />
-                </div>
+                <Button className="w-full md:w-auto md:ml-auto">Guardar cambios</Button>
               </div>
-
-              <Button className="w-full md:w-auto md:ml-auto">Guardar cambios</Button>
-            </div>
-          </Card>
+            </Card>
+          ) : (
+            <div className="p-6 text-center text-muted-foreground">No hay negocio seleccionado.</div>
+          )}
 
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="impuestos">

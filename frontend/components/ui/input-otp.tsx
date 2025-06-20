@@ -40,7 +40,9 @@ const InputOTPSlot = React.forwardRef<
   if (!inputOTPContext) {
     throw new Error("InputOTPSlot must be used within an OTPInput provider")
   }
-  const { char, hasFakeCaret, isActive } = inputOTPContext.slots[index]
+  const slot = inputOTPContext.slots[index]
+  if (!slot) return null
+  const { char, hasFakeCaret, isActive } = slot
 
   return (
     <div

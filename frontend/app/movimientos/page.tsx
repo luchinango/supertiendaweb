@@ -8,19 +8,19 @@ import { CalendarIcon, Search, Download, Filter, ChevronDown } from "lucide-reac
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { es } from "date-fns/locale"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { FilterPanel } from "../../components/FilterPanel"
-import { SelectEmployeesModal } from "../../components/SelectEmployeesModal"
-import { SelectClientsModal } from "../../components/SelectClientsModal"
-import { SelectSuppliersModal } from "../../components/SelectSuppliersModal"
-import { TransactionDetailPanel } from "../../components/TransactionDetailPanel"
-import { ExpenseDetailPanel } from "../../components/ExpenseDetailPanel"
-import { ReportBalancePanel } from "../../components/ReportBalancePanel"
-import { ReportDebtsPanel } from "../../components/ReportDebtsPanel"
-import { DownloadReportPanel } from "../../components/DownloadReportPanel"
-import { CashRegisterManager } from "../../components/CashRegisterManager"
-import { CashRegisterDetailPanel } from "../../components/CashRegisterDetailPanel"
-import { EditSalePanel } from "../../components/EditSalePanel"
-import EditExpensePanel from "../../components/EditExpensePanel"
+import { FilterPanel } from '@/components/features/reports/FilterPanel'
+import { SelectEmployeesModal } from '@/components/features/employees/SelectEmployeesModal'
+import { SelectClientsModal } from '@/components/forms/SelectClientsModal'
+import { SelectSuppliersModal } from '@/components/features/suppliers/SelectSuppliersModal'
+import { TransactionDetailPanel } from '@/components/features/inventory/TransactionDetailPanel'
+import { ExpenseDetailPanel } from '@/components/features/expenses/ExpenseDetailPanel'
+import { ReportBalancePanel } from '@/components/features/reports/ReportBalancePanel'
+import { ReportDebtsPanel } from '@/components/features/reports/ReportDebtsPanel'
+import { DownloadReportPanel } from '@/components/features/reports/DownloadReportPanel'
+import { CashRegisterManager } from '@/components/features/cash-register/CashRegisterManager'
+import { CashRegisterDetailPanel } from '@/components/features/cash-register/CashRegisterDetailPanel'
+import { EditSalePanel } from '@/components/features/sales/EditSalePanel'
+import { EditExpensePanel } from '@/components/features/expenses/EditExpensePanel'
 
 // Sample data for transactions
 const transactions = [
@@ -548,7 +548,7 @@ export default function MovimientosPage() {
             <Popover open={showTimePeriodDropdown} onOpenChange={setShowTimePeriodDropdown}>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="gap-2">
-                  {selectedTimePeriod.name}
+                  {selectedTimePeriod?.name}
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -640,9 +640,9 @@ export default function MovimientosPage() {
                         days.push(
                           <button
                             key={i}
-                            className={`h-8 w-8 rounded-full flex items-center justify-center text-sm 
-                              ${!isCurrentMonth ? "text-gray-300" : ""} 
-                              ${isToday ? "bg-blue-100 text-blue-600" : ""} 
+                            className={`h-8 w-8 rounded-full flex items-center justify-center text-sm
+                              ${!isCurrentMonth ? "text-gray-300" : ""}
+                              ${isToday ? "bg-blue-100 text-blue-600" : ""}
                               ${isInSelectedWeek ? "bg-blue-50" : ""}
                               ${isSelected ? "bg-blue-600 text-white" : ""}`}
                             onClick={() => {
@@ -796,7 +796,7 @@ export default function MovimientosPage() {
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="gap-2">
-                  {selectedTimePeriod.name}
+                  {selectedTimePeriod?.name}
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -887,9 +887,9 @@ export default function MovimientosPage() {
                         days.push(
                           <button
                             key={i}
-                            className={`h-8 w-8 rounded-full flex items-center justify-center text-sm 
-                              ${!isCurrentMonth ? "text-gray-300" : ""} 
-                              ${isToday ? "bg-blue-100 text-blue-600" : ""} 
+                            className={`h-8 w-8 rounded-full flex items-center justify-center text-sm
+                              ${!isCurrentMonth ? "text-gray-300" : ""}
+                              ${isToday ? "bg-blue-100 text-blue-600" : ""}
                               ${isInSelectedWeek ? "bg-blue-50" : ""}
                               ${isSelected ? "bg-blue-600 text-white" : ""}`}
                             onClick={() => {

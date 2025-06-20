@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import {Customer} from "@/types/Customer";
+import type {Customer} from "@/types/Customer";
 import {getCustomers, createCustomer, updateCustomer, deleteCustomer} from "@/services/customersService";
 
 export function useCustomers() {

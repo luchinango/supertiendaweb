@@ -1,4 +1,4 @@
-import type EmployeeDto  from "@/types/EmployeeDto";
+import type { EmployeeDto }  from "@/types/EmployeeDto";
 
 export const swrFetcher = (url: string) =>
   fetch(url, {

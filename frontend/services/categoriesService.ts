@@ -1,5 +1,5 @@
 import {fetcher} from "@/lib/fetcher";
-import {Category} from "@/types/Category";
+import type {Category} from "@/types/Category";
 
 const BASE_URL = "/api/categories";
 

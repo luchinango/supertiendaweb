@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL!   // p.ej. "http://206.183.128.36:5500/api"
+const API_BASE = process.env['NEXT_PUBLIC_API_URL']!   // p.ej. "http://206.183.128.36:5500/api"
 
 async function proxy(req: NextRequest, method: string) {
   const url = `${API_BASE}/suppliers${req.nextUrl.search}`
-  const upstream = await fetch(url, {
+  const fetchOptions: RequestInit = {
     method,
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.ADMIN_TOKEN}` // tu token de servidor
+      Authorization: req.headers.get("authorization") || "",
     },
-    body: method === "GET" ? undefined : await req.text(),
-  })
+  };
+  if (method !== "GET") {
+    const body = await req.text();
+    fetchOptions.body = body || null;
+  }
+  const upstream = await fetch(url, fetchOptions);
   const text = await upstream.text()
   return new NextResponse(text, {
     status: upstream.status,

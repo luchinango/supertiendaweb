@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Download, Grid2X2, Plus, ChevronDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CategoriesDialog } from "@/components/CategoriesDialog"
-import { ProductFormWrapper } from "@/components/ProductFormWrapper"
+import { CategoriesDialog } from '@/components/features/products/CategoriesDialog'
+import { ProductFormWrapper } from '@/components/features/products/ProductFormWrapper'
 import { useProductForm } from "@/contexts/ProductFormContext"
-import { AddProductPanel } from "@/components/AddProductPanel"
-import { DownloadReportPanel } from "@/components/DownloadReportPanel"
-import { ProductDetailPanel } from "@/components/ProductDetailPanel"
-import { EditProductPanel } from "@/components/EditProductPanel"
+import { AddProductPanel } from '@/components/features/products/AddProductPanel'
+import { DownloadReportPanel } from '@/components/features/reports/DownloadReportPanel'
+import { ProductDetailPanel } from "@/components/features/products/ProductDetailPanel"
+import { EditProductPanel } from "@/components/features/products/EditProductPanel"
 import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
-import {Category} from "@/types/Category";
-import {Product} from "@/types/Product";
+import type {Category} from "@/types/Category";
+import type {Product} from "@/types/Product"
 import {useCategories} from "@/hooks/useCategories";
 import {useProducts} from "@/hooks/useProducts";
 
