@@ -15,6 +15,7 @@ import { EditClientPanel } from "@/components/EditClientPanel"
 import { ClientesOverlay } from "@/components/ClientesOverlay"
 import { MoreVertical } from "lucide-react"
 import { Customer } from "@/types/Customer";
+// Make sure Customer type includes document_type, document_number, city, department, country
 import { useCustomers } from "@/hooks/useCustomers";
 
 
@@ -207,7 +208,14 @@ export default function Clientes() {
 
       {editingClient && (
         <EditClientPanel
-          client={editingClient}
+          client={{
+            ...editingClient,
+            document_type: editingClient.document_type ?? "",
+            document_number: editingClient.document_number ?? "",
+            city: editingClient.city ?? "",
+            department: editingClient.department ?? "",
+            country: editingClient.country ?? "",
+          }}
           open={true}
           onOpenChange={() => setEditingClient(null)}
           onEdit={(updatedClient) => {
