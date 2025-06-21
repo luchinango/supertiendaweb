@@ -18,8 +18,8 @@ interface EditClientPanelProps {
 }
 
 export function EditClientPanel({ customer, open, onOpenChange, onEdit }: EditClientPanelProps) {
-   const [firstName, setFirstName] = useState(customer.first_name)
-  const [lastName, setLastName] = useState(customer.last_name)
+   const [firstName, setFirstName] = useState(customer.first_name || "")
+  const [lastName, setLastName] = useState(customer.last_name || "")
   const [phone, setPhone] = useState(customer.phone || "")
   const [email, setEmail] = useState(customer.email || "")
   const [companyName, setCompanyName] = useState(customer.company_name || "")
@@ -28,7 +28,11 @@ export function EditClientPanel({ customer, open, onOpenChange, onEdit }: EditCl
   const [status, setStatus] = useState(customer.status || "Activo")
   const [hasDebt, setHasDebt] = useState(false)
   const [debtAmount, setDebtAmount] = useState(0)
-
+  const [documentType, setDocumentType] = useState(customer.document_type || "CI")
+  const [documentNumber, setDocumentNumber] = useState(customer.document_number || "")
+  const [city, setCity] = useState(customer.city || "")
+  const [department, setDepartment] = useState(customer.department || "LA_PAZ")
+  const [country, setCountry] = useState(customer.country || "Bolivia")
 
     useEffect(() => {
     if (open) {
@@ -40,6 +44,11 @@ export function EditClientPanel({ customer, open, onOpenChange, onEdit }: EditCl
       setTaxId(customer.tax_id || "")
       setAddress(customer.address || "")
       setStatus(customer.status || "Activo")
+      setDocumentType("CI")
+      setDocumentNumber("")
+      setCity("")
+      setDepartment("LA_PAZ")
+      setCountry("")
     }
   }, [customer, open])
 
@@ -87,46 +96,80 @@ export function EditClientPanel({ customer, open, onOpenChange, onEdit }: EditCl
           <div className="flex-1 overflow-auto p-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Nombre completo</Label>
-                <Input id="edit-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                <Label htmlFor="edit-firstName">Nombre</Label>
+                <Input id="edit-firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Apellido</Label>
+                <Input id="edit-lastName" value={lastName} onChange={e => setLastName(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-documentType">Tipo de documento</Label>
+                <select
+                  id="edit-documentType"
+                  value={documentType}
+                  onChange={e => setDocumentType(e.target.value)}
+                  className="w-full border rounded px-2 py-1"
+                  required
+                >
+                  <option value="CI">CI</option>
+                  <option value="NIT">NIT</option>
+                  <option value="PASAPORTE">Pasaporte</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-documentNumber">Número de documento</Label>
+                <Input id="edit-documentNumber" value={documentNumber} onChange={e => setDocumentNumber(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input id="edit-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">Teléfono</Label>
-                <Input id="edit-phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                <Input id="edit-phone" value={phone} onChange={e => setPhone(e.target.value)} required />
               </div>
-
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="has-debt">Tiene deuda</Label>
-                  <Switch id="has-debt" checked={hasDebt} onCheckedChange={setHasDebt} />
-                </div>
+                <Label htmlFor="edit-address">Dirección</Label>
+                <Input id="edit-address" value={address} onChange={e => setAddress(e.target.value)} required />
               </div>
-
-              {hasDebt && (
-                <div className="space-y-2">
-                  <Label htmlFor="debt-amount">Monto de deuda (Bs)</Label>
-                  <Input
-                    id="debt-amount"
-                    type="number"
-                    value={debtAmount}
-                    onChange={(e) => setDebtAmount(Number(e.target.value))}
-                    required
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="edit-city">Ciudad</Label>
+                <Input id="edit-city" value={city} onChange={e => setCity(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-department">Departamento</Label>
+                <select
+                  id="edit-department"
+                  value={department}
+                  onChange={e => setDepartment(e.target.value)}
+                  className="w-full border rounded px-2 py-1"
+                  required
+                >
+                  <option value="LA_PAZ">La Paz</option>
+                  <option value="COCHABAMBA">Cochabamba</option>
+                  <option value="SANTA_CRUZ">Santa Cruz</option>
+                  <option value="ORURO">Oruro</option>
+                  <option value="POTOSI">Potosí</option>
+                  <option value="CHUQUISACA">Chuquisaca</option>
+                  <option value="TARIJA">Tarija</option>
+                  <option value="BENI">Beni</option>
+                  <option value="PANDO">Pando</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-country">País</Label>
+                <Input id="edit-country" value={country} onChange={e => setCountry(e.target.value)} required />
+              </div>
+              <div className="pt-2 flex gap-2">
+                <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1" type="button">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="flex-1 bg-[#1e293b] text-white hover:bg-[#334155]">
+                  Guardar cambios
+                </Button>
+              </div>
             </form>
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t mt-auto">
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-                Cancelar
-              </Button>
-              <Button onClick={handleSubmit} className="flex-1 bg-[#1e293b] hover:bg-[#334155]">
-                Guardar cambios
-              </Button>
-            </div>
           </div>
         </div>
       </div>
