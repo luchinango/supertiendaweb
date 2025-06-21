@@ -10,6 +10,7 @@ export * from './Promotion'
 export * from './Report'
 
 export * from './Api'
+export * from './Auth'
 
 export type { Business } from './Business'
 export type { Transaction, Sale, Purchase, Expense as TransactionExpense } from './Transaction'

@@ -17,8 +17,21 @@ import {
   Bell,
   ShoppingCart,
   Settings,
+  LogOut,
+  User,
 } from "lucide-react";
 import { ROUTES } from '@/lib/routes';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: ROUTES.DASHBOARD },
@@ -89,6 +102,7 @@ MenuItem.displayName = 'MenuItem';
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const menuItemsList = useMemo(() => {
     return menuItems.map((item) => ({
@@ -97,13 +111,32 @@ export function Sidebar() {
     }));
   }, [pathname]);
 
+  const handleLogout = useCallback(() => {
+    logout();
+  }, [logout]);
+
+  const getUserInitials = (name: string | undefined) => {
+    if (!name || typeof name !== 'string') {
+      return 'U'; // Usuario
+    }
+
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <aside
       style={{
         width: '250px',
         backgroundColor: '#000',
         color: 'white',
-        minHeight: '100vh'
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column'
       }}
       role="complementary"
       aria-label="Navegación principal"
@@ -115,8 +148,9 @@ export function Sidebar() {
           </OptimizedLink>
         </h1>
       </header>
+
       <nav
-        style={{ marginTop: '16px' }}
+        style={{ marginTop: '16px', flex: 1 }}
         role="navigation"
         aria-label="Menú principal"
       >
@@ -126,6 +160,55 @@ export function Sidebar() {
           ))}
         </ul>
       </nav>
+
+      {/* Sección de usuario */}
+      {user && user.name && user.email && (
+        <div style={{
+          padding: '16px',
+          borderTop: '1px solid #444',
+          backgroundColor: '#111'
+        }}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  padding: '8px',
+                  color: 'white',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <Avatar style={{ width: '32px', height: '32px', marginRight: '8px' }}>
+                  <AvatarFallback style={{ backgroundColor: '#333', color: 'white' }}>
+                    {getUserInitials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div style={{ textAlign: 'left', flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{user.name}</div>
+                  <div style={{ fontSize: '12px', color: '#999' }}>{user.email}</div>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" style={{ minWidth: '200px' }}>
+              <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                Perfil
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                Cerrar sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </aside>
   );
 }

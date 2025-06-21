@@ -8,6 +8,7 @@ import {CashRegisterProvider} from "@/contexts/CashRegisterContext"
 import {SalesFormProvider} from "@/contexts/SalesFormContext"
 import {CartProvider} from "@/contexts/CartContext"
 import {ExpenseFormProvider} from "@/contexts/ExpenseFormContext"
+import {AuthProvider} from "@/contexts/AuthContext"
 import {GlobalProductForm} from "@/components/features/products/GlobalProductForm"
 import {ThemeProvider} from "@/components/layout/theme-provider"
 import {SkipLink} from "@/components/ui/SkipLink"
@@ -49,28 +50,30 @@ export default function RootLayout({
       attribute="class"
       defaultTheme="system"
     >
-      <ProductFormProvider>
-        <CashRegisterProvider>
-          <SalesFormProvider>
-            <CartProvider>
-              <ExpenseFormProvider>
-                <div className="flex h-screen bg-gray-100">
-                  <SkipLink href="#main-content">
-                    Saltar al contenido principal
-                  </SkipLink>
-                  <Sidebar/>
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <MainContent>
-                      {children}
-                    </MainContent>
+      <AuthProvider>
+        <ProductFormProvider>
+          <CashRegisterProvider>
+            <SalesFormProvider>
+              <CartProvider>
+                <ExpenseFormProvider>
+                  <div className="flex h-screen bg-gray-100">
+                    <SkipLink href="#main-content">
+                      Saltar al contenido principal
+                    </SkipLink>
+                    <Sidebar/>
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <MainContent>
+                        {children}
+                      </MainContent>
+                    </div>
+                    <GlobalProductForm/>
                   </div>
-                  <GlobalProductForm/>
-                </div>
-              </ExpenseFormProvider>
-            </CartProvider>
-          </SalesFormProvider>
-        </CashRegisterProvider>
-      </ProductFormProvider>
+                </ExpenseFormProvider>
+              </CartProvider>
+            </SalesFormProvider>
+          </CashRegisterProvider>
+        </ProductFormProvider>
+      </AuthProvider>
     </ThemeProvider>
     </body>
     </html>

@@ -1,11 +1,11 @@
 "use client"
 
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 interface OptimizedImageProps {
-  src: string
+  src?: string
   alt: string
   width?: number
   height?: number
@@ -25,8 +25,12 @@ export function OptimizedImage({
   priority = false,
   sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
 }: OptimizedImageProps) {
-  const [imgSrc, setImgSrc] = useState(src)
+  const [imgSrc, setImgSrc] = useState(src || fallbackSrc)
   const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    setImgSrc(src || fallbackSrc)
+  }, [src, fallbackSrc])
 
   const handleError = () => {
     if (imgSrc !== fallbackSrc) {

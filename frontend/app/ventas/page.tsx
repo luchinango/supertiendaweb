@@ -143,7 +143,7 @@ export default function VentasPage() {
                   >
                     {/* Imagen y nombre */}
                     <OptimizedImage
-                      src={product.image}
+                      src={product.image || "/placeholder.png"}
                       alt={product.name}
                       width={96}
                       height={96}

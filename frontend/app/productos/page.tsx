@@ -164,7 +164,7 @@ export default function Inventario() {
             <CardContent className="p-0">
               <div className="aspect-square relative bg-gray-50">
                 <OptimizedImage
-                  src={product.imagen}
+                  src={product.imagen || "/placeholder.png"}
                   alt={product.nombre}
                   width={200}
                   height={200}
