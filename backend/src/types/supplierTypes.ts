@@ -1,5 +1,6 @@
 import {Decimal} from '@prisma/client/runtime/library';
 import {SupplierStatus, DocumentType, Department} from 'prisma/generated';
+import { PaginationMeta } from './pagination';
 
 /**
  * Tipos para operaciones de proveedores
@@ -103,11 +104,8 @@ export interface SupplierResponse {
 }
 
 export interface SupplierListResponse {
-  suppliers: SupplierResponse[];
-  total: number;
-  page: number;
-  totalPages: number;
-  limit: number;
+  data: SupplierResponse[];
+  meta: PaginationMeta;
 }
 
 export interface SupplierPathParams {

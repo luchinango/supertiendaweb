@@ -63,3 +63,5 @@ frontend/pnpm-lock.yaml
 /backend/docs
 /backend/backups
 /backend/examples
+*.md
+*.backup

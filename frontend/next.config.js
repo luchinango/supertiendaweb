@@ -12,7 +12,10 @@ const nextConfig = {
   },
 
   experimental: {
-    optimizeCss: true,
+    optimizeCss: {
+      critters: false,
+      beasties: true,
+    },
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 

@@ -213,6 +213,10 @@ model User {
   purchaseOrders     PurchaseOrder[]
   auditCashRegisters AuditCashRegister[]
 
+  @@index([status])
+  @@index([roleId])
+  @@index([username])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -355,9 +359,14 @@ model Employee {
   updatedBy        Int            @default(0) @map("updated_by")
   deletedBy        Int?           @map("deleted_by")
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
+  @@index([businessId])
+  @@index([userId])
+  @@index([firstName])
+  @@index([lastName])
+  @@index([status])
   @@map("employees")
 }
 

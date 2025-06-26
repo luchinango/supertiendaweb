@@ -11,6 +11,7 @@ import {
   SupplierStats,
   SupplierSearchResult
 } from '../types/supplierTypes';
+import { PaginationParams } from '../types/pagination';
 
 export class SupplierService {
   private convertToSupplierResponse(supplier: any): SupplierResponse {
@@ -128,11 +129,25 @@ export class SupplierService {
     }));
   }
 
-  async getSuppliers(params: SupplierQueryParams, businessId: number = 1): Promise<SupplierListResponse> {
+  async getSuppliers(
+    paginationParams: PaginationParams,
+    additionalFilters?: {
+      status?: string;
+      department?: string;
+      documentType?: string;
+      minCreditLimit?: number;
+      maxCreditLimit?: number;
+      minBalance?: number;
+      maxBalance?: number;
+    }
+  ): Promise<SupplierListResponse> {
     const {
       page = 1,
       limit = 10,
       search,
+    } = paginationParams;
+
+    const {
       status,
       department,
       documentType,
@@ -140,7 +155,9 @@ export class SupplierService {
       maxCreditLimit,
       minBalance,
       maxBalance
-    } = params;
+    } = additionalFilters || {};
+
+    const businessId = 1; // Por ahora fijo, luego se puede obtener del contexto
 
     const skip = (page - 1) * limit;
     const where: any = {businessId};
@@ -199,11 +216,17 @@ export class SupplierService {
 
     const totalPages = Math.ceil(total / limit);
     return {
-      suppliers: suppliers.map(supplier => this.convertToSupplierResponse(supplier)),
-      total,
-      page,
-      totalPages,
-      limit
+      data: suppliers.map(supplier => this.convertToSupplierResponse(supplier)),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        nextPage: page < totalPages ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null,
+      }
     };
   }
 

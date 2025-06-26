@@ -1,10 +1,20 @@
 import prisma from '../config/prisma';
-import {CartStatus, SaleStatus, PaymentMethod, PaymentStatus, DocumentType, Department} from '../../prisma/generated';
+import {CartStatus, PaymentMethod, DocumentType, Department} from '../../prisma/generated';
 import {cartService} from './cartService';
 import {saleService} from './saleService';
 import {customerService} from './customerService';
-import {productService} from './productService';
+import { ProductService } from './ProductService';
 import {cashRegisterService} from './cashRegisterService';
+import { BusinessProductService } from './BusinessProductService';
+import { DIContainer } from '../container/DIContainer';
+import { ProductRepository } from '../repositories/ProductRepository';
+import {
+  ProductSearchResult,
+} from '../types/api';
+
+const businessProductService = new BusinessProductService(DIContainer.getBusinessProductRepository());
+const productRepository = new ProductRepository(prisma);
+const productService = new ProductService(productRepository);
 
 export interface CartItemInput {
   productId: number;
@@ -77,6 +87,14 @@ export interface QuickProductsInput {
   limit?: number;
 }
 
+export interface QuickProduct {
+  id: number;
+  name: string;
+  price: number;
+  stock: number;
+  barcode?: string;
+}
+
 export class POSService {
   /**
    * Iniciar una nueva venta (crear carrito)
@@ -142,7 +160,7 @@ export class POSService {
       throw new Error('Carrito no encontrado o no está activo');
     }
 
-    const product = await productService.getProductById(productId);
+    const product = await productService.findById(productId);
     if (!product) {
       throw new Error('Producto no encontrado');
     }
@@ -192,12 +210,13 @@ export class POSService {
 
     return {
       success: true,
+      message: 'Producto removido del carrito',
       updatedCart: await prisma.cart.findUnique({where: {id: cartId}})
     };
   }
 
   /**
-   * Actualizar cantidad de un producto en el carrito
+   * Actualizar cantidad de producto en el carrito
    */
   async updateItemQuantity(input: UpdateQuantityInput) {
     const {cartId, productId, quantity} = input;
@@ -214,16 +233,26 @@ export class POSService {
     }
 
     const businessProduct = await prisma.businessProduct.findFirst({
-      where: {businessId: cart.businessId, productId}
+      where: {
+        businessId: cart.businessId,
+        productId: productId
+      }
     });
-    if (!businessProduct || businessProduct.currentStock < quantity) {
-      throw new Error(`Stock insuficiente. Disponible: ${businessProduct?.currentStock || 0}`);
+
+    if (!businessProduct) {
+      throw new Error('Producto no disponible en este negocio');
     }
 
-    await cartService.updateItemQuantity(cartId, productId, quantity);
+    const currentStock = businessProduct.currentStock;
+    if (currentStock < quantity) {
+      throw new Error(`Stock insuficiente. Disponible: ${currentStock}`);
+    }
+
+    const cartItem = await cartService.updateItemQuantity(cartId, productId, quantity);
 
     return {
       success: true,
+      cartItem,
       updatedCart: await prisma.cart.findUnique({where: {id: cartId}})
     };
   }
@@ -231,93 +260,91 @@ export class POSService {
   /**
    * Registrar nuevo cliente
    */
-  async registerCustomer(customerData: CustomerInput) {
-    try {
-      const customer = await customerService.createCustomer({
-        businessId: 1,
-        ...customerData
-      });
-
-      return {
-        success: true,
-        customer
-      };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      throw new Error(`Error al registrar cliente: ${errorMessage}`);
-    }
-  }
-
-  /**
-   * Obtener resumen de venta actual
-   */
-  async getSaleSummary(cartId: number) {
-    if (!cartId) {
-      throw new Error('cartId es requerido');
-    }
-
-    const cart = await prisma.cart.findUnique({where: {id: cartId}});
-    if (!cart) {
-      throw new Error('Carrito no encontrado');
-    }
-
-    const items = await prisma.cartItem.findMany({
-      where: {cartId},
-      include: {product: true}
+  async registerCustomer(customerData: CustomerInput, businessId: number = 1) {
+    const customer = await customerService.createCustomer({
+      ...customerData,
+      businessId,
+      isActive: true
     });
 
     return {
       success: true,
+      customer
+    };
+  }
+
+  /**
+   * Obtener resumen de venta
+   */
+  async getSaleSummary(cartId: number) {
+    const cart = await prisma.cart.findUnique({
+      where: {id: cartId},
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        customer: true
+      }
+    });
+
+    if (!cart) {
+      throw new Error('Carrito no encontrado');
+    }
+
+    let total = 0;
+    const items = cart.items.map(item => {
+      const subtotal = item.quantity * Number(item.unitPrice);
+      total += subtotal;
+      return {
+        ...item,
+        subtotal
+      };
+    });
+
+    return {
       cart,
       items,
-      summary: {
-        totalItems: items.length,
-        totalQuantity: items.reduce((sum: number, item: any) => sum + item.quantity, 0),
-        subtotal: cart.subtotal || 0,
-        taxAmount: cart.taxAmount || 0,
-        totalAmount: cart.totalAmount || 0
+      total,
+      customer: cart.customer
+    };
+  }
+
+  /**
+   * Buscar productos para agregar al carrito
+   */
+  async searchProducts(input: SearchProductsInput): Promise<ProductSearchResult[]> {
+    const {query, businessId} = input;
+    const products = await productService.search(query.trim(), businessId || 1);
+    return products;
+  }
+
+  /**
+   * Obtener productos más vendidos/populares
+   */
+  async getQuickProducts(input: QuickProductsInput): Promise<QuickProduct[]> {
+    const {businessId, limit = 10} = input;
+
+    // Por ahora devolver productos aleatorios del negocio
+    const businessProducts = await prisma.businessProduct.findMany({
+      where: {businessId: businessId || 1},
+      include: {
+        product: true
+      },
+      take: limit,
+      orderBy: {
+        currentStock: 'desc'
       }
-    };
-  }
+    });
 
-  /**
-   * Buscar productos por código o nombre
-   */
-  async searchProducts(input: SearchProductsInput) {
-    const {query, businessId = 1} = input;
-
-    if (!query || query.trim().length === 0) {
-      throw new Error('Query de búsqueda es requerida');
-    }
-
-    const products = await productService.searchProducts(query.trim(), businessId);
-
-    return {
-      success: true,
-      products,
-      query: query.trim(),
-      totalFound: products.length
-    };
-  }
-
-  /**
-   * Obtener productos rápidos (más vendidos)
-   */
-  async getQuickProducts(input: QuickProductsInput) {
-    const {businessId = 1, limit = 20} = input;
-
-    if (limit <= 0 || limit > 100) {
-      throw new Error('El límite debe estar entre 1 y 100');
-    }
-
-    const products = await productService.getQuickProducts(businessId, limit);
-
-    return {
-      success: true,
-      products,
-      totalReturned: products.length,
-      limit
-    };
+    return businessProducts.map(bp => ({
+      id: bp.productId,
+      name: bp.product.name,
+      price: Number(bp.customPrice),
+      stock: bp.currentStock,
+      barcode: bp.product.barcode || undefined
+    }));
   }
 
   /**

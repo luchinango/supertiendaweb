@@ -73,17 +73,22 @@ class BusinessService {
     return business;
   }
 
-  async getBusinesses(filters: BusinessFilters = {}) {
+  async getBusinesses(paginationParams: any, additionalFilters: any = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      search
+    } = paginationParams;
+
     const {
       status,
       businessType,
-      department,
-      search,
-      page = 1,
-      limit = 10
-    } = filters;
+      department
+    } = additionalFilters;
+
     const skip = (page - 1) * limit;
     const where: any = {};
+
     if (status) where.status = status;
     if (businessType) where.businessType = businessType;
     if (department) where.department = department;
@@ -94,7 +99,8 @@ class BusinessService {
         {nit: {contains: search, mode: 'insensitive'}}
       ];
     }
-    const [businesses, total] = await Promise.all([
+
+    const [data, total] = await Promise.all([
       prisma.business.findMany({
         where,
         include: {
@@ -116,8 +122,22 @@ class BusinessService {
       }),
       prisma.business.count({where})
     ]);
+
     const totalPages = Math.ceil(total / limit);
-    return {businesses, total, page, totalPages, limit};
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        nextPage: page < totalPages ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null
+      }
+    };
   }
 
   async delete(id: number) {

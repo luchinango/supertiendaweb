@@ -85,3 +85,38 @@ export const checkOwnershipOrAdmin = (
     }
   }
 }
+
+/**
+ * Función de autenticación para TSOA
+ */
+export async function expressAuthentication(
+  request: Request,
+  securityName: string,
+  scopes?: string[]
+): Promise<any> {
+  if (securityName === 'bearerAuth') {
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      throw new UnauthorizedError('Token no proporcionado');
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = await authService.verifyToken(token);
+
+    if (scopes && scopes.length > 0) {
+      if (!scopes.includes(decoded.role)) {
+        throw new UnauthorizedError('No tiene permisos para realizar esta acción');
+      }
+    }
+
+    return {
+      id: decoded.userId,
+      userId: decoded.userId,
+      businessId: decoded.businessId,
+      username: decoded.username,
+      role: decoded.role
+    };
+  }
+
+  throw new UnauthorizedError('Método de autenticación no soportado');
+}

@@ -1,6 +1,19 @@
 {
   "watch": ["src"],
-  "ext": ".ts,.js",
-  "ignore": [],
-  "exec": "ts-node ./src/server.ts"
+  "ext": "ts,js,json",
+  "ignore": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/__tests__/**",
+    "dist/**",
+    "node_modules/**"
+  ],
+  "exec": "ts-node -r tsconfig-paths/register src/server.ts",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000",
+  "verbose": true,
+  "legacyWatch": true,
+  "polling": true
 }

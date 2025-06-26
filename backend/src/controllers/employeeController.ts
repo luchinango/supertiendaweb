@@ -2,7 +2,6 @@ import {Request, Response, NextFunction} from 'express';
 import employeeService from '../services/employeeService';
 import {EmployeeStatus, Gender} from '../../prisma/generated';
 
-import {createEmployeeSchema, updateEmployeeSchema} from '../validators/employee.validator';
 
 function toISOStringIfDate(dateString: string) {
   // if (!dateString) return null;

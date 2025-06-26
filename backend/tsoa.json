@@ -1,0 +1,67 @@
+{
+  "entryPoints": ["src/server.ts"],
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["src/**/*Controller.ts"],
+  "typeDefinitions": ["src/types/api.ts"],
+  "authenticationModule": "src/middlewares/authMiddleware.ts",
+  "spec": {
+    "outputDirectory": "src",
+    "specVersion": 3,
+    "securityDefinitions": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token JWT obtenido del endpoint de login"
+      }
+    },
+    "tags": [
+      {
+        "name": "Autenticación",
+        "description": "Endpoints de autenticación y autorización"
+      },
+      {
+        "name": "Usuarios",
+        "description": "Gestión de usuarios del sistema"
+      },
+      {
+        "name": "Productos",
+        "description": "Gestión de productos e inventario"
+      },
+      {
+        "name": "Negocios",
+        "description": "Gestión de negocios y configuraciones"
+      },
+      {
+        "name": "Proveedores",
+        "description": "Gestión de proveedores y compras"
+      },
+      {
+        "name": "Ventas",
+        "description": "Gestión de ventas y transacciones"
+      },
+      {
+        "name": "Clientes",
+        "description": "Gestión de clientes y créditos"
+      },
+      {
+        "name": "Empleados",
+        "description": "Gestión de empleados y permisos"
+      },
+      {
+        "name": "Reportes",
+        "description": "Generación de reportes y estadísticas"
+      },
+      {
+        "name": "Logs",
+        "description": "Monitoreo y análisis de logs del sistema"
+      }
+    ],
+    "specFileBaseName": "swagger"
+  },
+  "routes": {
+    "routesDir": "src/routes",
+    "middleware": "express",
+    "authenticationModule": "./src/middlewares/authMiddleware.ts"
+  }
+}

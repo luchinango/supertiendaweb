@@ -10,6 +10,7 @@ import {
   ChangeUserPasswordRequest,
   ResetUserPasswordRequest
 } from '../types/userTypes';
+import { PaginationParams, PaginatedResult } from '../types/pagination';
 
 const prisma = new PrismaClient();
 
@@ -72,7 +73,7 @@ export class UserService {
         return newUser;
       });
 
-      return user as User;
+      return user as unknown as User;
     } catch (error) {
       throw new Error(`Error al crear usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
@@ -91,7 +92,7 @@ export class UserService {
         }
       });
 
-      return user as User | null;
+      return user as unknown as User | null;
     } catch (error) {
       throw new Error(`Error al obtener usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
@@ -110,7 +111,7 @@ export class UserService {
         }
       });
 
-      return user as User | null;
+      return user as unknown as User | null;
     } catch (error) {
       throw new Error(`Error al obtener usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
@@ -179,11 +180,107 @@ export class UserService {
       const totalPages = Math.ceil(total / limit);
 
       return {
-        users: users as User[],
+        users: users as unknown as User[],
         total,
         page,
         totalPages,
         limit
+      };
+    } catch (error) {
+      throw new Error(`Error al obtener usuarios: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
+  }
+
+  /**
+   * Obtener lista de usuarios con filtros y paginación usando PaginatedResult
+   * (Método requerido por la interfaz IUserService)
+   */
+  async findMany(params: PaginationParams, additionalFilters?: any): Promise<PaginatedResult<User>> {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        sortBy = 'createdAt',
+        sortOrder = 'desc'
+      } = params;
+
+      const skip = (page - 1) * limit;
+
+      const where: any = {};
+
+      // Filtros adicionales
+      if (additionalFilters) {
+        if (additionalFilters.status) {
+          where.status = additionalFilters.status;
+        }
+
+        if (additionalFilters.roleId) {
+          where.roleId = additionalFilters.roleId;
+        }
+
+        if (additionalFilters.businessId) {
+          where.employee = {
+            businessId: additionalFilters.businessId
+          };
+        }
+      }
+
+      // Búsqueda por texto
+      if (search) {
+        where.OR = [
+          {username: {contains: search, mode: 'insensitive'}},
+          {
+            employee: {
+              OR: [
+                {firstName: {contains: search, mode: 'insensitive'}},
+                {lastName: {contains: search, mode: 'insensitive'}}
+              ]
+            }
+          }
+        ];
+      }
+
+      // Construir orderBy dinámicamente
+      const orderBy: any = {};
+      if (sortBy === 'username' || sortBy === 'status' || sortBy === 'createdAt') {
+        orderBy[sortBy] = sortOrder;
+      } else if (sortBy === 'firstName' || sortBy === 'lastName') {
+        orderBy.employee = { [sortBy]: sortOrder };
+      } else if (sortBy === 'roleName') {
+        orderBy.role = { name: sortOrder };
+      } else {
+        orderBy.createdAt = sortOrder;
+      }
+
+      const [data, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          include: {
+            role: true,
+            employee: true
+          },
+          skip,
+          take: limit,
+          orderBy
+        }),
+        prisma.user.count({where})
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: data as unknown as User[],
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+          nextPage: page < totalPages ? page + 1 : null,
+          prevPage: page > 1 ? page - 1 : null
+        }
       };
     } catch (error) {
       throw new Error(`Error al obtener usuarios: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -247,7 +344,7 @@ export class UserService {
         return updatedUser;
       });
 
-      return user as User;
+      return user as unknown as User;
     } catch (error) {
       throw new Error(`Error al actualizar usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
