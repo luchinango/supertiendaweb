@@ -14,25 +14,40 @@ interface EditEmployeePanelProps {
 }
 
 export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissions }: EditEmployeePanelProps) {
-  const [first_name, setFirstName] = useState(employee.first_name)
-  const [phone, setPhone] = useState(employee.mobile_phone.replace("+591", ""))
-  const [role, setRole] = useState(employee.position)
+  const [firstName, setFirstName] = useState(employee.firstName ?? employee.first_name ?? "")
+  const [lastName, setLastName] = useState(employee.lastName ?? employee.last_name ?? "")
+  const [phone, setPhone] = useState((employee.phone ?? employee.mobile_phone ?? "").replace("+591", ""))
+  const [email, setEmail] = useState(employee.email ?? "")
+  const [address, setAddress] = useState(employee.address ?? "")
+  const [salary, setSalary] = useState<number>(Number(employee.salary) || 0)
+  const [position, setPosition] = useState(employee.position ?? "")
+  const [status, setStatus] = useState(employee.status ?? "")
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
 
   useEffect(() => {
     if (employee) {
-      setFirstName(employee.first_name)
-      setPhone(employee.mobile_phone.replace("+591", ""))
-      setRole(employee.position)
+      setFirstName(employee.firstName ?? employee.first_name ?? "")
+      setLastName(employee.lastName ?? employee.last_name ?? "")
+      setPhone((employee.phone ?? employee.mobile_phone ?? "").replace("+591", ""))
+      setEmail(employee.email ?? "")
+      setAddress(employee.address ?? "")
+      setSalary(Number(employee.salary) || 0)
+      setPosition(employee.position ?? "")
+      setStatus(employee.status ?? "")
     }
   }, [employee])
 
   const handleSubmit = () => {
     const updatedEmployee: Employee = {
       ...employee,
-      first_name,
-      mobile_phone: `+591${phone}`,
-      ...(role !== undefined ? { position: role } : {})
+      first_name: firstName,
+      last_name: lastName,
+      phone: `+591${phone}`,
+      email: email,
+      address,
+      salary,
+      position,
+      status,
     }
     onShowPermissions(updatedEmployee)
   }
@@ -52,27 +67,41 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
         </div>
 
         <div className="flex-1 overflow-auto p-4 space-y-6">
+          {/* Nombre */}
           <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
               Nombre <span className="text-red-500">*</span>
             </label>
             <Input
-              id="name"
-              value={first_name}
+              id="firstName"
+              value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Escribe el nombre de tu empleado"
+              placeholder="Nombre"
               className="w-full"
             />
           </div>
-
+          {/* Apellido */}
+          <div className="space-y-2">
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+              Apellido <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Apellido"
+              className="w-full"
+            />
+          </div>
+          {/* Celular */}
           <div className="space-y-2">
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Número celular de tu empleado <span className="text-red-500">*</span>
+              Número celular <span className="text-red-500">*</span>
             </label>
             <div className="flex">
               <div className="relative">
                 <Button variant="outline" className="flex items-center gap-2 h-10 rounded-r-none border-r-0">
-                  <img src="/flag-bolivia.svg" alt="Bolivia" className="w-5 h-3" />
+                  <img src="/images/flag-bolivia.svg" alt="Bolivia" className="w-5 h-3" />
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </div>
@@ -84,9 +113,60 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
                 className="rounded-l-none flex-1"
               />
             </div>
-            <p className="text-xs text-red-500">El número debe tener mínimo 8 caracteres</p>
           </div>
-
+          {/* Email */}
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <Input
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Correo electrónico"
+              className="w-full"
+            />
+          </div>
+          {/* Dirección */}
+          <div className="space-y-2">
+            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+              Dirección
+            </label>
+            <Input
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Dirección"
+              className="w-full"
+            />
+          </div>
+          {/* Salario */}
+          <div className="space-y-2">
+            <label htmlFor="salary" className="block text-sm font-medium text-gray-700">
+              Salario
+            </label>
+            <Input
+              id="salary"
+              value={salary}
+              onChange={(e) => setSalary(Number(e.target.value))}
+              placeholder="Salario"
+              className="w-full"
+            />
+          </div>
+          {/* Cargo */}
+          <div className="space-y-2">
+            <label htmlFor="position" className="block text-sm font-medium text-gray-700">
+              Cargo
+            </label>
+            <Input
+              id="position"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder="Cargo"
+              className="w-full"
+            />
+          </div>
+          {/* Rol */}
           <div className="space-y-2">
             <label htmlFor="role" className="block text-sm font-medium text-gray-700">
               Rol <span className="text-red-500">*</span>
@@ -97,7 +177,7 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
                 className="w-full justify-between"
                 onClick={() => setShowRoleDropdown(!showRoleDropdown)}
               >
-                {role}
+                {position}
                 <ChevronDown className="h-4 w-4" />
               </Button>
               {showRoleDropdown && (
@@ -105,7 +185,7 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
                   <div
                     className="p-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
-                      setRole("Propietario")
+                      setPosition("Propietario")
                       setShowRoleDropdown(false)
                     }}
                   >
@@ -114,7 +194,7 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
                   <div
                     className="p-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
-                      setRole("Administrador")
+                      setPosition("Administrador")
                       setShowRoleDropdown(false)
                     }}
                   >
@@ -123,7 +203,7 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
                   <div
                     className="p-2 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
-                      setRole("Vendedor")
+                      setPosition("Vendedor")
                       setShowRoleDropdown(false)
                     }}
                   >
@@ -139,7 +219,7 @@ export function EditEmployeePanel({ employee, open, onOpenChange, onShowPermissi
           <Button
             className="w-full bg-gray-900 hover:bg-gray-800"
             onClick={handleSubmit}
-            disabled={!first_name || !phone || phone.length < 8}
+            disabled={!firstName || !lastName || !phone || phone.length < 8}
           >
             Guardar cambios
           </Button>

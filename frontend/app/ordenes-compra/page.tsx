@@ -41,7 +41,7 @@ export default function OrdenesCompra() {
       const res = await fetch("/api/purchase-orders", {
         headers: {
           Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoibWdvbnphbGVzIiwicm9sZSI6InN1cGVyX2FkbWluIiwiYnVzaW5lc3NJZCI6MSwiaWF0IjoxNzUwNjIwODE2LCJleHAiOjE3NTMyMTI4MTZ9.V3VNLCuSleU8ef4WY1SaYRNRSMAQBle1RlEx_qx008UaFEaCHfIv25HPEAwiHEek4kNvaIABGBhf2llMTB2Z0fRb2OQh47rBgTYVcnsarDHEunuF7_EnCgpyN6khnnSDtXqC-FIvir9O_2ejBOnOJvZ33B9x6fzQRXnfCbqoNJEwihUwbfyIKvKCkkTPVmEAD5E2jvf-A9Yo6MzOZYgZXvJVm45woHZJSK0WFHZNCYUTLugB-0NEMzDqpvmcmQXuoXr5dJgyeVJ-XnVcEDqMfSapeaGVP0Jae4_oqDOdM9-wRbWF7jZBhFKVO10xHEt96w2TKB-VkKMgb3rTmEpSX5DcMxi6Pl4kCeYhd7nLWVLnGWmLaSZrvqZBQe67l-j9ekg14kB3wN33XSVaAhEismxbK4GXhgO7fNkGy2ke6bW-EmIuvRJ86oS_MUv3d5M-o4ampGrXCS78ezRwdzy2uFhr0j9kFkFTwl7GTESr9noCNnZ_UnFd8JssAduMLte3j5qB8j4jqT4dONU-xLxKeMdN_EAQEEzzjIGU0tpnNBJC3WXp1IP_d5BPmGwci9t-rYzPV80-rO8KxpLWyUpUFFsCaP_ZOm3fUy3JVeEpGt7mmfWuHRZSLxDi_e8ugqxcbwD01KAZxfoiWq-8WZHrtmbgAk1QUorBtTuuBlQrMdM", // Reemplaza con tu token real
-        },
+        }, 
       })
       const data = await res.json()
       // Mapea los datos de la API al formato esperado por la tabla
@@ -83,6 +83,10 @@ export default function OrdenesCompra() {
   const handleViewDetails = (order: PurchaseOrder) => {
     setSelectedOrder(order)
     setIsDetailPanelOpen(true)
+  }
+
+  const crearOrdenCompra = () => {
+    // Lógica para crear una nueva orden de compra
   }
 
   return (
@@ -211,6 +215,8 @@ export default function OrdenesCompra() {
           }
         />
       )}
+
+      <Button onClick={crearOrdenCompra}>Crear Orden de Compra</Button>
     </div>
   )
 }

@@ -57,7 +57,7 @@ export default function Empleados() {
 
       <div className="bg-white rounded-lg border overflow-hidden">
         <div className="grid grid-cols-5 gap-4 p-4 border-b bg-gray-50">
-          <div className="font-medium text-gray-600">Nombre del empleador</div>
+          <div className="font-medium text-gray-600">Nombre</div>
           <div className="font-medium text-gray-600">Celular</div>
           <div className="font-medium text-gray-600">Rol</div>
           <div className="font-medium text-gray-600">Estado</div>
@@ -67,8 +67,12 @@ export default function Empleados() {
         <div className="divide-y">
           {employees.map((employee) => (
             <div key={employee.id} className="grid grid-cols-5 gap-4 p-4 items-center">
-              <div>{employee.first_name} {employee.last_name}</div>
-              <div>{employee.mobile_phone}</div>
+              <div>
+                {(employee.firstName ?? employee.first_name ?? "")} {(employee.lastName ?? employee.last_name ?? "")}
+              </div>
+              <div>
+                {employee.phone ?? employee.mobile_phone ?? "-"}
+              </div>
               <div>
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
