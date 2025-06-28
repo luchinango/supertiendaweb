@@ -125,11 +125,17 @@ export class SupplierRepository implements ISupplierRepository {
     const mappedSuppliers = suppliers.map(supplier => this.mapToSupplierResponse(supplier));
 
     return {
-      suppliers: mappedSuppliers,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-      limit,
+      data: mappedSuppliers,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: skip + limit < total,
+        hasPrevPage: page > 1,
+        nextPage: skip + limit < total ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null,
+      },
     };
   }
 

@@ -8,13 +8,28 @@ import type {
   RegisterResponse
 } from '@/types'
 
+interface BackendLoginResponse {
+  success: boolean
+  data: LoginResponse
+  message: string
+  timestamp: string
+}
+
 export const authService = {
   login: async (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
     try {
-      const response = await apiClient.post<LoginResponse>('/auth/login', credentials)
-      return {
-        success: true,
-        data: response.data,
+      const response = await apiClient.post<BackendLoginResponse>('/auth/login', credentials)
+
+      if (response.data.success && response.data.data) {
+        return {
+          success: true,
+          data: response.data.data
+        }
+      } else {
+        return {
+          success: false,
+          error: response.data.message || 'Error de autenticación',
+        }
       }
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
@@ -48,12 +63,8 @@ export const authService = {
 
   me: async (): Promise<ApiResponse<any>> => {
     try {
-      // Usa la ruta y método que tu backend espera
-      const response = await apiClient.get('/auth/me')
-      return {
-        success: true,
-        data: response.data,
-      }
+      const response = await apiClient.post('/auth/verify')
+      return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
       return {

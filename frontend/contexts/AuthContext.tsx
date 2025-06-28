@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { authService } from "@/services/authService"
-import { setAuthToken, getAuthToken, removeAuthToken } from "@/lib/auth-utils"
+import { setTokens, getAuthToken, removeAuthToken } from "@/lib/auth-utils"
 import type { User, AuthContextType, RegisterRequest } from "@/types"
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -14,16 +14,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // Verificar autenticación al cargar
   useEffect(() => {
     checkAuth().then()
   }, [])
 
   const checkAuth = async () => {
     try {
-      console.log("🔍 Verificando autenticación...")
       const token = getAuthToken()
-      console.log("📋 Token encontrado:", token ? "Sí" : "No")
 
       if (!token) {
         console.log("No hay token, finalizando verificación")
@@ -31,19 +28,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      console.log("Llamando a /auth/me...")
       const response = await authService.me()
-      console.log("Respuesta de /auth/me:", response)
 
-      if (response.success && response.data && response.data.user) {
-        const { user } = response.data
-        const role = user.role
+      if (response.success && response.data) {
+        const userData = response.data as any
 
-        console.log("Datos del usuario:", user)
-
-        if (role) {
-          console.log("Usuario autenticado correctamente")
-          setUser(user as User)
+        if (userData.role) {
+          const mappedUser: User = {
+            ...userData,
+            businessId: userData.employee?.businessId
+          }
+          setUser(mappedUser)
         } else {
           console.log("Usuario sin rol válido, removiendo token")
           removeAuthToken()
@@ -64,13 +59,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     try {
       const response = await authService.login({ username, password })
-
       if (response.success && response.data) {
-        setAuthToken(response.data.token)
+        setTokens(response.data.token, response.data.refreshToken)
+
         const userData = response.data.user as any
-        console.log(userData)
-        if (userData && userData.role) {
-          setUser(userData as User)
+        if (userData.role) {
+          const mappedUser: User = {
+            ...userData,
+            email: userData.employee?.email || userData.email,
+            name: userData.employee ? `${userData.employee.firstName} ${userData.employee.lastName}` : userData.name,
+            businessId: userData.employee?.businessId || userData.businessId
+          }
+          setUser(mappedUser)
           return { success: true }
         } else {
           removeAuthToken()
@@ -102,10 +102,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.register(userData)
 
       if (response.success && response.data) {
-        setAuthToken(response.data.token)
+        setTokens(response.data.token, "")
         const userData = response.data.user as any
         if (userData.role) {
-          setUser(userData as User)
+          const mappedUser: User = {
+            ...userData,
+            email: userData.employee?.email || userData.email,
+            name: userData.employee ? `${userData.employee.firstName} ${userData.employee.lastName}` : userData.name,
+            businessId: userData.employee?.businessId || userData.businessId
+          }
+          setUser(mappedUser)
           return { success: true }
         } else {
           removeAuthToken()

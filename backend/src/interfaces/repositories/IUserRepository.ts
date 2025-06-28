@@ -2,10 +2,10 @@ import { User } from '../../types/userTypes';
 import { CreateUserRequest, UpdateUserRequest } from '../../types/userTypes';
 
 export interface IUserRepository {
-  create(data: CreateUserRequest): Promise<User>;
-  findById(id: number): Promise<User | null>;
-  findByUsername(username: string): Promise<User | null>;
-  update(id: number, data: Partial<UpdateUserRequest>): Promise<User>;
+  create(data: any): Promise<any>;
+  findById(id: number): Promise<any>;
+  findByUsername(username: string): Promise<any>;
+  update(id: number, data: Partial<any>): Promise<any>;
   delete(id: number): Promise<void>;
 
   findMany(options: {
@@ -14,7 +14,7 @@ export interface IUserRepository {
     orderBy?: any;
     skip?: number;
     take?: number;
-  }): Promise<User[]>;
+  }): Promise<any[]>;
 
   count(where?: any): Promise<number>;
   exists(id: number): Promise<boolean>;

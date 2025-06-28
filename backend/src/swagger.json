@@ -3102,6 +3102,268 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"UserStatus": {
+				"$ref": "#/components/schemas/_36_Enums.UserStatus"
+			},
+			"Department": {
+				"$ref": "#/components/schemas/_36_Enums.Department"
+			},
+			"BusinessType": {
+				"$ref": "#/components/schemas/_36_Enums.BusinessType"
+			},
+			"BusinessStatus": {
+				"$ref": "#/components/schemas/_36_Enums.BusinessStatus"
+			},
+			"VerifyTokenResponse": {
+				"description": "Respuesta completa del verify token",
+				"properties": {
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"username": {
+						"type": "string"
+					},
+					"phone": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"$ref": "#/components/schemas/UserStatus"
+					},
+					"roleId": {
+						"type": "number",
+						"format": "double"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastLogin": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"role": {
+						"properties": {
+							"code": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							},
+							"id": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"code",
+							"name",
+							"id"
+						],
+						"type": "object"
+					},
+					"employee": {
+						"properties": {
+							"business": {
+								"properties": {
+									"status": {
+										"$ref": "#/components/schemas/BusinessStatus"
+									},
+									"businessType": {
+										"$ref": "#/components/schemas/BusinessType"
+									},
+									"country": {
+										"type": "string",
+										"nullable": true
+									},
+									"department": {
+										"$ref": "#/components/schemas/Department"
+									},
+									"city": {
+										"type": "string",
+										"nullable": true
+									},
+									"address": {
+										"type": "string",
+										"nullable": true
+									},
+									"phone": {
+										"type": "string",
+										"nullable": true
+									},
+									"email": {
+										"type": "string",
+										"nullable": true
+									},
+									"nit": {
+										"type": "string",
+										"nullable": true
+									},
+									"legalName": {
+										"type": "string"
+									},
+									"name": {
+										"type": "string"
+									},
+									"id": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"status",
+									"businessType",
+									"country",
+									"department",
+									"city",
+									"address",
+									"phone",
+									"email",
+									"nit",
+									"legalName",
+									"name",
+									"id"
+								],
+								"type": "object"
+							},
+							"businessId": {
+								"type": "number",
+								"format": "double"
+							},
+							"status": {
+								"$ref": "#/components/schemas/EmployeeStatus"
+							},
+							"emergencyPhone": {
+								"type": "string",
+								"nullable": true
+							},
+							"emergencyContact": {
+								"type": "string",
+								"nullable": true
+							},
+							"ciNumber": {
+								"type": "string",
+								"nullable": true
+							},
+							"phone": {
+								"type": "string",
+								"nullable": true
+							},
+							"address": {
+								"type": "string",
+								"nullable": true
+							},
+							"email": {
+								"type": "string",
+								"nullable": true
+							},
+							"birthDate": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"gender": {
+								"$ref": "#/components/schemas/Gender"
+							},
+							"salary": {
+								"type": "string",
+								"nullable": true
+							},
+							"endDate": {
+								"type": "string",
+								"format": "date-time",
+								"nullable": true
+							},
+							"startDate": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"department": {
+								"type": "string"
+							},
+							"position": {
+								"type": "string"
+							},
+							"lastName": {
+								"type": "string"
+							},
+							"firstName": {
+								"type": "string"
+							},
+							"id": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"business",
+							"businessId",
+							"status",
+							"emergencyPhone",
+							"emergencyContact",
+							"ciNumber",
+							"phone",
+							"address",
+							"email",
+							"birthDate",
+							"gender",
+							"salary",
+							"endDate",
+							"startDate",
+							"department",
+							"position",
+							"lastName",
+							"firstName",
+							"id"
+						],
+						"type": "object",
+						"nullable": true
+					}
+				},
+				"required": [
+					"id",
+					"username",
+					"phone",
+					"status",
+					"roleId",
+					"createdAt",
+					"updatedAt",
+					"lastLogin",
+					"role",
+					"employee"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_VerifyTokenResponse_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"$ref": "#/components/schemas/VerifyTokenResponse"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {
@@ -6373,7 +6635,7 @@
 				"parameters": [
 					{
 						"in": "query",
-						"name": "businessId",
+						"name": "productId",
 						"required": true,
 						"schema": {
 							"format": "double",
@@ -6382,8 +6644,8 @@
 					},
 					{
 						"in": "query",
-						"name": "productId",
-						"required": true,
+						"name": "businessId",
+						"required": false,
 						"schema": {
 							"format": "double",
 							"type": "number"
@@ -8453,7 +8715,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_any_"
+									"$ref": "#/components/schemas/ApiResponse_VerifyTokenResponse_"
 								}
 							}
 						}
@@ -8469,8 +8731,8 @@
 						}
 					}
 				},
-				"description": "Verificar token",
-				"summary": "Verificar validez del token JWT",
+				"description": "Verificar token y obtener datos del usuario",
+				"summary": "Verificar validez del token JWT y devolver datos completos del usuario",
 				"tags": [
 					"Autenticación"
 				],

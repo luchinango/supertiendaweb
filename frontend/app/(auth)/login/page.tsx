@@ -139,7 +139,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-sm text-gray-500">
-            © 2024 Supertienda. Todos los derechos reservados.
+            © 2025 Supertienda. Todos los derechos reservados.
           </p>
         </div>
       </div>

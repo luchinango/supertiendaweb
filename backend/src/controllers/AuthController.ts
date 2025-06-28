@@ -1,7 +1,7 @@
 import { Controller, Route, Post, Body, Response, Tags, Security, Request } from 'tsoa';
 import { authService } from '../services/authService';
 import { UnauthorizedError } from '../errors';
-import { AuthResponse } from '../types/authTypes';
+import { AuthResponse, VerifyTokenResponse } from '../types/authTypes';
 import { ApiResponse, ErrorResponse } from '../types/api';
 import { createSuccessResponse } from '../helpers/responseHelpers';
 import { Request as ExpressRequest } from 'express';
@@ -126,14 +126,14 @@ export class AuthController extends Controller {
   }
 
   /**
-   * Verificar token
-   * @summary Verificar validez del token JWT
+   * Verificar token y obtener datos del usuario
+   * @summary Verificar validez del token JWT y devolver datos completos del usuario
    */
   @Post('verify')
   @Security('bearerAuth')
-  @Response<ApiResponse<any>>(200, 'Token válido')
+  @Response<ApiResponse<VerifyTokenResponse>>(200, 'Token válido - datos del usuario obtenidos')
   @Response<ErrorResponse>(401, 'Token inválido')
-  public async verifyToken(@Request() request: ExpressRequest): Promise<ApiResponse<any>> {
+  public async verifyToken(@Request() request: ExpressRequest): Promise<ApiResponse<VerifyTokenResponse>> {
     try {
       const authHeader = request.headers.authorization;
       if (!authHeader?.startsWith('Bearer ')) {
@@ -142,8 +142,8 @@ export class AuthController extends Controller {
       }
 
       const token = authHeader.split(' ')[1];
-      const decoded = await authService.verifyToken(token);
-      return createSuccessResponse({ valid: true, user: decoded }, 'Token válido');
+      const userData = await authService.getUserFromToken(token);
+      return createSuccessResponse(userData, 'Token válido - datos del usuario obtenidos');
     } catch (error) {
       if (error instanceof UnauthorizedError) {
         this.setStatus(401);

@@ -57,10 +57,16 @@ export function mapPaginatedProductsToResponse(
   limit: number
 ): ProductListResponse {
   return {
-    products: products.map(mapProductToProductResponse),
-    total,
-    page,
-    totalPages: Math.ceil(total / limit),
-    limit,
+    data: products.map(mapProductToProductResponse),
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+      nextPage: page * limit < total ? page + 1 : null,
+      prevPage: page > 1 ? page - 1 : null,
+    },
   };
 }

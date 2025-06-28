@@ -311,6 +311,78 @@ class AuthService {
       }
     });
   }
+
+  /**
+   * Obtener datos completos del usuario desde el token
+   */
+  async getUserFromToken(token: string): Promise<any> {
+    const decoded = await this.verifyToken(token);
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        username: true,
+        phone: true,
+        status: true,
+        roleId: true,
+        createdAt: true,
+        updatedAt: true,
+        lastLogin: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        employee: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            position: true,
+            department: true,
+            startDate: true,
+            endDate: true,
+            salary: true,
+            gender: true,
+            birthDate: true,
+            email: true,
+            address: true,
+            phone: true,
+            ciNumber: true,
+            emergencyContact: true,
+            emergencyPhone: true,
+            status: true,
+            businessId: true,
+            business: {
+              select: {
+                id: true,
+                name: true,
+                legalName: true,
+                nit: true,
+                email: true,
+                phone: true,
+                address: true,
+                city: true,
+                department: true,
+                country: true,
+                businessType: true,
+                status: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      throw new UnauthorizedError('Usuario no encontrado');
+    }
+
+    return user;
+  }
 }
 
 export const authService = new AuthService();

@@ -1,11 +1,26 @@
 import type { ApiResponse } from './Api'
 
+export interface EmployeeData {
+  businessId: number
+  phone: string
+  address: string
+  email: string
+  birthDate: string
+  gender: "MALE" | "FEMALE"
+  status: "ACTIVE" | "INACTIVE"
+  startDate: string
+  position: string
+  lastName: string
+  firstName: string
+}
+
 export interface User {
   id: number
-  email: string
-  name: string
   username: string
-  role: "admin" | "employee" | "owner"
+  role: string
+  employee?: EmployeeData
+  email?: string
+  name?: string
   businessId?: number
   permissions?: string[]
 }
@@ -16,8 +31,9 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  user: User
   token: string
+  refreshToken: string
+  user: User
 }
 
 export interface RegisterRequest {

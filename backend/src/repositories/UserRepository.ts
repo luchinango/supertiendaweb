@@ -1,5 +1,6 @@
 import { PrismaClient, User, Role } from '../../prisma/generated';
 import { CreateUserRequest, UpdateUserRequest, UserResponse, UserListResponse } from '../types/api';
+import { User as UserType } from '../types/userTypes';
 import { mapUserToUserResponse, mapUsersToUserListResponse } from '../mappers/userMappers';
 import { NotFoundError, DatabaseError } from '../errors';
 import logger from '../utils/logger';
@@ -8,11 +9,11 @@ import { IUserRepository } from '../interfaces/repositories/IUserRepository';
 export class UserRepository implements IUserRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async create(data: any): Promise<User> {
+  async create(data: any): Promise<UserType> {
     try {
       logger.info('Creating user in repository', { username: data.username });
 
-      return await this.prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           username: data.username,
           passwordHash: data.passwordHash,
@@ -24,48 +25,57 @@ export class UserRepository implements IUserRepository {
           role: true,
           employee: true,
         },
-      }) as User;
+      });
+
+      // @ts-ignore - Prisma types are complex with relations, using manual mapping
+      return this.mapPrismaUserToUserType(user);
     } catch (error) {
       logger.error('Error creating user in repository', { error, data });
       throw new DatabaseError(`Error al crear usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: number): Promise<UserType | null> {
     try {
-      return await this.prisma.user.findUnique({
+      const user = await this.prisma.user.findUnique({
         where: { id },
         include: {
           role: true,
           employee: true,
         },
-      }) as User | null;
+      });
+
+      // @ts-ignore - Prisma types are complex with relations, using manual mapping
+      return user ? this.mapPrismaUserToUserType(user) : null;
     } catch (error) {
       logger.error('Error finding user by ID in repository', { error, id });
       throw new DatabaseError(`Error al buscar usuario por ID: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   }
 
-  async findByUsername(username: string): Promise<User | null> {
+  async findByUsername(username: string): Promise<UserType | null> {
     try {
-      return await this.prisma.user.findUnique({
+      const user = await this.prisma.user.findUnique({
         where: { username },
         include: {
           role: true,
           employee: true,
         },
-      }) as User | null;
+      });
+
+      // @ts-ignore - Prisma types are complex with relations, using manual mapping
+      return user ? this.mapPrismaUserToUserType(user) : null;
     } catch (error) {
       logger.error('Error finding user by username in repository', { error, username });
       throw new DatabaseError(`Error al buscar usuario por username: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   }
 
-  async update(id: number, data: Partial<any>): Promise<User> {
+  async update(id: number, data: Partial<any>): Promise<UserType> {
     try {
       logger.info('Updating user in repository', { id, data });
 
-      return await this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id },
         data: {
           ...data,
@@ -75,7 +85,10 @@ export class UserRepository implements IUserRepository {
           role: true,
           employee: true,
         },
-      }) as User;
+      });
+
+      // @ts-ignore - Prisma types are complex with relations, using manual mapping
+      return this.mapPrismaUserToUserType(user);
     } catch (error) {
       logger.error('Error updating user in repository', { error, id, data });
       throw new DatabaseError(`Error al actualizar usuario: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -101,21 +114,62 @@ export class UserRepository implements IUserRepository {
     orderBy?: any;
     skip?: number;
     take?: number;
-  }): Promise<User[]> {
+  }): Promise<UserType[]> {
     try {
       const defaultInclude = {
         role: true,
         employee: true,
       };
 
-      return await this.prisma.user.findMany({
+      const users = await this.prisma.user.findMany({
         ...options,
         include: options.include || defaultInclude,
-      }) as any;
+      });
+
+      return users.map(user => this.mapPrismaUserToUserType(user));
     } catch (error) {
       logger.error('Error finding many users in repository', { error, options });
       throw new DatabaseError(`Error al buscar usuarios: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
+  }
+
+  private mapPrismaUserToUserType(user: any): UserType {
+    return {
+      id: user.id,
+      username: user.username,
+      phone: user.phone,
+      status: user.status,
+      roleId: user.roleId,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLogin: user.lastLogin,
+      role: {
+        id: user.role.id,
+        code: user.role.code,
+        name: user.role.name,
+        description: user.role.description,
+      },
+      employee: user.employee ? {
+        id: user.employee.id,
+        firstName: user.employee.firstName,
+        lastName: user.employee.lastName,
+        position: user.employee.position,
+        department: user.employee.department,
+        startDate: user.employee.startDate,
+        endDate: user.employee.endDate,
+        salary: user.employee.salary ? Number(user.employee.salary) : null,
+        status: user.employee.status,
+        gender: user.employee.gender,
+        birthDate: user.employee.birthDate,
+        email: user.employee.email,
+        phone: user.employee.phone,
+        address: user.employee.address,
+        emergencyContact: user.employee.emergencyContact,
+        emergencyPhone: user.employee.emergencyPhone,
+        ciNumber: user.employee.ciNumber,
+        businessId: user.employee.businessId,
+      } : null,
+    };
   }
 
   async count(where?: any): Promise<number> {

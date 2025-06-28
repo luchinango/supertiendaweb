@@ -25,7 +25,6 @@ export function mapBusinessToBusinessResponse(business: any): BusinessResponse {
     currency: business.currency,
     defaultTaxRate: business.defaultTaxRate,
     status: business.status,
-    isActive: business.isActive,
     createdAt: business.createdAt,
     updatedAt: business.updatedAt,
     deletedAt: business.deletedAt,

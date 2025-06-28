@@ -10,13 +10,10 @@ import {
   Tags,
   Security,
   Response,
-  Request,
 } from 'tsoa';
-import { Request as ExpressRequest } from 'express';
 import { CreateUserRequest, UpdateUserRequest, UserResponse } from '../types/api';
 import { ApiResponse, ErrorResponse, PaginatedApiResponse } from '../types/api';
 import { BasePaginationController } from './basePaginationController';
-import { PaginatedResult } from '../types/pagination';
 import {
   mapPaginatedUsersToResponse,
   mapUserToUserResponse,
