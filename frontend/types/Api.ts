@@ -74,3 +74,69 @@ export interface ApiMutationResult<T, V> {
   mutate: (variables: V) => Promise<T | undefined>
   reset: () => void
 }
+
+export interface PaginationMeta {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+  nextPage: number | null
+  prevPage: number | null
+}
+
+export interface NewPaginatedResponse<T> {
+  success: boolean
+  data: T[]
+  meta: PaginationMeta
+  message?: string
+  timestamp?: string
+}
+
+export interface PaginationOptions {
+  page?: number
+  limit?: number
+  sort?: string
+  order?: 'asc' | 'desc'
+  search?: string
+}
+
+export interface CrudResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+}
+
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+export interface LoginResponse {
+  token: string
+  refreshToken: string
+  user: {
+    id: number
+    username: string
+    role: string
+    employee?: any
+  }
+}
+
+export interface RegisterRequest {
+  username: string
+  password: string
+  email?: string
+  firstName?: string
+  lastName?: string
+}
+
+export interface RegisterResponse {
+  token: string
+  user: {
+    id: number
+    username: string
+    role: string
+  }
+}

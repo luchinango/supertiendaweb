@@ -1,5 +1,5 @@
-import { Department, DocumentType, PaymentMethod } from '../../prisma/generated';
-import { PaginationMeta } from './api';
+import { Department, DocumentType, PaymentMethod, BusinessProduct, Product, Category } from '../../prisma/generated';
+import { PaginationMeta } from './pagination';
 
 
 export interface BusinessProductResponse {
@@ -13,30 +13,114 @@ export interface BusinessProductResponse {
   lastRestock?: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  product?: {
-    id: number;
-    categoryId: number;
-    name: string;
-    sku?: string;
-    barcode?: string;
-    description?: string;
-    brand?: string;
-    unit?: string;
-    costPrice: number;
-    sellingPrice: number;
-    taxType: string;
-    taxRate: number;
-    minStock: number;
-    reorderPoint: number;
-    isActive: boolean;
-    status: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  product?: ProductResponse;
   business?: {
     id: number;
     name: string;
   };
+}
+
+export interface ProductResponse {
+  id: number;
+  categoryId: number;
+  sku?: string;
+  barcode?: string;
+  name: string;
+  description?: string;
+  brand?: string;
+  model?: string;
+  unit?: string;
+  weight?: number;
+  dimensions?: string;
+  costPrice: number;
+  sellingPrice: number;
+  taxType: string;
+  taxRate: number;
+  minStock: number;
+  maxStock?: number;
+  reorderPoint: number;
+  isActive: boolean;
+  status: string;
+  expiryDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+  createdBy: number;
+  updatedBy: number;
+  deletedBy?: number;
+  category?: {
+    id: number;
+    name: string;
+    description?: string;
+  };
+}
+
+export interface BusinessProductCatalogItem {
+  id: number;
+  categoryId: number;
+  sku?: string;
+  barcode?: string;
+  name: string;
+  description?: string;
+  brand?: string;
+  model?: string;
+  unit?: string;
+  weight?: number;
+  dimensions?: string;
+  taxType: string;
+  taxRate: number;
+  minStock: number;
+  maxStock?: number;
+  reorderPoint: number;
+  isActive: boolean;
+  status: string;
+  expiryDate?: string;
+  category?: {
+    id: number;
+    name: string;
+    description?: string;
+  };
+
+  businessProduct?: {
+    id: number;
+    businessId: number;
+    customPrice: number;
+    currentStock: number;
+    reservedStock: number;
+    availableStock: number;
+    lastRestock?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+
+  effectivePrice: number;
+  effectiveStock: number;
+  isAvailableInBusiness: boolean;
+  stockStatus: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'NOT_CONFIGURED';
+}
+
+export interface BusinessProductCatalogResponse {
+  items: BusinessProductCatalogItem[];
+  meta: PaginationMeta;
+  summary: {
+    totalProducts: number;
+    configuredProducts: number;
+    notConfiguredProducts: number;
+    inStockProducts: number;
+    lowStockProducts: number;
+    outOfStockProducts: number;
+  };
+}
+
+export interface BusinessProductCatalogFilters {
+  categoryId?: number;
+  search?: string;
+  isActive?: boolean;
+  stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'NOT_CONFIGURED';
+  isConfigured?: boolean;
+  brand?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export interface CreateBusinessProductRequest {
@@ -46,9 +130,6 @@ export interface CreateBusinessProductRequest {
   currentStock?: number;
   reservedStock?: number;
   availableStock?: number;
-  minStock?: number;
-  maxStock?: number;
-  reorderPoint?: number;
 }
 
 export interface UpdateBusinessProductRequest {
@@ -56,14 +137,21 @@ export interface UpdateBusinessProductRequest {
   currentStock?: number;
   reservedStock?: number;
   availableStock?: number;
-  minStock?: number;
-  maxStock?: number;
-  reorderPoint?: number;
+  lastRestock?: Date;
 }
 
 export interface BusinessProductListResponse {
   data: BusinessProductResponse[];
   meta: PaginationMeta;
+}
+
+export interface BusinessProductStats {
+  totalProducts: number;
+  totalStockValue: number;
+  averageStockLevel: number;
+  lowStockProducts: number;
+  outOfStockProducts: number;
+  recentlyRestockedProducts: number;
 }
 
 export interface BusinessProductSearchResult {
@@ -87,26 +175,30 @@ export interface BusinessProductSearchResponse {
   meta: PaginationMeta;
 }
 
-export interface BusinessProductStats {
-  totalProducts: number;
-  totalStockValue: number;
-  averageStockLevel: number;
-  lowStockProducts: number;
-  outOfStockProducts: number;
-  recentlyRestockedProducts: number;
-}
-
 export interface StockAdjustmentRequest {
   quantity: number;
-  reason?: string;
-  adjustmentType: 'ADD' | 'SUBTRACT' | 'SET';
+  reason: string;
+  notes?: string;
 }
 
 export interface RestockRequest {
   quantity: number;
-  costPerUnit?: number;
-  supplierReference?: string;
+  unitCost?: number;
+  reason?: string;
   notes?: string;
+}
+
+export interface BulkConfigureProductsRequest {
+  businessId: number;
+  productIds: number[];
+  defaultCustomPrice?: number;
+  defaultStock?: number;
+}
+
+export interface BulkConfigureProductsResponse {
+  configured: number;
+  skipped: number;
+  errors: string[];
 }
 
 // POS Related Types

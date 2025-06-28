@@ -21,6 +21,7 @@ import {
 } from '../types/api';
 import { ApiResponse, ErrorResponse, PaginatedApiResponse } from '../types/api';
 import { BasePaginationController } from './basePaginationController';
+import { PaginationParams } from '../types/pagination';
 
 import {
   createSuccessResponse,
@@ -41,7 +42,7 @@ export class SupplierController extends BasePaginationController {
   }
 
   /**
-   * Obtener lista de proveedores con paginación estándar
+   * Obtener lista de proveedores con paginación y filtros avanzados
    */
   @Get('/')
   @Security('bearerAuth')
@@ -50,8 +51,8 @@ export class SupplierController extends BasePaginationController {
   @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(500, 'Error interno del servidor')
   public async getSuppliers(
-    @Query() page?: number,
-    @Query() limit?: number,
+    @Query() page: number = 1,
+    @Query() limit: number = 10,
     @Query() search?: string,
     @Query() sortBy?: string,
     @Query() sortOrder?: 'asc' | 'desc',
@@ -61,10 +62,20 @@ export class SupplierController extends BasePaginationController {
     @Query() minCreditLimit?: number,
     @Query() maxCreditLimit?: number,
     @Query() minBalance?: number,
-    @Query() maxBalance?: number
+    @Query() maxBalance?: number,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
   ): Promise<PaginatedApiResponse<SupplierResponse>> {
     try {
-      const paginationParams = this.validatePagination(page, limit, search, sortBy, sortOrder);
+      const paginationParams: PaginationParams = {
+        page: Math.max(1, page),
+        limit: Math.min(100, Math.max(1, limit)),
+        search,
+        sortBy,
+        sortOrder
+      };
+
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
 
       const additionalFilters = {
         status,
@@ -74,6 +85,7 @@ export class SupplierController extends BasePaginationController {
         maxCreditLimit,
         minBalance,
         maxBalance,
+        businessId: effectiveBusinessId
       };
 
       const result = await this.supplierService.getSuppliers(paginationParams, additionalFilters);
@@ -92,12 +104,17 @@ export class SupplierController extends BasePaginationController {
   @Response<ApiResponse<SupplierResponse>>(200, 'Proveedor obtenido exitosamente')
   @Response<ErrorResponse>(404, 'Proveedor no encontrado')
   @Response<ErrorResponse>(401, 'No autorizado')
-  public async getSupplierById(@Path() id: number): Promise<ApiResponse<SupplierResponse>> {
+  public async getSupplierById(
+    @Path() id: number,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<SupplierResponse>> {
     try {
-      const supplier = await this.supplierService.getSupplierById(id);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const supplier = await this.supplierService.getSupplierById(id, effectiveBusinessId);
       const validatedSupplier = ensureExists(supplier, 'Proveedor', id);
 
-      return createSuccessResponse(validatedSupplier);
+      return this.createSuccessResponse(validatedSupplier, 'Proveedor obtenido exitosamente');
     } catch (error) {
       if (error instanceof NotFoundError) {
         this.setStatus(404);
@@ -117,12 +134,17 @@ export class SupplierController extends BasePaginationController {
   @Response<ErrorResponse>(400, 'Datos inválidos')
   @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(409, 'Código o documento ya existe')
-  public async createSupplier(@Body() supplierData: CreateSupplierRequestNew): Promise<ApiResponse<SupplierResponse>> {
+  public async createSupplier(
+    @Body() supplierData: CreateSupplierRequestNew,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<SupplierResponse>> {
     try {
-      const supplier = await this.supplierService.createSupplier(supplierData);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const supplier = await this.supplierService.createSupplier(supplierData, effectiveBusinessId);
 
       this.setStatus(201);
-      return createSuccessResponse(supplier, 'Proveedor creado exitosamente');
+      return this.createSuccessResponse(supplier, 'Proveedor creado exitosamente');
     } catch (error) {
       if (error instanceof ValidationError) {
         this.setStatus(400);
@@ -149,12 +171,15 @@ export class SupplierController extends BasePaginationController {
   @Response<ErrorResponse>(409, 'Código o documento ya existe')
   public async updateSupplier(
     @Path() id: number,
-    @Body() supplierData: UpdateSupplierRequest
+    @Body() supplierData: UpdateSupplierRequest,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<SupplierResponse>> {
     try {
-      const supplier = await this.supplierService.updateSupplier(id, supplierData);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const supplier = await this.supplierService.updateSupplier(id, supplierData, effectiveBusinessId);
 
-      return createSuccessResponse(supplier, 'Proveedor actualizado exitosamente');
+      return this.createSuccessResponse(supplier, 'Proveedor actualizado exitosamente');
     } catch (error) {
       if (error instanceof NotFoundError) {
         this.setStatus(404);
@@ -181,11 +206,16 @@ export class SupplierController extends BasePaginationController {
   @Response<ApiResponse<null>>(200, 'Proveedor eliminado exitosamente')
   @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(404, 'Proveedor no encontrado')
-  public async deleteSupplier(@Path() id: number): Promise<ApiResponse<null>> {
+  public async deleteSupplier(
+    @Path() id: number,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<null>> {
     try {
-      await this.supplierService.deleteSupplier(id);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      await this.supplierService.deleteSupplier(id, effectiveBusinessId);
 
-      return createSuccessResponse(null, 'Proveedor eliminado exitosamente');
+      return this.createSuccessResponse(null, 'Proveedor eliminado exitosamente');
     } catch (error) {
       if (error instanceof NotFoundError) {
         this.setStatus(404);
@@ -197,21 +227,28 @@ export class SupplierController extends BasePaginationController {
   }
 
   /**
-   * Buscar proveedores
+   * Buscar proveedores por término de búsqueda
    */
   @Get('search')
   @Security('bearerAuth')
-  @Response<ApiResponse<SupplierSearchResult[]>>(200, 'Búsqueda realizada exitosamente')
+  @Response<ApiResponse<SupplierSearchResult[]>>(200, 'Búsqueda de proveedores exitosa')
   @Response<ErrorResponse>(400, 'Parámetros de búsqueda inválidos')
   @Response<ErrorResponse>(401, 'No autorizado')
   public async searchSuppliers(
     @Query() query: string,
-    @Query() businessId?: number
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<SupplierSearchResult[]>> {
     try {
-      const results = await this.supplierService.searchSuppliers(query, businessId);
+      if (!query || query.trim().length === 0) {
+        this.setStatus(400);
+        throw new ValidationError('El término de búsqueda es requerido');
+      }
 
-      return createSuccessResponse(results, 'Búsqueda realizada exitosamente');
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const suppliers = await this.supplierService.searchSuppliers(query.trim(), effectiveBusinessId);
+
+      return this.createSuccessResponse(suppliers, 'Búsqueda de proveedores exitosa');
     } catch (error) {
       if (error instanceof ValidationError) {
         this.setStatus(400);
@@ -228,13 +265,18 @@ export class SupplierController extends BasePaginationController {
   @Put('{id}/activate')
   @Security('bearerAuth')
   @Response<ApiResponse<SupplierResponse>>(200, 'Proveedor activado exitosamente')
-  @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(404, 'Proveedor no encontrado')
-  public async activateSupplier(@Path() id: number): Promise<ApiResponse<SupplierResponse>> {
+  @Response<ErrorResponse>(401, 'No autorizado')
+  public async activateSupplier(
+    @Path() id: number,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<SupplierResponse>> {
     try {
-      const supplier = await this.supplierService.activateSupplier(id);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const supplier = await this.supplierService.activateSupplier(id, effectiveBusinessId);
 
-      return createSuccessResponse(supplier, 'Proveedor activado exitosamente');
+      return this.createSuccessResponse(supplier, 'Proveedor activado exitosamente');
     } catch (error) {
       if (error instanceof NotFoundError) {
         this.setStatus(404);
@@ -251,13 +293,18 @@ export class SupplierController extends BasePaginationController {
   @Put('{id}/deactivate')
   @Security('bearerAuth')
   @Response<ApiResponse<SupplierResponse>>(200, 'Proveedor desactivado exitosamente')
-  @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(404, 'Proveedor no encontrado')
-  public async deactivateSupplier(@Path() id: number): Promise<ApiResponse<SupplierResponse>> {
+  @Response<ErrorResponse>(401, 'No autorizado')
+  public async deactivateSupplier(
+    @Path() id: number,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<SupplierResponse>> {
     try {
-      const supplier = await this.supplierService.deactivateSupplier(id);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const supplier = await this.supplierService.deactivateSupplier(id, effectiveBusinessId);
 
-      return createSuccessResponse(supplier, 'Proveedor desactivado exitosamente');
+      return this.createSuccessResponse(supplier, 'Proveedor desactivado exitosamente');
     } catch (error) {
       if (error instanceof NotFoundError) {
         this.setStatus(404);
@@ -274,13 +321,18 @@ export class SupplierController extends BasePaginationController {
   @Put('{id}/suspend')
   @Security('bearerAuth')
   @Response<ApiResponse<SupplierResponse>>(200, 'Proveedor suspendido exitosamente')
-  @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(404, 'Proveedor no encontrado')
-  public async suspendSupplier(@Path() id: number): Promise<ApiResponse<SupplierResponse>> {
+  @Response<ErrorResponse>(401, 'No autorizado')
+  public async suspendSupplier(
+    @Path() id: number,
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<SupplierResponse>> {
     try {
-      const supplier = await this.supplierService.suspendSupplier(id);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const supplier = await this.supplierService.suspendSupplier(id, effectiveBusinessId);
 
-      return createSuccessResponse(supplier, 'Proveedor suspendido exitosamente');
+      return this.createSuccessResponse(supplier, 'Proveedor suspendido exitosamente');
     } catch (error) {
       if (error instanceof NotFoundError) {
         this.setStatus(404);
@@ -292,20 +344,91 @@ export class SupplierController extends BasePaginationController {
   }
 
   /**
-   * Obtener proveedores con deuda
+   * Obtener proveedores con deuda pendiente
    */
   @Get('with-debt')
   @Security('bearerAuth')
   @Response<ApiResponse<SupplierResponse[]>>(200, 'Proveedores con deuda obtenidos exitosamente')
   @Response<ErrorResponse>(401, 'No autorizado')
   public async getSuppliersWithDebt(
-    @Query() businessId?: number
-
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<SupplierResponse[]>> {
     try {
-      const suppliers = await this.supplierService.getSuppliersWithDebt(businessId);
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const suppliers = await this.supplierService.getSuppliersWithDebt(effectiveBusinessId);
 
-      return createSuccessResponse(suppliers, 'Proveedores con deuda obtenidos exitosamente');
+      return this.createSuccessResponse(suppliers, 'Proveedores con deuda obtenidos exitosamente');
+    } catch (error) {
+      this.setStatus(500);
+      throw new Error('Error interno del servidor');
+    }
+  }
+
+  /**
+   * Obtener estadísticas de proveedores
+   */
+  @Get('stats')
+  @Security('bearerAuth')
+  @Response<ApiResponse<any>>(200, 'Estadísticas de proveedores obtenidas exitosamente')
+  @Response<ErrorResponse>(401, 'No autorizado')
+  public async getSupplierStats(
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<any>> {
+    try {
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const stats = await this.supplierService.getSupplierStats(effectiveBusinessId);
+
+      return this.createSuccessResponse(stats, 'Estadísticas de proveedores obtenidas exitosamente');
+    } catch (error) {
+      this.setStatus(500);
+      throw new Error('Error interno del servidor');
+    }
+  }
+
+  /**
+   * Obtener proveedores por estado
+   */
+  @Get('by-status/{status}')
+  @Security('bearerAuth')
+  @Response<ApiResponse<SupplierResponse[]>>(200, 'Proveedores por estado obtenidos exitosamente')
+  @Response<ErrorResponse>(400, 'Estado inválido')
+  @Response<ErrorResponse>(401, 'No autorizado')
+  public async getSuppliersByStatus(
+    @Path() status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<SupplierResponse[]>> {
+    try {
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const suppliers = await this.supplierService.getSuppliersByStatus(status, effectiveBusinessId);
+
+      return this.createSuccessResponse(suppliers, 'Proveedores por estado obtenidos exitosamente');
+    } catch (error) {
+      this.setStatus(500);
+      throw new Error('Error interno del servidor');
+    }
+  }
+
+  /**
+   * Obtener proveedores por departamento
+   */
+  @Get('by-department/{department}')
+  @Security('bearerAuth')
+  @Response<ApiResponse<SupplierResponse[]>>(200, 'Proveedores por departamento obtenidos exitosamente')
+  @Response<ErrorResponse>(400, 'Departamento inválido')
+  @Response<ErrorResponse>(401, 'No autorizado')
+  public async getSuppliersByDepartment(
+    @Path() department: 'LA_PAZ' | 'COCHABAMBA' | 'SANTA_CRUZ' | 'ORURO' | 'POTOSI' | 'CHUQUISACA' | 'TARIJA' | 'BENI' | 'PANDO',
+    @Query() businessId?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<SupplierResponse[]>> {
+    try {
+      const effectiveBusinessId = this.getBusinessId(businessId, request!);
+      const suppliers = await this.supplierService.getSuppliersByDepartment(department, effectiveBusinessId);
+
+      return this.createSuccessResponse(suppliers, 'Proveedores por departamento obtenidos exitosamente');
     } catch (error) {
       this.setStatus(500);
       throw new Error('Error interno del servidor');

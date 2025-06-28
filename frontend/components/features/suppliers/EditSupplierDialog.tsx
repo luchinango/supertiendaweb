@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type {Supplier} from "@/types/types"
+import apiClient from "@/lib/api-client"
 
 export interface EditSupplierDialogProps {
   supplierId: number
@@ -36,25 +37,19 @@ export function EditSupplierDialog({
 
     setLoading(true)
     setError(null)
-    fetch(`/api/suppliers/${supplierId}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Error loading supplier (status: ${res.status})`)
-        }
-        return res.json()
-      })
-      .then((data: Supplier) => {
-        console.log("Loaded supplier data:", data)
-        if (data && data.id) {
-          setSupplier(data)
+    apiClient.get(`/api/suppliers/${supplierId}`)
+      .then((response: any) => {
+        console.log("Loaded supplier data:", response.data)
+        if (response.data && response.data.id) {
+          setSupplier(response.data)
         } else {
           setError("No se encontraron datos para el proveedor.")
         }
         setLoading(false)
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error("Fetch error:", err)
-        setError(err.message)
+        setError(err.response?.data?.message || err.message || 'Error loading supplier')
         setLoading(false)
       })
   }, [open, supplierId])
@@ -72,19 +67,11 @@ export function EditSupplierDialog({
     if (!supplier) return
     setError(null)
     try {
-      const res = await fetch(`/api/suppliers/${supplierId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(supplier),
-      })
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(`Error ${res.status}: ${txt}`)
-      }
+      await apiClient.put(`/api/suppliers/${supplierId}`, supplier)
       onOpenChange(false)
       onEdit?.(supplier)
     } catch (err: any) {
-      setError(err.message)
+      setError(err.response?.data?.message || err.message || 'Error updating supplier')
     }
   }
 
@@ -313,4 +300,3 @@ export function EditSupplierDialog({
     </Dialog>
   )
 }
-

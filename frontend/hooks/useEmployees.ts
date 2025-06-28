@@ -3,7 +3,7 @@ import type {Employee} from "@/types/Employee";
 import {getEmployees, createEmployee, updateEmployee, deleteEmployee} from "@/services/employeesService";
 
 export function useEmployees() {
-  const {data, error, isLoading, mutate} = useSWR<Employee[]>("/api/employees", getEmployees);
+  const {data, error, isLoading, mutate} = useSWR<Employee[]>("employees", getEmployees);
 
   const addEmployee = async (newEmployee: Partial<Employee>) => {
     try {

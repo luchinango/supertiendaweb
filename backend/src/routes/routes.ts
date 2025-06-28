@@ -12,6 +12,8 @@ import { PurchaseOrderController } from './../controllers/PurchaseOrderControlle
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProductController } from './../controllers/ProductController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { CategoryController } from './../controllers/CategoryController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { BusinessProductController } from './../controllers/BusinessProductController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { BusinessController } from './../controllers/BusinessController';
@@ -391,6 +393,17 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_any_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"dataType":"any","required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "_36_Enums.PurchaseOrderStatus": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["PENDING"]},{"dataType":"enum","enums":["DRAFT"]},{"dataType":"enum","enums":["APPROVED"]},{"dataType":"enum","enums":["ORDERED"]},{"dataType":"enum","enums":["PARTIALLY_RECEIVED"]},{"dataType":"enum","enums":["RECEIVED"]},{"dataType":"enum","enums":["CANCELLED"]}],"validators":{}},
@@ -716,6 +729,236 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CategoryResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "sortOrder": {"dataType":"double","required":true},
+            "isActive": {"dataType":"boolean","required":true},
+            "parentId": {"dataType":"double","required":true},
+            "description": {"dataType":"string","required":true},
+            "deletedBy": {"dataType":"double","required":true},
+            "updatedBy": {"dataType":"double","required":true},
+            "createdBy": {"dataType":"double","required":true},
+            "deletedAt": {"dataType":"datetime","required":true},
+            "updatedAt": {"dataType":"datetime","required":true},
+            "createdAt": {"dataType":"datetime","required":true},
+            "id": {"dataType":"double","required":true},
+            "name": {"dataType":"string","required":true},
+            "productCount": {"dataType":"double"},
+            "children": {"dataType":"array","array":{"dataType":"refObject","ref":"CategoryResponse"}},
+            "parent": {"ref":"CategoryResponse"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "DefaultSelection_Prisma._36_CategoryPayload_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"sortOrder":{"dataType":"double","required":true},"isActive":{"dataType":"boolean","required":true},"parentId":{"dataType":"double","required":true},"description":{"dataType":"string","required":true},"deletedBy":{"dataType":"double","required":true},"updatedBy":{"dataType":"double","required":true},"createdBy":{"dataType":"double","required":true},"deletedAt":{"dataType":"datetime","required":true},"updatedAt":{"dataType":"datetime","required":true},"createdAt":{"dataType":"datetime","required":true},"id":{"dataType":"double","required":true},"name":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "PaginatedApiResponse_CategoryResponse_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"CategoryResponse"},"required":true},
+            "meta": {"ref":"PaginationMeta","required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_CategoryResponse_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"ref":"CategoryResponse","required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CreateCategoryRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "description": {"dataType":"string"},
+            "parentId": {"dataType":"double"},
+            "isActive": {"dataType":"boolean"},
+            "sortOrder": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "UpdateCategoryRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string"},
+            "description": {"dataType":"string"},
+            "parentId": {"dataType":"double"},
+            "isActive": {"dataType":"boolean"},
+            "sortOrder": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CategoryTreeNode": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"double","required":true},
+            "name": {"dataType":"string","required":true},
+            "description": {"dataType":"string"},
+            "isActive": {"dataType":"boolean","required":true},
+            "sortOrder": {"dataType":"double","required":true},
+            "productCount": {"dataType":"double","required":true},
+            "children": {"dataType":"array","array":{"dataType":"refObject","ref":"CategoryTreeNode"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_CategoryTreeNode-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"CategoryTreeNode"},"required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_CategoryResponse-Array_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"CategoryResponse"},"required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CategoryStats": {
+        "dataType": "refObject",
+        "properties": {
+            "totalCategories": {"dataType":"double","required":true},
+            "activeCategories": {"dataType":"double","required":true},
+            "inactiveCategories": {"dataType":"double","required":true},
+            "categoriesWithProducts": {"dataType":"double","required":true},
+            "averageProductsPerCategory": {"dataType":"double","required":true},
+            "topCategoriesByProducts": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"productCount":{"dataType":"double","required":true},"name":{"dataType":"string","required":true},"id":{"dataType":"double","required":true}}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_CategoryStats_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"ref":"CategoryStats","required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_CategoryResponse-or-null_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"dataType":"union","subSchemas":[{"ref":"CategoryResponse"},{"dataType":"enum","enums":[null]}],"required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "BusinessProductCatalogItem": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"double","required":true},
+            "categoryId": {"dataType":"double","required":true},
+            "sku": {"dataType":"string"},
+            "barcode": {"dataType":"string"},
+            "name": {"dataType":"string","required":true},
+            "description": {"dataType":"string"},
+            "brand": {"dataType":"string"},
+            "model": {"dataType":"string"},
+            "unit": {"dataType":"string"},
+            "weight": {"dataType":"double"},
+            "dimensions": {"dataType":"string"},
+            "taxType": {"dataType":"string","required":true},
+            "taxRate": {"dataType":"double","required":true},
+            "minStock": {"dataType":"double","required":true},
+            "maxStock": {"dataType":"double"},
+            "reorderPoint": {"dataType":"double","required":true},
+            "isActive": {"dataType":"boolean","required":true},
+            "status": {"dataType":"string","required":true},
+            "expiryDate": {"dataType":"string"},
+            "category": {"dataType":"nestedObjectLiteral","nestedProperties":{"description":{"dataType":"string"},"name":{"dataType":"string","required":true},"id":{"dataType":"double","required":true}}},
+            "businessProduct": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"updatedAt":{"dataType":"datetime","required":true},"createdAt":{"dataType":"datetime","required":true},"lastRestock":{"dataType":"datetime"},"availableStock":{"dataType":"double","required":true},"reservedStock":{"dataType":"double","required":true},"currentStock":{"dataType":"double","required":true},"customPrice":{"dataType":"double","required":true},"businessId":{"dataType":"double","required":true},"id":{"dataType":"double","required":true}}},{"dataType":"enum","enums":[null]}]},
+            "effectivePrice": {"dataType":"double","required":true},
+            "effectiveStock": {"dataType":"double","required":true},
+            "isAvailableInBusiness": {"dataType":"boolean","required":true},
+            "stockStatus": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["IN_STOCK"]},{"dataType":"enum","enums":["LOW_STOCK"]},{"dataType":"enum","enums":["OUT_OF_STOCK"]},{"dataType":"enum","enums":["NOT_CONFIGURED"]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "BusinessProductCatalogResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "items": {"dataType":"array","array":{"dataType":"refObject","ref":"BusinessProductCatalogItem"},"required":true},
+            "meta": {"ref":"PaginationMeta","required":true},
+            "summary": {"dataType":"nestedObjectLiteral","nestedProperties":{"outOfStockProducts":{"dataType":"double","required":true},"lowStockProducts":{"dataType":"double","required":true},"inStockProducts":{"dataType":"double","required":true},"notConfiguredProducts":{"dataType":"double","required":true},"configuredProducts":{"dataType":"double","required":true},"totalProducts":{"dataType":"double","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_BusinessProductCatalogResponse_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"ref":"BusinessProductCatalogResponse","required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "BulkConfigureProductsResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "configured": {"dataType":"double","required":true},
+            "skipped": {"dataType":"double","required":true},
+            "errors": {"dataType":"array","array":{"dataType":"string"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ApiResponse_BulkConfigureProductsResponse_": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "data": {"ref":"BulkConfigureProductsResponse","required":true},
+            "message": {"dataType":"string"},
+            "timestamp": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "BulkConfigureProductsRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "businessId": {"dataType":"double","required":true},
+            "productIds": {"dataType":"array","array":{"dataType":"double"},"required":true},
+            "defaultCustomPrice": {"dataType":"double"},
+            "defaultStock": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "BusinessProductResponse": {
         "dataType": "refObject",
         "properties": {
@@ -991,17 +1234,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ApiResponse_any_": {
-        "dataType": "refObject",
-        "properties": {
-            "success": {"dataType":"boolean","required":true},
-            "data": {"dataType":"any","required":true},
-            "message": {"dataType":"string"},
-            "timestamp": {"dataType":"string","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "RefreshTokenRequestBody": {
         "dataType": "refObject",
         "properties": {
@@ -1248,8 +1480,8 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_getSuppliers: Record<string, TsoaRoute.ParameterSchema> = {
-                page: {"in":"query","name":"page","dataType":"double"},
-                limit: {"in":"query","name":"limit","dataType":"double"},
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                limit: {"default":10,"in":"query","name":"limit","dataType":"double"},
                 search: {"in":"query","name":"search","dataType":"string"},
                 sortBy: {"in":"query","name":"sortBy","dataType":"string"},
                 sortOrder: {"in":"query","name":"sortOrder","dataType":"union","subSchemas":[{"dataType":"enum","enums":["asc"]},{"dataType":"enum","enums":["desc"]}]},
@@ -1260,6 +1492,8 @@ export function RegisterRoutes(app: Router) {
                 maxCreditLimit: {"in":"query","name":"maxCreditLimit","dataType":"double"},
                 minBalance: {"in":"query","name":"minBalance","dataType":"double"},
                 maxBalance: {"in":"query","name":"maxBalance","dataType":"double"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.get('/suppliers',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1291,6 +1525,8 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_getSupplierById: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.get('/suppliers/:id',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1322,6 +1558,8 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_createSupplier: Record<string, TsoaRoute.ParameterSchema> = {
                 supplierData: {"in":"body","name":"supplierData","required":true,"ref":"CreateSupplierRequestNew"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.post('/suppliers',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1354,6 +1592,8 @@ export function RegisterRoutes(app: Router) {
         const argsSupplierController_updateSupplier: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
                 supplierData: {"in":"body","name":"supplierData","required":true,"ref":"UpdateSupplierRequest"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.put('/suppliers/:id',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1385,6 +1625,8 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_deleteSupplier: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.delete('/suppliers/:id',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1417,6 +1659,7 @@ export function RegisterRoutes(app: Router) {
         const argsSupplierController_searchSuppliers: Record<string, TsoaRoute.ParameterSchema> = {
                 query: {"in":"query","name":"query","required":true,"dataType":"string"},
                 businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.get('/suppliers/search',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1448,6 +1691,8 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_activateSupplier: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.put('/suppliers/:id/activate',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1479,6 +1724,8 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_deactivateSupplier: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.put('/suppliers/:id/deactivate',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1510,6 +1757,8 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_suspendSupplier: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.put('/suppliers/:id/suspend',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1541,6 +1790,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSupplierController_getSuppliersWithDebt: Record<string, TsoaRoute.ParameterSchema> = {
                 businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
         };
         app.get('/suppliers/with-debt',
             authenticateMiddleware([{"bearerAuth":[]}]),
@@ -1559,6 +1809,104 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getSuppliersWithDebt',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSupplierController_getSupplierStats: Record<string, TsoaRoute.ParameterSchema> = {
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/suppliers/stats',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(SupplierController)),
+            ...(fetchMiddlewares<RequestHandler>(SupplierController.prototype.getSupplierStats)),
+
+            async function SupplierController_getSupplierStats(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSupplierController_getSupplierStats, request, response });
+
+                const controller = new SupplierController();
+
+              await templateService.apiHandler({
+                methodName: 'getSupplierStats',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSupplierController_getSuppliersByStatus: Record<string, TsoaRoute.ParameterSchema> = {
+                status: {"in":"path","name":"status","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ACTIVE"]},{"dataType":"enum","enums":["INACTIVE"]},{"dataType":"enum","enums":["SUSPENDED"]}]},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/suppliers/by-status/:status',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(SupplierController)),
+            ...(fetchMiddlewares<RequestHandler>(SupplierController.prototype.getSuppliersByStatus)),
+
+            async function SupplierController_getSuppliersByStatus(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSupplierController_getSuppliersByStatus, request, response });
+
+                const controller = new SupplierController();
+
+              await templateService.apiHandler({
+                methodName: 'getSuppliersByStatus',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSupplierController_getSuppliersByDepartment: Record<string, TsoaRoute.ParameterSchema> = {
+                department: {"in":"path","name":"department","required":true,"dataType":"union","subSchemas":[{"dataType":"enum","enums":["LA_PAZ"]},{"dataType":"enum","enums":["COCHABAMBA"]},{"dataType":"enum","enums":["SANTA_CRUZ"]},{"dataType":"enum","enums":["ORURO"]},{"dataType":"enum","enums":["POTOSI"]},{"dataType":"enum","enums":["CHUQUISACA"]},{"dataType":"enum","enums":["TARIJA"]},{"dataType":"enum","enums":["BENI"]},{"dataType":"enum","enums":["PANDO"]}]},
+                businessId: {"in":"query","name":"businessId","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/suppliers/by-department/:department',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(SupplierController)),
+            ...(fetchMiddlewares<RequestHandler>(SupplierController.prototype.getSuppliersByDepartment)),
+
+            async function SupplierController_getSuppliersByDepartment(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSupplierController_getSuppliersByDepartment, request, response });
+
+                const controller = new SupplierController();
+
+              await templateService.apiHandler({
+                methodName: 'getSuppliersByDepartment',
                 controller,
                 response,
                 next,
@@ -2432,6 +2780,600 @@ export function RegisterRoutes(app: Router) {
                 next,
                 validatedArgs,
                 successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_getCategories: Record<string, TsoaRoute.ParameterSchema> = {
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                limit: {"default":10,"in":"query","name":"limit","dataType":"double"},
+                search: {"in":"query","name":"search","dataType":"string"},
+                isActive: {"in":"query","name":"isActive","dataType":"boolean"},
+                parentId: {"in":"query","name":"parentId","dataType":"double"},
+                hasProducts: {"in":"query","name":"hasProducts","dataType":"boolean"},
+                sortBy: {"in":"query","name":"sortBy","dataType":"string"},
+                sortOrder: {"in":"query","name":"sortOrder","dataType":"union","subSchemas":[{"dataType":"enum","enums":["asc"]},{"dataType":"enum","enums":["desc"]}]},
+        };
+        app.get('/categories',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.getCategories)),
+
+            async function CategoryController_getCategories(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_getCategories, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'getCategories',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_getCategoryById: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/categories/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.getCategoryById)),
+
+            async function CategoryController_getCategoryById(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_getCategoryById, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'getCategoryById',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_createCategory: Record<string, TsoaRoute.ParameterSchema> = {
+                categoryData: {"in":"body","name":"categoryData","required":true,"ref":"CreateCategoryRequest"},
+        };
+        app.post('/categories',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.createCategory)),
+
+            async function CategoryController_createCategory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_createCategory, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'createCategory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_updateCategory: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                categoryData: {"in":"body","name":"categoryData","required":true,"ref":"UpdateCategoryRequest"},
+        };
+        app.put('/categories/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.updateCategory)),
+
+            async function CategoryController_updateCategory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_updateCategory, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'updateCategory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_deleteCategory: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.delete('/categories/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.deleteCategory)),
+
+            async function CategoryController_deleteCategory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_deleteCategory, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteCategory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_getCategoryTree: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/categories/tree',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.getCategoryTree)),
+
+            async function CategoryController_getCategoryTree(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_getCategoryTree, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'getCategoryTree',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_getCategoryChildren: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/categories/:id/children',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.getCategoryChildren)),
+
+            async function CategoryController_getCategoryChildren(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_getCategoryChildren, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'getCategoryChildren',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_activateCategory: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.put('/categories/:id/activate',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.activateCategory)),
+
+            async function CategoryController_activateCategory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_activateCategory, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'activateCategory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_deactivateCategory: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.put('/categories/:id/deactivate',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.deactivateCategory)),
+
+            async function CategoryController_deactivateCategory(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_deactivateCategory, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'deactivateCategory',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_getCategoryStats: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/categories/stats',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.getCategoryStats)),
+
+            async function CategoryController_getCategoryStats(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_getCategoryStats, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'getCategoryStats',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCategoryController_searchCategoryByName: Record<string, TsoaRoute.ParameterSchema> = {
+                name: {"in":"path","name":"name","required":true,"dataType":"string"},
+        };
+        app.get('/categories/search/:name',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController)),
+            ...(fetchMiddlewares<RequestHandler>(CategoryController.prototype.searchCategoryByName)),
+
+            async function CategoryController_searchCategoryByName(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCategoryController_searchCategoryByName, request, response });
+
+                const controller = new CategoryController();
+
+              await templateService.apiHandler({
+                methodName: 'searchCategoryByName',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBusinessProductController_getBusinessProductCatalogForCurrentUser: Record<string, TsoaRoute.ParameterSchema> = {
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                limit: {"default":20,"in":"query","name":"limit","dataType":"double"},
+                categoryId: {"in":"query","name":"categoryId","dataType":"double"},
+                search: {"in":"query","name":"search","dataType":"string"},
+                isActive: {"in":"query","name":"isActive","dataType":"boolean"},
+                stockStatus: {"in":"query","name":"stockStatus","dataType":"union","subSchemas":[{"dataType":"enum","enums":["IN_STOCK"]},{"dataType":"enum","enums":["LOW_STOCK"]},{"dataType":"enum","enums":["OUT_OF_STOCK"]},{"dataType":"enum","enums":["NOT_CONFIGURED"]}]},
+                isConfigured: {"in":"query","name":"isConfigured","dataType":"boolean"},
+                brand: {"in":"query","name":"brand","dataType":"string"},
+                minPrice: {"in":"query","name":"minPrice","dataType":"double"},
+                maxPrice: {"in":"query","name":"maxPrice","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/business-products/catalog',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController)),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController.prototype.getBusinessProductCatalogForCurrentUser)),
+
+            async function BusinessProductController_getBusinessProductCatalogForCurrentUser(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBusinessProductController_getBusinessProductCatalogForCurrentUser, request, response });
+
+                const controller = new BusinessProductController();
+
+              await templateService.apiHandler({
+                methodName: 'getBusinessProductCatalogForCurrentUser',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBusinessProductController_getProductsByCategoryForCurrentUser: Record<string, TsoaRoute.ParameterSchema> = {
+                categoryId: {"in":"path","name":"categoryId","required":true,"dataType":"double"},
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                limit: {"default":50,"in":"query","name":"limit","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/business-products/catalog/category/:categoryId',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController)),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController.prototype.getProductsByCategoryForCurrentUser)),
+
+            async function BusinessProductController_getProductsByCategoryForCurrentUser(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBusinessProductController_getProductsByCategoryForCurrentUser, request, response });
+
+                const controller = new BusinessProductController();
+
+              await templateService.apiHandler({
+                methodName: 'getProductsByCategoryForCurrentUser',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBusinessProductController_getCatalogStatsForCurrentUser: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/business-products/catalog/stats',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController)),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController.prototype.getCatalogStatsForCurrentUser)),
+
+            async function BusinessProductController_getCatalogStatsForCurrentUser(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBusinessProductController_getCatalogStatsForCurrentUser, request, response });
+
+                const controller = new BusinessProductController();
+
+              await templateService.apiHandler({
+                methodName: 'getCatalogStatsForCurrentUser',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBusinessProductController_bulkConfigureProducts: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"body","name":"request","required":true,"ref":"BulkConfigureProductsRequest"},
+                expressRequest: {"in":"request","name":"expressRequest","dataType":"object"},
+        };
+        app.post('/business-products/catalog/bulk-configure',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController)),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController.prototype.bulkConfigureProducts)),
+
+            async function BusinessProductController_bulkConfigureProducts(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBusinessProductController_bulkConfigureProducts, request, response });
+
+                const controller = new BusinessProductController();
+
+              await templateService.apiHandler({
+                methodName: 'bulkConfigureProducts',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBusinessProductController_getBusinessProductCatalog: Record<string, TsoaRoute.ParameterSchema> = {
+                businessId: {"in":"path","name":"businessId","required":true,"dataType":"double"},
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                limit: {"default":20,"in":"query","name":"limit","dataType":"double"},
+                categoryId: {"in":"query","name":"categoryId","dataType":"double"},
+                search: {"in":"query","name":"search","dataType":"string"},
+                isActive: {"in":"query","name":"isActive","dataType":"boolean"},
+                stockStatus: {"in":"query","name":"stockStatus","dataType":"union","subSchemas":[{"dataType":"enum","enums":["IN_STOCK"]},{"dataType":"enum","enums":["LOW_STOCK"]},{"dataType":"enum","enums":["OUT_OF_STOCK"]},{"dataType":"enum","enums":["NOT_CONFIGURED"]}]},
+                isConfigured: {"in":"query","name":"isConfigured","dataType":"boolean"},
+                brand: {"in":"query","name":"brand","dataType":"string"},
+                minPrice: {"in":"query","name":"minPrice","dataType":"double"},
+                maxPrice: {"in":"query","name":"maxPrice","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/business-products/catalog/:businessId',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController)),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController.prototype.getBusinessProductCatalog)),
+
+            async function BusinessProductController_getBusinessProductCatalog(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBusinessProductController_getBusinessProductCatalog, request, response });
+
+                const controller = new BusinessProductController();
+
+              await templateService.apiHandler({
+                methodName: 'getBusinessProductCatalog',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBusinessProductController_getProductsByCategoryForBusiness: Record<string, TsoaRoute.ParameterSchema> = {
+                businessId: {"in":"path","name":"businessId","required":true,"dataType":"double"},
+                categoryId: {"in":"path","name":"categoryId","required":true,"dataType":"double"},
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                limit: {"default":50,"in":"query","name":"limit","dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/business-products/catalog/:businessId/category/:categoryId',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController)),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController.prototype.getProductsByCategoryForBusiness)),
+
+            async function BusinessProductController_getProductsByCategoryForBusiness(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBusinessProductController_getProductsByCategoryForBusiness, request, response });
+
+                const controller = new BusinessProductController();
+
+              await templateService.apiHandler({
+                methodName: 'getProductsByCategoryForBusiness',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsBusinessProductController_getCatalogStats: Record<string, TsoaRoute.ParameterSchema> = {
+                businessId: {"in":"path","name":"businessId","required":true,"dataType":"double"},
+                request: {"in":"request","name":"request","dataType":"object"},
+        };
+        app.get('/business-products/catalog/:businessId/stats',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController)),
+            ...(fetchMiddlewares<RequestHandler>(BusinessProductController.prototype.getCatalogStats)),
+
+            async function BusinessProductController_getCatalogStats(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsBusinessProductController_getCatalogStats, request, response });
+
+                const controller = new BusinessProductController();
+
+              await templateService.apiHandler({
+                methodName: 'getCatalogStats',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);

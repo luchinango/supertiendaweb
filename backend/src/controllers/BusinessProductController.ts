@@ -19,6 +19,7 @@ import { Request as ExpressRequest } from 'express';
 import { BasePaginationController } from './basePaginationController';
 import { IBusinessProductService } from '../interfaces/services/IBusinessProductService';
 import { DIContainer } from '../container/DIContainer';
+import { BusinessProductCatalogService } from '../services/BusinessProductCatalogService';
 import {
   BusinessProductResponse,
   CreateBusinessProductRequest,
@@ -28,20 +29,27 @@ import {
   BusinessProductSearchResult,
   StockAdjustmentRequest,
   RestockRequest,
+  BusinessProductCatalogResponse,
+  BusinessProductCatalogFilters,
+  BulkConfigureProductsRequest,
+  BulkConfigureProductsResponse,
   ApiResponse,
   PaginatedApiResponse
 } from '../types/api';
 import { PaginationParams } from '../types/pagination';
 import { createSuccessResponse } from '../helpers/responseHelpers';
+import prisma from '../config/prisma';
 
 @Route('business-products')
 @Tags('Productos de Negocio')
 export class BusinessProductController extends BasePaginationController {
   private businessProductService: IBusinessProductService;
+  private catalogService: BusinessProductCatalogService;
 
   constructor() {
     super();
     this.businessProductService = DIContainer.getBusinessProductService();
+    this.catalogService = new BusinessProductCatalogService(prisma);
   }
 
   /**
@@ -52,6 +60,237 @@ export class BusinessProductController extends BasePaginationController {
       page: page || 1,
       limit: Math.min(limit || 10, 100)
     };
+  }
+
+  /**
+   * Obtiene el catálogo completo de productos para el business del usuario autenticado
+   * Incluye productos configurados y no configurados
+   */
+  @Get('catalog')
+  @Security('bearerAuth')
+  @SuccessResponse('200', 'Catálogo de productos obtenido exitosamente')
+  @Response<ApiResponse<string>>('400', 'Parámetros inválidos')
+  @Response<ApiResponse<string>>('404', 'Business no encontrado')
+  @Response<ApiResponse<string>>('401', 'No autorizado')
+  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  public async getBusinessProductCatalogForCurrentUser(
+    @Query() page: number = 1,
+    @Query() limit: number = 20,
+    @Query() categoryId?: number,
+    @Query() search?: string,
+    @Query() isActive?: boolean,
+    @Query() stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'NOT_CONFIGURED',
+    @Query() isConfigured?: boolean,
+    @Query() brand?: string,
+    @Query() minPrice?: number,
+    @Query() maxPrice?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
+    const businessId = this.getBusinessId(undefined, request!);
+
+    const paginationParams: PaginationParams = {
+      page: Math.max(1, page),
+      limit: Math.min(100, Math.max(1, limit))
+    };
+
+    const filters: BusinessProductCatalogFilters = {
+      categoryId,
+      search,
+      isActive,
+      stockStatus,
+      isConfigured,
+      brand,
+      minPrice,
+      maxPrice
+    };
+
+    const result = await this.catalogService.getBusinessProductCatalog(
+      businessId,
+      paginationParams,
+      filters
+    );
+
+    return this.createSuccessResponse(result, 'Catálogo de productos obtenido exitosamente');
+  }
+
+  /**
+   * Obtiene productos por categoría para el business del usuario autenticado
+   */
+  @Get('catalog/category/{categoryId}')
+  @Security('bearerAuth')
+  @SuccessResponse('200', 'Productos por categoría obtenidos exitosamente')
+  @Response<ApiResponse<string>>('400', 'Parámetros inválidos')
+  @Response<ApiResponse<string>>('404', 'Business o categoría no encontrados')
+  @Response<ApiResponse<string>>('401', 'No autorizado')
+  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  public async getProductsByCategoryForCurrentUser(
+    @Path() categoryId: number,
+    @Query() page: number = 1,
+    @Query() limit: number = 50,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
+    const businessId = this.getBusinessId(undefined, request!);
+
+    const paginationParams: PaginationParams = {
+      page: Math.max(1, page),
+      limit: Math.min(100, Math.max(1, limit))
+    };
+
+    const result = await this.catalogService.getProductsByCategory(
+      businessId,
+      categoryId,
+      paginationParams
+    );
+
+    return this.createSuccessResponse(result, 'Productos por categoría obtenidos exitosamente');
+  }
+
+  /**
+   * Obtener estadísticas del catálogo para el business del usuario autenticado
+   */
+  @Get('catalog/stats')
+  @Security('bearerAuth')
+  @SuccessResponse('200', 'Estadísticas del catálogo obtenidas exitosamente')
+  @Response<ApiResponse<string>>('400', 'Parámetros inválidos')
+  @Response<ApiResponse<string>>('404', 'Business no encontrado')
+  @Response<ApiResponse<string>>('401', 'No autorizado')
+  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  public async getCatalogStatsForCurrentUser(
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<any>> {
+    const businessId = this.getBusinessId(undefined, request!);
+
+    const stats = await this.catalogService.getCatalogStats(businessId);
+    return this.createSuccessResponse(stats, 'Estadísticas del catálogo obtenidas exitosamente');
+  }
+
+  /**
+   * Configurar productos masivamente para un business
+   */
+  @Post('catalog/bulk-configure')
+  @Security('bearerAuth')
+  @SuccessResponse('201', 'Productos configurados exitosamente')
+  @Response<ApiResponse<string>>('400', 'Datos inválidos')
+  @Response<ApiResponse<string>>('404', 'Business no encontrado')
+  @Response<ApiResponse<string>>('401', 'No autorizado')
+  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  public async bulkConfigureProducts(
+    @Body() request: BulkConfigureProductsRequest,
+    @Request() expressRequest?: ExpressRequest
+  ): Promise<ApiResponse<BulkConfigureProductsResponse>> {
+    if (!request.businessId) {
+      request.businessId = this.getBusinessId(undefined, expressRequest!);
+    }
+
+    const result = await this.catalogService.bulkConfigureProducts(request);
+    this.setStatus(201);
+    return this.createSuccessResponse(result, 'Productos configurados exitosamente');
+  }
+
+  /**
+   * Obtiene el catálogo completo de productos para un business específico
+   * Incluye productos configurados y no configurados
+   */
+  @Get('catalog/{businessId}')
+  @Security('bearerAuth')
+  @SuccessResponse('200', 'Catálogo de productos obtenido exitosamente')
+  @Response<ApiResponse<string>>('400', 'Parámetros inválidos')
+  @Response<ApiResponse<string>>('404', 'Business no encontrado')
+  @Response<ApiResponse<string>>('401', 'No autorizado')
+  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  public async getBusinessProductCatalog(
+    @Path() businessId: number,
+    @Query() page: number = 1,
+    @Query() limit: number = 20,
+    @Query() categoryId?: number,
+    @Query() search?: string,
+    @Query() isActive?: boolean,
+    @Query() stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'NOT_CONFIGURED',
+    @Query() isConfigured?: boolean,
+    @Query() brand?: string,
+    @Query() minPrice?: number,
+    @Query() maxPrice?: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
+    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+
+    const paginationParams: PaginationParams = {
+      page: Math.max(1, page),
+      limit: Math.min(100, Math.max(1, limit))
+    };
+
+    const filters: BusinessProductCatalogFilters = {
+      categoryId,
+      search,
+      isActive,
+      stockStatus,
+      isConfigured,
+      brand,
+      minPrice,
+      maxPrice
+    };
+
+    const result = await this.catalogService.getBusinessProductCatalog(
+      effectiveBusinessId,
+      paginationParams,
+      filters
+    );
+
+    return this.createSuccessResponse(result, 'Catálogo de productos obtenido exitosamente');
+  }
+
+  /**
+   * Obtiene productos por categoría para un business específico
+   * Incluye productos configurados y no configurados de esa categoría
+   */
+  @Get('catalog/{businessId}/category/{categoryId}')
+  @Security('bearerAuth')
+  @SuccessResponse('200', 'Productos por categoría obtenidos exitosamente')
+  @Response<ApiResponse<string>>('400', 'Parámetros inválidos')
+  @Response<ApiResponse<string>>('404', 'Business o categoría no encontrados')
+  @Response<ApiResponse<string>>('401', 'No autorizado')
+  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  public async getProductsByCategoryForBusiness(
+    @Path() businessId: number,
+    @Path() categoryId: number,
+    @Query() page: number = 1,
+    @Query() limit: number = 50,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
+    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+
+    const paginationParams: PaginationParams = {
+      page: Math.max(1, page),
+      limit: Math.min(100, Math.max(1, limit))
+    };
+
+    const result = await this.catalogService.getProductsByCategory(
+      effectiveBusinessId,
+      categoryId,
+      paginationParams
+    );
+
+    return this.createSuccessResponse(result, 'Productos por categoría obtenidos exitosamente');
+  }
+
+  /**
+   * Obtener estadísticas del catálogo de productos para un business específico
+   */
+  @Get('catalog/{businessId}/stats')
+  @Security('bearerAuth')
+  @SuccessResponse('200', 'Estadísticas del catálogo obtenidas exitosamente')
+  @Response<ApiResponse<string>>('400', 'Parámetros inválidos')
+  @Response<ApiResponse<string>>('404', 'Business no encontrado')
+  @Response<ApiResponse<string>>('401', 'No autorizado')
+  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  public async getCatalogStats(
+    @Path() businessId: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<any>> {
+    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+
+    const stats = await this.catalogService.getCatalogStats(effectiveBusinessId);
+    return this.createSuccessResponse(stats, 'Estadísticas del catálogo obtenidas exitosamente');
   }
 
   /**
@@ -130,7 +369,6 @@ export class BusinessProductController extends BasePaginationController {
     try {
       const paginationParams = this.validatePagination(page, limit);
 
-      // Si no se proporciona businessId, lo obtenemos del token
       const effectiveBusinessId = businessId || this.getBusinessId(businessId, request!);
 
       const additionalFilters = {
@@ -148,7 +386,6 @@ export class BusinessProductController extends BasePaginationController {
 
       const result = await this.businessProductService.findMany(paginationParams, additionalFilters);
 
-      // El resultado ya está en formato estándar {data, meta}
       return this.createPaginatedResponse(result, 'Lista de productos de negocio obtenida exitosamente');
     } catch (error) {
       return this.handlePaginationError(error);

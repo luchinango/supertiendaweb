@@ -5,17 +5,11 @@
 import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, MoreVertical, Pencil } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Edit } from "lucide-react"
 import { NewSupplierDialog } from '@/components/features/suppliers/NewSupplierDialog'
 import { EditSupplierDialog } from '@/components/features/suppliers/EditSupplierDialog'
 import { ProveedoresOverlay } from '@/components/features/suppliers/ProveedoresOverlay'
+import { useSuppliers, useSuppliersStats, useSuppliersWithDebt } from '@/hooks/useSuppliers'
 import type {Supplier} from "@/types/types"; // Ajusta la ruta según tu proyecto
 // Ajusta la ruta según tu proyecto
 
@@ -59,15 +53,15 @@ interface SupplierStats {
   averagePaymentTerms: number
 }
 function getLastPurchaseStatus(lastPurchase: string | null) {
-  if (!lastPurchase) return { label: "Sin compras", color: "text-gray-400" }
-  const now = new Date()
-  const last = new Date(lastPurchase)
-  const diffMonths = (now.getFullYear() - last.getFullYear()) * 12 + (now.getMonth() - last.getMonth())
-  const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
-  if (diffMonths < 1) return { label: `${diffDays} días`, color: "text-green-600 font-bold" }
-  if (diffMonths === 1) return { label: "1 mes", color: "text-orange-500 font-bold" }
-  if (diffMonths === 2) return { label: "2 meses", color: "text-red-600 font-bold" }
-  return { label: `${diffMonths} meses`, color: "text-red-600 font-bold" }
+  if (!lastPurchase) return { text: "Nunca", color: "text-gray-400" }
+
+  const today = new Date()
+  const purchaseDate = new Date(lastPurchase)
+  const diffInDays = Math.floor((today.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (diffInDays <= 7) return { text: `${diffInDays}d`, color: "text-green-600" }
+  if (diffInDays <= 30) return { text: `${diffInDays}d`, color: "text-yellow-600" }
+  return { text: `${diffInDays}d`, color: "text-red-600" }
 }
 
 // --- 1) declara el array de compras de ejemplo y su tipo ---
@@ -87,7 +81,11 @@ const sampleSupplierPurchases: Purchase[] = [
 
 // --- Inicio del componente ---
 export default function Proveedores() {
-  const [suppliers, setSuppliers]   = useState<Supplier[]>([])
+  // Usar los nuevos hooks de suppliers
+  const { suppliers, isLoading: isLoadingSuppliers, mutate: mutateSuppliers, addSupplier, editSupplier: editSupplierHook } = useSuppliers();
+  const { stats, isLoading: isLoadingStats } = useSuppliersStats();
+  const { suppliers: suppliersWithDebt, isLoading: isLoadingDebt } = useSuppliersWithDebt();
+
   const [editId, setEditId]         = useState<number | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
@@ -112,21 +110,9 @@ export default function Proveedores() {
   const [kardexEnd,   setKardexEnd]   = useState<string>("")
   const [selectedId, setSelectedId]   = useState<number|null>(null)
   const [detail, setDetail]           = useState<SupplierDetail|null>(null)
-  const [debtSuppliers, setDebtSuppliers] = useState<DebtSupplier[]>([])
-  const [stats, setStats]             = useState<SupplierStats|null>(null)
+  // Los debtSuppliers y stats ahora vienen de los hooks
 
-  // fetch inicial (mantén tu lógica)
-  useEffect(() => {
-    fetch("/api/suppliers")
-      .then(r => r.json())
-      .then((data: Supplier[] | { suppliers: Supplier[] }) => {
-        const list = Array.isArray(data) ? data : data.suppliers
-        setSuppliers(list)
-      })
-      .catch(console.error)
-  }, [])
-
-  // 2) Detalle al click
+  // Detalle al click - mantener este ya que es específico
   useEffect(() => {
     if (selectedId != null) {
       fetch(`/api/suppliers/${selectedId}`)
@@ -135,22 +121,6 @@ export default function Proveedores() {
         .catch(() => setDetail(null))
     }
   }, [selectedId])
-
-  // 3) Proveedores con deuda
-  useEffect(() => {
-    fetch("/api/suppliers/debt")
-      .then(r => r.json())
-      .then((d: DebtSupplier[]) => setDebtSuppliers(d))
-      .catch(() => setDebtSuppliers([]))
-  }, [])
-
-  // 4) Estadísticas
-  useEffect(() => {
-    fetch("/api/suppliers/stats")
-      .then(r => r.json())
-      .then((st: SupplierStats) => setStats(st))
-      .catch(() => setStats(null))
-  }, [])
 
   // --- 2) añade tipos a los filtros/maps ---
   const filteredSuppliers = suppliers.filter((supplier: Supplier) =>
@@ -193,18 +163,13 @@ export default function Proveedores() {
     status: string
     notes: string
   }) {
-    console.log("📤 POST /api/suppliers:", data)
-    const res = await fetch("/api/suppliers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-    const json = await res.json()
-    if (!res.ok) {
-      throw new Error(json?.message || "Error al crear proveedor")
+    try {
+      await addSupplier(data);
+      console.log("✅ Proveedor creado exitosamente");
+    } catch (error) {
+      console.error("❌ Error al crear proveedor:", error);
+      throw error;
     }
-    console.log("✅ Creado en backend:", json)
-    // Aquí refresca tu lista con setSuppliers o similar
   }
 
   function handleEditSupplier(supplier: Supplier) {
@@ -217,8 +182,13 @@ export default function Proveedores() {
     setEditId(id)
     setIsEditOpen(true)
   }
-  function onEdit(upd: Supplier) {
-    setSuppliers(prev => prev.map(x => x.id === upd.id ? upd : x))
+  async function onEdit(updatedSupplier: Supplier) {
+    try {
+      await editSupplierHook(updatedSupplier.id, updatedSupplier);
+      console.log("✅ Proveedor actualizado exitosamente");
+    } catch (error) {
+      console.error("❌ Error al actualizar proveedor:", error);
+    }
   }
 
   // filtrar siempre sobre todo el array
@@ -232,17 +202,7 @@ export default function Proveedores() {
   // solo muestro los primeros `visibleCount`
   const visible = filtered.slice(0, visibleCount)
 
-  // En el useEffect de fetch, añade page/limit/search en la URL
-  useEffect(() => {
-     const params = new URLSearchParams({ page: String(page), limit: String(pageSize) })
-     if (searchTerm.length>=2) params.set("search", searchTerm)
-     fetch(`/api/suppliers?${params}`)
-       .then(r=>r.json())
-       .then(d=>{
-         setSuppliers(d.suppliers)
-         setTotalPages(d.totalPages)
-       })
-  }, [page, pageSize, searchTerm])
+  // Este useEffect ya no es necesario porque los datos vienen del hook
 
   return (
     <div className="space-y-6">
@@ -283,9 +243,9 @@ export default function Proveedores() {
           const totalComprado = supplierPurchases.reduce((sum, p) => sum + p.amount, 0)
           const totalDeuda = supplier.hasDebt && supplier.debtAmount ? supplier.debtAmount : 0
           const lastPurchase = supplierPurchases
-  .map(p => p.date)
-  .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null
-const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
+            .map(p => p.date)
+            .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null
+          const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
 
           return (
             <div
@@ -309,24 +269,25 @@ const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
                 Bs {totalComprado}
               </div>
               {/* Deuda total */}
-              <div className="text-sm text-right">
-                {totalDeuda > 0 ? `Bs ${totalDeuda}` : "Sin deuda"}
+              <div className={`text-sm text-right font-semibold ${totalDeuda > 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                Bs {totalDeuda}
               </div>
               {/* Última compra */}
-              <div className="text-sm text-right">
-                <span className={lastPurchaseStatus.color}>{lastPurchaseStatus.label}</span>
+              <div className={`text-sm text-right ${lastPurchaseStatus.color}`}>
+                {lastPurchaseStatus.text}
               </div>
               {/* Lápiz (evita que abra el Kardex con e.stopPropagation()) */}
               <div className="text-right">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleEditSupplier(supplier)
                   }}
-                  className="p-1 text-gray-600 hover:text-gray-800"
                 >
-                  ✏️
-                </button>
+                  <Edit className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           );
@@ -374,12 +335,14 @@ const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
       </div>
       {/* Fin de los controles de paginación */}
 
-      <Button
-        className="w-full bg-black text-white border border-gray-300"
-        onClick={() => setShowNewSupplier(true)}
-      >
-        Crear proveedor
-      </Button>
+      <div className="flex justify-center pt-4">
+        <Button
+          variant="outline"
+          onClick={() => setShowNewSupplier(true)}
+        >
+          Agregar nuevo proveedor
+        </Button>
+      </div>
 
       {/* Overlay de proveedores */}
       <ProveedoresOverlay
@@ -387,39 +350,20 @@ const lastPurchaseStatus = getLastPurchaseStatus(lastPurchase)
         onOpenChange={setShowOverlay}
         suppliers={suppliers.map((s) => ({
           id: s.id,
-          code: s.code ?? "",
           name: s.name,
-          phone: s.phone ?? "",
-          initials: s.initials ?? "",
-          hasDebt: s.hasDebt ?? false,
-          debtAmount: s.debtAmount ?? 0,
+          phone: s.phone || "—",
+          initials: s.name.split(" ").map(n => n[0]).join("").toUpperCase(),
+          hasDebt: s.hasDebt || false,
+          debtAmount: s.debtAmount || 0,
         }))}
       />
 
       {editingSupplier && (
         <EditSupplierDialog
           supplierId={editingSupplier.id}
-          open={true}
-          onOpenChange={() => setEditingSupplier(null)}
-          onEdit={(updatedSupplier: Supplier) => {
-            setSuppliers(
-              suppliers.map((s) =>
-                s.id === updatedSupplier.id
-                  ? {
-                      id: s.id,
-                      name: updatedSupplier.name,
-                      phone: updatedSupplier.phone,
-                      email: updatedSupplier.email,
-                      ...(updatedSupplier.contact !== undefined ? { contact: updatedSupplier.contact } : {}),
-                      ...(updatedSupplier.initials !== undefined ? { initials: updatedSupplier.initials } : {}),
-                      ...(updatedSupplier.hasDebt !== undefined ? { hasDebt: updatedSupplier.hasDebt } : {}),
-                      ...(updatedSupplier.debtAmount !== undefined ? { debtAmount: updatedSupplier.debtAmount } : {}),
-                    }
-                  : s
-              )
-            );
-            setEditingSupplier(null);
-          }}
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          onEdit={onEdit}
         />
       )}
 

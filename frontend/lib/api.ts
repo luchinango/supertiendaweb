@@ -1,22 +1,21 @@
+import apiClient from './api-client';
+
 async function fetchAPI(endpoint: string, method = 'GET', body: any = null) {
-  const options: RequestInit = { method }
-  
-  if (body) {
-    options.headers = { 'Content-Type': 'application/json' }
-    options.body = JSON.stringify(body)
+  try {
+    const response = await apiClient({
+      url: `/${endpoint}`,
+      method: method.toLowerCase() as any,
+      data: body,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    const message = error.response?.data?.error || error.response?.data?.message || error.message || 'An error occurred';
+    throw new Error(message);
   }
-
-  const response = await fetch(`/api/${endpoint}`, options)
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.error || 'An error occurred')
-  }
-
-  return data
 }
 
 export const api = {
   getProducts: () => fetchAPI('products'),
   createProduct: (product: any) => fetchAPI('products', 'POST', product),
-}
+};

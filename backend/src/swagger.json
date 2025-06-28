@@ -1336,6 +1336,27 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ApiResponse_any_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"_36_Enums.PurchaseOrderStatus": {
 				"type": "string",
 				"enum": [
@@ -2231,6 +2252,786 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CategoryResponse": {
+				"properties": {
+					"sortOrder": {
+						"type": "number",
+						"format": "double"
+					},
+					"isActive": {
+						"type": "boolean"
+					},
+					"parentId": {
+						"type": "number",
+						"format": "double"
+					},
+					"description": {
+						"type": "string"
+					},
+					"deletedBy": {
+						"type": "number",
+						"format": "double"
+					},
+					"updatedBy": {
+						"type": "number",
+						"format": "double"
+					},
+					"createdBy": {
+						"type": "number",
+						"format": "double"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"productCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"children": {
+						"items": {
+							"$ref": "#/components/schemas/CategoryResponse"
+						},
+						"type": "array"
+					},
+					"parent": {
+						"$ref": "#/components/schemas/CategoryResponse"
+					}
+				},
+				"required": [
+					"sortOrder",
+					"isActive",
+					"parentId",
+					"description",
+					"deletedBy",
+					"updatedBy",
+					"createdBy",
+					"deletedAt",
+					"updatedAt",
+					"createdAt",
+					"id",
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DefaultSelection_Prisma._36_CategoryPayload_": {
+				"properties": {
+					"sortOrder": {
+						"type": "number",
+						"format": "double"
+					},
+					"isActive": {
+						"type": "boolean"
+					},
+					"parentId": {
+						"type": "number",
+						"format": "double"
+					},
+					"description": {
+						"type": "string"
+					},
+					"deletedBy": {
+						"type": "number",
+						"format": "double"
+					},
+					"updatedBy": {
+						"type": "number",
+						"format": "double"
+					},
+					"createdBy": {
+						"type": "number",
+						"format": "double"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"sortOrder",
+					"isActive",
+					"parentId",
+					"description",
+					"deletedBy",
+					"updatedBy",
+					"createdBy",
+					"deletedAt",
+					"updatedAt",
+					"createdAt",
+					"id",
+					"name"
+				],
+				"type": "object"
+			},
+			"PaginatedApiResponse_CategoryResponse_": {
+				"description": "Respuesta estándar para listas paginadas",
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/CategoryResponse"
+						},
+						"type": "array"
+					},
+					"meta": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"meta",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_CategoryResponse_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"$ref": "#/components/schemas/CategoryResponse"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateCategoryRequest": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"parentId": {
+						"type": "number",
+						"format": "double"
+					},
+					"isActive": {
+						"type": "boolean"
+					},
+					"sortOrder": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateCategoryRequest": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"parentId": {
+						"type": "number",
+						"format": "double"
+					},
+					"isActive": {
+						"type": "boolean"
+					},
+					"sortOrder": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CategoryTreeNode": {
+				"properties": {
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"isActive": {
+						"type": "boolean"
+					},
+					"sortOrder": {
+						"type": "number",
+						"format": "double"
+					},
+					"productCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"children": {
+						"items": {
+							"$ref": "#/components/schemas/CategoryTreeNode"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"isActive",
+					"sortOrder",
+					"productCount",
+					"children"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_CategoryTreeNode-Array_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/CategoryTreeNode"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_CategoryResponse-Array_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/CategoryResponse"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CategoryStats": {
+				"properties": {
+					"totalCategories": {
+						"type": "number",
+						"format": "double"
+					},
+					"activeCategories": {
+						"type": "number",
+						"format": "double"
+					},
+					"inactiveCategories": {
+						"type": "number",
+						"format": "double"
+					},
+					"categoriesWithProducts": {
+						"type": "number",
+						"format": "double"
+					},
+					"averageProductsPerCategory": {
+						"type": "number",
+						"format": "double"
+					},
+					"topCategoriesByProducts": {
+						"items": {
+							"properties": {
+								"productCount": {
+									"type": "number",
+									"format": "double"
+								},
+								"name": {
+									"type": "string"
+								},
+								"id": {
+									"type": "number",
+									"format": "double"
+								}
+							},
+							"required": [
+								"productCount",
+								"name",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"totalCategories",
+					"activeCategories",
+					"inactiveCategories",
+					"categoriesWithProducts",
+					"averageProductsPerCategory",
+					"topCategoriesByProducts"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_CategoryStats_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"$ref": "#/components/schemas/CategoryStats"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_CategoryResponse-or-null_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/CategoryResponse"
+							}
+						],
+						"nullable": true
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"BusinessProductCatalogItem": {
+				"properties": {
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"categoryId": {
+						"type": "number",
+						"format": "double"
+					},
+					"sku": {
+						"type": "string"
+					},
+					"barcode": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"brand": {
+						"type": "string"
+					},
+					"model": {
+						"type": "string"
+					},
+					"unit": {
+						"type": "string"
+					},
+					"weight": {
+						"type": "number",
+						"format": "double"
+					},
+					"dimensions": {
+						"type": "string"
+					},
+					"taxType": {
+						"type": "string"
+					},
+					"taxRate": {
+						"type": "number",
+						"format": "double"
+					},
+					"minStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"maxStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"reorderPoint": {
+						"type": "number",
+						"format": "double"
+					},
+					"isActive": {
+						"type": "boolean"
+					},
+					"status": {
+						"type": "string"
+					},
+					"expiryDate": {
+						"type": "string"
+					},
+					"category": {
+						"properties": {
+							"description": {
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							},
+							"id": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"name",
+							"id"
+						],
+						"type": "object"
+					},
+					"businessProduct": {
+						"properties": {
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"lastRestock": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"availableStock": {
+								"type": "number",
+								"format": "double"
+							},
+							"reservedStock": {
+								"type": "number",
+								"format": "double"
+							},
+							"currentStock": {
+								"type": "number",
+								"format": "double"
+							},
+							"customPrice": {
+								"type": "number",
+								"format": "double"
+							},
+							"businessId": {
+								"type": "number",
+								"format": "double"
+							},
+							"id": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"updatedAt",
+							"createdAt",
+							"availableStock",
+							"reservedStock",
+							"currentStock",
+							"customPrice",
+							"businessId",
+							"id"
+						],
+						"type": "object",
+						"nullable": true
+					},
+					"effectivePrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"effectiveStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"isAvailableInBusiness": {
+						"type": "boolean"
+					},
+					"stockStatus": {
+						"type": "string",
+						"enum": [
+							"IN_STOCK",
+							"LOW_STOCK",
+							"OUT_OF_STOCK",
+							"NOT_CONFIGURED"
+						]
+					}
+				},
+				"required": [
+					"id",
+					"categoryId",
+					"name",
+					"taxType",
+					"taxRate",
+					"minStock",
+					"reorderPoint",
+					"isActive",
+					"status",
+					"effectivePrice",
+					"effectiveStock",
+					"isAvailableInBusiness",
+					"stockStatus"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"BusinessProductCatalogResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/BusinessProductCatalogItem"
+						},
+						"type": "array"
+					},
+					"meta": {
+						"$ref": "#/components/schemas/PaginationMeta"
+					},
+					"summary": {
+						"properties": {
+							"outOfStockProducts": {
+								"type": "number",
+								"format": "double"
+							},
+							"lowStockProducts": {
+								"type": "number",
+								"format": "double"
+							},
+							"inStockProducts": {
+								"type": "number",
+								"format": "double"
+							},
+							"notConfiguredProducts": {
+								"type": "number",
+								"format": "double"
+							},
+							"configuredProducts": {
+								"type": "number",
+								"format": "double"
+							},
+							"totalProducts": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"outOfStockProducts",
+							"lowStockProducts",
+							"inStockProducts",
+							"notConfiguredProducts",
+							"configuredProducts",
+							"totalProducts"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"items",
+					"meta",
+					"summary"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_BusinessProductCatalogResponse_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"$ref": "#/components/schemas/BusinessProductCatalogResponse"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"BulkConfigureProductsResponse": {
+				"properties": {
+					"configured": {
+						"type": "number",
+						"format": "double"
+					},
+					"skipped": {
+						"type": "number",
+						"format": "double"
+					},
+					"errors": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"configured",
+					"skipped",
+					"errors"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_BulkConfigureProductsResponse_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"$ref": "#/components/schemas/BulkConfigureProductsResponse"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"BulkConfigureProductsRequest": {
+				"properties": {
+					"businessId": {
+						"type": "number",
+						"format": "double"
+					},
+					"productIds": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array"
+					},
+					"defaultCustomPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"defaultStock": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"businessId",
+					"productIds"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"BusinessProductResponse": {
 				"properties": {
 					"id": {
@@ -3054,27 +3855,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ApiResponse_any_": {
-				"properties": {
-					"success": {
-						"type": "boolean"
-					},
-					"data": {},
-					"message": {
-						"type": "string"
-					},
-					"timestamp": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"success",
-					"data",
-					"timestamp"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"RefreshTokenRequestBody": {
 				"properties": {
 					"refreshToken": {
@@ -3821,7 +4601,7 @@
 						}
 					}
 				},
-				"description": "Obtener lista de proveedores con paginación estándar",
+				"description": "Obtener lista de proveedores con paginación y filtros avanzados",
 				"tags": [
 					"Proveedores"
 				],
@@ -3836,6 +4616,7 @@
 						"name": "page",
 						"required": false,
 						"schema": {
+							"default": 1,
 							"format": "double",
 							"type": "number"
 						}
@@ -3845,6 +4626,7 @@
 						"name": "limit",
 						"required": false,
 						"schema": {
+							"default": 10,
 							"format": "double",
 							"type": "number"
 						}
@@ -3958,6 +4740,15 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			},
@@ -4024,7 +4815,17 @@
 						"bearerAuth": []
 					}
 				],
-				"parameters": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -4086,6 +4887,15 @@
 						"in": "path",
 						"name": "id",
 						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
 						"schema": {
 							"format": "double",
 							"type": "number"
@@ -4165,6 +4975,15 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				],
 				"requestBody": {
@@ -4230,6 +5049,15 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			}
@@ -4269,7 +5097,7 @@
 						}
 					}
 				},
-				"description": "Buscar proveedores",
+				"description": "Buscar proveedores por término de búsqueda",
 				"tags": [
 					"Proveedores"
 				],
@@ -4352,6 +5180,15 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			}
@@ -4405,6 +5242,15 @@
 						"in": "path",
 						"name": "id",
 						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
 						"schema": {
 							"format": "double",
 							"type": "number"
@@ -4466,6 +5312,15 @@
 							"format": "double",
 							"type": "number"
 						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			}
@@ -4495,7 +5350,7 @@
 						}
 					}
 				},
-				"description": "Obtener proveedores con deuda",
+				"description": "Obtener proveedores con deuda pendiente",
 				"tags": [
 					"Proveedores"
 				],
@@ -4505,6 +5360,199 @@
 					}
 				],
 				"parameters": [
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/suppliers/stats": {
+			"get": {
+				"operationId": "GetSupplierStats",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_any_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener estadísticas de proveedores",
+				"tags": [
+					"Proveedores"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/suppliers/by-status/{status}": {
+			"get": {
+				"operationId": "GetSuppliersByStatus",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_SupplierResponse-Array_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Estado inválido",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener proveedores por estado",
+				"tags": [
+					"Proveedores"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "status",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"ACTIVE",
+								"INACTIVE",
+								"SUSPENDED"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "businessId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/suppliers/by-department/{department}": {
+			"get": {
+				"operationId": "GetSuppliersByDepartment",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_SupplierResponse-Array_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Departamento inválido",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener proveedores por departamento",
+				"tags": [
+					"Proveedores"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "department",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"LA_PAZ",
+								"COCHABAMBA",
+								"SANTA_CRUZ",
+								"ORURO",
+								"POTOSI",
+								"CHUQUISACA",
+								"TARIJA",
+								"BENI",
+								"PANDO"
+							]
+						}
+					},
 					{
 						"in": "query",
 						"name": "businessId",
@@ -6202,6 +7250,1538 @@
 						"in": "query",
 						"name": "excludeId",
 						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/categories": {
+			"get": {
+				"operationId": "GetCategories",
+				"responses": {
+					"200": {
+						"description": "Categorías obtenidas exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PaginatedApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener todas las categorías con paginación",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 10,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "isActive",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "parentId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "hasProducts",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateCategory",
+				"responses": {
+					"201": {
+						"description": "Categoría creada exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Datos inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Crear una nueva categoría",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateCategoryRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/categories/{id}": {
+			"get": {
+				"operationId": "GetCategoryById",
+				"responses": {
+					"200": {
+						"description": "Categoría obtenida exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Categoría no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener una categoría por ID",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateCategory",
+				"responses": {
+					"200": {
+						"description": "Categoría actualizada exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Datos inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Categoría no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Actualizar una categoría existente",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateCategoryRequest"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteCategory",
+				"responses": {
+					"204": {
+						"description": "Categoría eliminada exitosamente"
+					},
+					"400": {
+						"description": "No se puede eliminar la categoría",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Categoría no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Eliminar una categoría (soft delete)",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/categories/tree": {
+			"get": {
+				"operationId": "GetCategoryTree",
+				"responses": {
+					"200": {
+						"description": "Árbol de categorías obtenido exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryTreeNode-Array_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener árbol jerárquico de categorías",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/categories/{id}/children": {
+			"get": {
+				"operationId": "GetCategoryChildren",
+				"responses": {
+					"200": {
+						"description": "Subcategorías obtenidas exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse-Array_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Categoría padre no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener subcategorías de una categoría padre",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/categories/{id}/activate": {
+			"put": {
+				"operationId": "ActivateCategory",
+				"responses": {
+					"200": {
+						"description": "Categoría activada exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "La categoría ya está activa",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Categoría no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Activar una categoría",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/categories/{id}/deactivate": {
+			"put": {
+				"operationId": "DeactivateCategory",
+				"responses": {
+					"200": {
+						"description": "Categoría desactivada exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "No se puede desactivar la categoría",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Categoría no encontrada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Desactivar una categoría",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/categories/stats": {
+			"get": {
+				"operationId": "GetCategoryStats",
+				"responses": {
+					"200": {
+						"description": "Estadísticas obtenidas exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryStats_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener estadísticas de categorías",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/categories/search/{name}": {
+			"get": {
+				"operationId": "SearchCategoryByName",
+				"responses": {
+					"200": {
+						"description": "Búsqueda completada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse-or-null_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Buscar categoría por nombre",
+				"tags": [
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "name",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/business-products/catalog": {
+			"get": {
+				"operationId": "GetBusinessProductCatalogForCurrentUser",
+				"responses": {
+					"200": {
+						"description": "Catálogo de productos obtenido exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_BusinessProductCatalogResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Parámetros inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Business no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtiene el catálogo completo de productos para el business del usuario autenticado\nIncluye productos configurados y no configurados",
+				"tags": [
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 20,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "categoryId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "isActive",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "stockStatus",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"IN_STOCK",
+								"LOW_STOCK",
+								"OUT_OF_STOCK",
+								"NOT_CONFIGURED"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "isConfigured",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "brand",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "minPrice",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "maxPrice",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/business-products/catalog/category/{categoryId}": {
+			"get": {
+				"operationId": "GetProductsByCategoryForCurrentUser",
+				"responses": {
+					"200": {
+						"description": "Productos por categoría obtenidos exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_BusinessProductCatalogResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Parámetros inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Business o categoría no encontrados",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtiene productos por categoría para el business del usuario autenticado",
+				"tags": [
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "categoryId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/business-products/catalog/stats": {
+			"get": {
+				"operationId": "GetCatalogStatsForCurrentUser",
+				"responses": {
+					"200": {
+						"description": "Estadísticas del catálogo obtenidas exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_any_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Parámetros inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Business no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener estadísticas del catálogo para el business del usuario autenticado",
+				"tags": [
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/business-products/catalog/bulk-configure": {
+			"post": {
+				"operationId": "BulkConfigureProducts",
+				"responses": {
+					"201": {
+						"description": "Productos configurados exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_BulkConfigureProductsResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Datos inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Business no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Configurar productos masivamente para un business",
+				"tags": [
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/BulkConfigureProductsRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/business-products/catalog/{businessId}": {
+			"get": {
+				"operationId": "GetBusinessProductCatalog",
+				"responses": {
+					"200": {
+						"description": "Catálogo de productos obtenido exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_BusinessProductCatalogResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Parámetros inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Business no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtiene el catálogo completo de productos para un business específico\nIncluye productos configurados y no configurados",
+				"tags": [
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "businessId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 20,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "categoryId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "isActive",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "stockStatus",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"IN_STOCK",
+								"LOW_STOCK",
+								"OUT_OF_STOCK",
+								"NOT_CONFIGURED"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "isConfigured",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "brand",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "minPrice",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "maxPrice",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/business-products/catalog/{businessId}/category/{categoryId}": {
+			"get": {
+				"operationId": "GetProductsByCategoryForBusiness",
+				"responses": {
+					"200": {
+						"description": "Productos por categoría obtenidos exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_BusinessProductCatalogResponse_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Parámetros inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Business o categoría no encontrados",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtiene productos por categoría para un business específico\nIncluye productos configurados y no configurados de esa categoría",
+				"tags": [
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "businessId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "path",
+						"name": "categoryId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/business-products/catalog/{businessId}/stats": {
+			"get": {
+				"operationId": "GetCatalogStats",
+				"responses": {
+					"200": {
+						"description": "Estadísticas del catálogo obtenidas exitosamente",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_any_"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Parámetros inválidos",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Business no encontrado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Error interno del servidor",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_string_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Obtener estadísticas del catálogo de productos para un business específico",
+				"tags": [
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "businessId",
+						"required": true,
 						"schema": {
 							"format": "double",
 							"type": "number"

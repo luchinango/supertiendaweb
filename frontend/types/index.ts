@@ -1,18 +1,42 @@
-export * from './Product'
-export * from './Customer'
-export * from './Employee'
-export * from './Category'
-export * from './Credit'
+export type { Category } from './Category'
+export type {
+  Product,
+  ProductFormData,
+  CatalogProduct,
+  BusinessProduct,
+  CatalogResponse,
+  CatalogFilters,
+  StockStatus
+} from './Product'
+export type { CartItem } from './Cart'
+export type { CashRegister } from './CashRegister'
+export type { Customer } from './Customer'
+export type { Employee } from './Employee'
+export type { Credit } from './Credit'
+export type { Promotion } from './Promotion'
+export type { Expense } from './Expense'
 
-export * from './Cart'
-export * from './CashRegister'
-export * from './Promotion'
-export * from './Report'
+export type {
+  ApiResponse,
+  ApiError,
+  PaginatedResponse,
+  SearchParams,
+  PaginationMeta,
+  NewPaginatedResponse,
+  PaginationOptions,
+  CrudResponse
+} from './Api'
 
-export * from './Api'
-export * from './Auth'
+export type {
+  User,
+  EmployeeData,
+  AuthContextType,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse
+} from './Auth'
 
 export type { Business } from './Business'
-export type { Transaction, Sale, Purchase, Expense as TransactionExpense } from './Transaction'
-export type { Expense } from './Expense'
+export type { Transaction, Sale, Purchase } from './Transaction'
 export type { Supplier } from './types'

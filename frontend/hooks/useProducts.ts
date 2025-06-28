@@ -27,9 +27,8 @@ interface UseProductsOptions {
 export function useProducts(options: UseProductsOptions = {}) {
   const { categoryId, enabled = true, refreshInterval } = options;
 
-  console.log("categoryId", categoryId);
-  const key = categoryId && categoryId != 0 ? `/api/products/category/${categoryId}` : "/api/products";
-  const fetcherFn = categoryId && categoryId != 0 ? () => getProductsByCategory(categoryId) : getProducts;
+  const key = categoryId && categoryId !== 0 ? `products-category-${categoryId}` : "products";
+  const fetcherFn = categoryId && categoryId !== 0 ? () => getProductsByCategory(categoryId) : getProducts;
 
   const {data, error, isLoading, mutate} = useSWR<Product[]>(
     enabled ? key : null,

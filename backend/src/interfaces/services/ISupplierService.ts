@@ -12,29 +12,30 @@ export interface ISupplierService {
       maxCreditLimit?: number;
       minBalance?: number;
       maxBalance?: number;
+      businessId?: number;
     }
   ): Promise<SupplierListResponse>;
 
-  getSupplierById(id: number): Promise<SupplierResponse | null>;
+  getSupplierById(id: number, businessId: number): Promise<SupplierResponse | null>;
 
-  createSupplier(data: CreateSupplierRequestNew, businessId?: number): Promise<SupplierResponse>;
+  createSupplier(data: CreateSupplierRequestNew, businessId: number): Promise<SupplierResponse>;
 
-  updateSupplier(id: number, data: UpdateSupplierRequest): Promise<SupplierResponse>;
+  updateSupplier(id: number, data: UpdateSupplierRequest, businessId: number): Promise<SupplierResponse>;
 
-  deleteSupplier(id: number): Promise<void>;
+  deleteSupplier(id: number, businessId: number): Promise<void>;
 
-  searchSuppliers(query: string, businessId?: number): Promise<SupplierSearchResult[]>;
+  searchSuppliers(query: string, businessId: number): Promise<SupplierSearchResult[]>;
 
-  activateSupplier(id: number): Promise<SupplierResponse>;
-  deactivateSupplier(id: number): Promise<SupplierResponse>;
-  suspendSupplier(id: number): Promise<SupplierResponse>;
+  activateSupplier(id: number, businessId: number): Promise<SupplierResponse>;
+  deactivateSupplier(id: number, businessId: number): Promise<SupplierResponse>;
+  suspendSupplier(id: number, businessId: number): Promise<SupplierResponse>;
 
-  getSuppliersWithDebt(businessId?: number): Promise<SupplierResponse[]>;
-  getSuppliersByStatus(status: string, businessId?: number): Promise<SupplierResponse[]>;
-  getSuppliersByDepartment(department: string, businessId?: number): Promise<SupplierResponse[]>;
+  getSuppliersWithDebt(businessId: number): Promise<SupplierResponse[]>;
+  getSuppliersByStatus(status: string, businessId: number): Promise<SupplierResponse[]>;
+  getSuppliersByDepartment(department: string, businessId: number): Promise<SupplierResponse[]>;
 
-  getSupplierStats(businessId?: number): Promise<SupplierStats>;
+  getSupplierStats(businessId: number): Promise<SupplierStats>;
 
-  checkCodeExists(code: string, businessId?: number, excludeId?: number): Promise<boolean>;
-  checkDocumentNumberExists(documentNumber: string, businessId?: number, excludeId?: number): Promise<boolean>;
+  checkCodeExists(code: string, businessId: number, excludeId?: number): Promise<boolean>;
+  checkDocumentNumberExists(documentNumber: string, businessId: number, excludeId?: number): Promise<boolean>;
 }

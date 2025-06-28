@@ -1,27 +1,34 @@
-import {fetcher} from "@/lib/fetcher";
-import type {Product} from "@/types/Product";
+import { PaginatedService, buildPaginationQuery } from "@/lib/api-utils";
+import { fetcher } from "@/lib/fetcher";
+import type { Product } from "@/types/Product";
+import type { PaginationOptions, NewPaginatedResponse } from "@/types/Api";
 
-const BASE_URL = "/api/products";
+class ProductsService extends PaginatedService<Product> {
+  constructor() {
+    super("/products");
+  }
 
-export const getProducts = () => fetcher<Product[]>(BASE_URL);
+  async getByCategory(categoryId: number, options: PaginationOptions = {}): Promise<Product[]> {
+    const baseQuery = buildPaginationQuery(options);
+    const separator = baseQuery ? '&' : '?';
+    const categoryQuery = `categoryId=${categoryId}`;
+    const fullQuery = baseQuery ? `${baseQuery}&${categoryQuery}` : `?${categoryQuery}`;
 
-export const getProductsByCategory = (categoryId: number) => fetcher<Product[]>(`${BASE_URL}/category/${categoryId}`);
+    const response = await fetcher<NewPaginatedResponse<Product>>(`/products${fullQuery}`);
+    return response.data;
+  }
+}
 
-export const getProductById = (id: number) => fetcher<Product>(`${BASE_URL}/${id}`);
+const productsService = new ProductsService();
 
-export const createProduct = (product: Partial<Product>) =>
-  fetcher<Product>(BASE_URL, {
-    method: "POST",
-    body: JSON.stringify(product),
-  });
-
+export const getProducts = () => productsService.getAll();
+export const getProductsByCategory = (categoryId: number) => productsService.getByCategory(categoryId);
+export const getProductsPaginated = (page: number = 1, limit: number = 10) =>
+  productsService.getList({ page, limit });
+export const getProductById = (id: number) => productsService.getById(id);
+export const createProduct = (product: Partial<Product>) => productsService.create(product);
 export const updateProduct = (id: number, product: Partial<Product>) =>
-  fetcher<Product>(`${BASE_URL}/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(product),
-  });
+  productsService.update(id, product);
+export const deleteProduct = (id: number) => productsService.delete(id);
 
-export const deleteProduct = (id: number) =>
-  fetcher<void>(`${BASE_URL}/${id}`, {
-    method: "DELETE",
-  });
+export { productsService };

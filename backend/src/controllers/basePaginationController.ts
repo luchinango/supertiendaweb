@@ -20,8 +20,14 @@ export abstract class BasePaginationController extends Controller {
     }
 
     const user = (request as any).user;
-    if (!user?.businessId) {
-      throw new Error('No se pudo obtener el businessId del token de autenticación');
+
+    if (!user) {
+      throw new Error('No se encontró información del usuario en el token de autenticación');
+    }
+
+    if (!user.businessId) {
+      console.log('⚠️ BusinessId no encontrado en token, usando business por defecto');
+      return 1;
     }
 
     return user.businessId;

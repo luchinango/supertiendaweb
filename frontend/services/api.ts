@@ -1,15 +1,14 @@
 import type { EmployeeDto }  from "@/types/EmployeeDto";
+import apiClient from "@/lib/api-client";
 
-export const swrFetcher = (url: string) =>
-  fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  }).then((res) => {
-    if (!res.ok) throw new Error(res.statusText);
-    return res.json();
-  });
+export const swrFetcher = async (url: string) => {
+  try {
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || error.message || 'Error fetching data');
+  }
+};
 
 /*
 export const fetchEmployees = async (url: string): Promise<EmployeeDto[]> => {

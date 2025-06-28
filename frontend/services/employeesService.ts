@@ -1,25 +1,21 @@
-import {fetcher} from "@/lib/fetcher";
-import type {Employee} from "@/types/Employee";
+import { PaginatedService } from "@/lib/api-utils";
+import type { Employee } from "@/types/Employee";
 
-const BASE_URL = "/api/employees";
+class EmployeesService extends PaginatedService<Employee> {
+  constructor() {
+    super("/employees");
+  }
+}
 
-export const getEmployees = () => fetcher<Employee[]>(BASE_URL);
+const employeesService = new EmployeesService();
 
-export const getEmployeeById = (id: number) => fetcher<Employee>(`${BASE_URL}/${id}`);
-
-export const createEmployee = (employee: Partial<Employee>) =>
-  fetcher<Employee>(BASE_URL, {
-    method: "POST",
-    body: JSON.stringify(employee),
-  });
-
+export const getEmployees = () => employeesService.getAll();
+export const getEmployeesPaginated = (page: number = 1, limit: number = 10) =>
+  employeesService.getList({ page, limit });
+export const getEmployeeById = (id: number) => employeesService.getById(id);
+export const createEmployee = (employee: Partial<Employee>) => employeesService.create(employee);
 export const updateEmployee = (id: number, employee: Partial<Employee>) =>
-  fetcher<Employee>(`${BASE_URL}/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(employee),
-  });
+  employeesService.update(id, employee);
+export const deleteEmployee = (id: number) => employeesService.delete(id);
 
-export const deleteEmployee = (id: number) =>
-  fetcher<void>(`${BASE_URL}/${id}`, {
-    method: "DELETE",
-  });
+export { employeesService };

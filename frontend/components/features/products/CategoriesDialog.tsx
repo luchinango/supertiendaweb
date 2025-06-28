@@ -1,31 +1,21 @@
 "use client"
 
-import useSWR from "swr"
-import {useEffect, useState} from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ChevronRight, Pencil, Plus, X } from "lucide-react"
-
-interface Category {
-  id: string
-  name: string
-  description?: string
-  is_active: boolean
-  count?: number
-}
+import { Plus, ChevronRight, Pencil, X } from "lucide-react"
+import { useState } from "react"
+import { useCategories } from "@/hooks/useCategories"
 
 interface CategoriesDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
-
 export function CategoriesDialog({ open, onOpenChange }: CategoriesDialogProps) {
   const [showNewCategory, setShowNewCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
 
-  const {data: categories, error, isLoading} = useSWR<Category[]>(open ? `/api/categories` : null, fetcher)
+  const {categories, error, isLoading} = useCategories()
 
   if (isLoading) {
     return <div className="p-4">Loading categories...</div>

@@ -2,9 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import useSWR from 'swr'
-
-// Función para hacer fetch de los datos
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+import { getReports, type ReportData } from '@/services/reportsService'
 
 // Función para formatear números con separador de miles según la configuración de Bolivia
 const formatNumber = (value: number) =>
@@ -64,7 +62,7 @@ function DashboardCard({
 
 export default function Home() {
   // Usa la URL del endpoint según corresponda, por ejemplo, vía variable de entorno
-  const { data, error } = useSWR('/api/reports', fetcher)
+  const { data, error } = useSWR<ReportData>('reports', getReports)
 
   if (error) return <div>Error al cargar los datos.</div>
   if (!data) return <div>Cargando...</div>
@@ -84,22 +82,21 @@ export default function Home() {
       >
         <DashboardCard
           title="Ventas Totales"
-          value={`Bs. ${data.totalSales}`}
+          value={`Bs. ${data.totalSales || 0}`}
         />
         <DashboardCard
           title="Productos Vendidos"
-          value={data.productsSold}
+          value={data.productsSold || 0}
         />
         <DashboardCard
           title="Clientes Activos"
-          value={data.activeCustomers}
+          value={data.activeCustomers || 0}
         />
         <DashboardCard
           title="Inventario Total"
-          value={`Bs. ${data.totalInventory}`}
+          value={`Bs. ${data.totalInventory || 0}`}
         />
       </div>
     </div>
   )
 }
-

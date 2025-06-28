@@ -3,17 +3,19 @@ import {SupplierStatus, DocumentType, Department} from '../../prisma/generated';
 import {Decimal} from '@prisma/client/runtime/library';
 
 import {
-  SupplierQueryParams,
   CreateSupplierRequest,
   UpdateSupplierRequest,
   SupplierResponse,
   SupplierListResponse,
   SupplierStats,
-  SupplierSearchResult
-} from '../types/supplierTypes';
+  SupplierSearchResult,
+  CreateSupplierRequestNew
+} from '../types/api';
 import { PaginationParams } from '../types/pagination';
+import { ISupplierService } from '../interfaces/services/ISupplierService';
+import { NotFoundError, ConflictError, ValidationError } from '../errors';
 
-export class SupplierService {
+export class SupplierService implements ISupplierService {
   private convertToSupplierResponse(supplier: any): SupplierResponse {
     return {
       id: supplier.id,
@@ -31,8 +33,8 @@ export class SupplierService {
       country: supplier.country,
       postalCode: supplier.postalCode,
       paymentTerms: supplier.paymentTerms,
-      creditLimit: supplier.creditLimit,
-      currentBalance: supplier.currentBalance,
+      creditLimit: supplier.creditLimit ? Number(supplier.creditLimit) : undefined,
+      currentBalance: Number(supplier.currentBalance),
       status: supplier.status,
       notes: supplier.notes,
       createdAt: supplier.createdAt,
@@ -41,68 +43,36 @@ export class SupplierService {
       createdBy: supplier.createdBy,
       updatedBy: supplier.updatedBy,
       deletedBy: supplier.deletedBy,
-      business: supplier.business ? {
-        id: supplier.business.id,
-        name: supplier.business.name
-      } : undefined,
-      purchaseOrders: supplier.purchaseOrders?.map((po: any) => ({
-        id: po.id,
-        poNumber: po.poNumber,
-        status: po.status,
-        totalAmount: po.totalAmount
-      })) || [],
-      supplierDebts: supplier.supplierDebts?.map((debt: any) => ({
-        id: debt.id,
-        amount: debt.amount,
-        paidAmount: debt.paidAmount,
-        dueDate: debt.dueDate,
-        isPaid: debt.isPaid
-      })) || []
     };
   }
 
-  async getSupplierById(id: number): Promise<SupplierResponse | null> {
-    const supplier = await prisma.supplier.findUnique({
-      where: {id},
-      include: {
-        business: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        purchaseOrders: {
-          select: {
-            id: true,
-            poNumber: true,
-            status: true,
-            totalAmount: true
-          }
-        },
-        supplierDebts: {
-          select: {
-            id: true,
-            amount: true,
-            paidAmount: true,
-            dueDate: true,
-            isPaid: true
-          }
-        }
-      }
+  async getSupplierById(id: number, businessId: number): Promise<SupplierResponse | null> {
+    const supplier = await prisma.supplier.findFirst({
+      where: {
+        id,
+        businessId,
+        deletedAt: null
+      },
     });
+
     return supplier ? this.convertToSupplierResponse(supplier) : null;
   }
 
   async searchSuppliers(query: string, businessId: number): Promise<SupplierSearchResult[]> {
     const suppliers = await prisma.supplier.findMany({
       where: {
-        OR: [
-          {name: {contains: query, mode: 'insensitive'}},
-          {code: {contains: query, mode: 'insensitive'}},
-          {documentNumber: {contains: query, mode: 'insensitive'}},
-          {contactPerson: {contains: query, mode: 'insensitive'}}
-        ],
-        businessId
+        AND: [
+          { businessId },
+          { deletedAt: null },
+          {
+            OR: [
+              {name: {contains: query, mode: 'insensitive'}},
+              {code: {contains: query, mode: 'insensitive'}},
+              {documentNumber: {contains: query, mode: 'insensitive'}},
+              {contactPerson: {contains: query, mode: 'insensitive'}}
+            ]
+          }
+        ]
       },
       select: {
         id: true,
@@ -117,6 +87,7 @@ export class SupplierService {
       take: 10,
       orderBy: {name: 'asc'}
     });
+
     return suppliers.map(supplier => ({
       id: supplier.id,
       name: supplier.name,
@@ -125,7 +96,7 @@ export class SupplierService {
       phone: supplier.phone || undefined,
       email: supplier.email || undefined,
       status: supplier.status,
-      currentBalance: supplier.currentBalance
+      currentBalance: Number(supplier.currentBalance)
     }));
   }
 
@@ -139,12 +110,15 @@ export class SupplierService {
       maxCreditLimit?: number;
       minBalance?: number;
       maxBalance?: number;
+      businessId?: number;
     }
   ): Promise<SupplierListResponse> {
     const {
       page = 1,
       limit = 10,
       search,
+      sortBy,
+      sortOrder
     } = paginationParams;
 
     const {
@@ -154,13 +128,15 @@ export class SupplierService {
       minCreditLimit,
       maxCreditLimit,
       minBalance,
-      maxBalance
+      maxBalance,
+      businessId = 1
     } = additionalFilters || {};
 
-    const businessId = 1; // Por ahora fijo, luego se puede obtener del contexto
-
     const skip = (page - 1) * limit;
-    const where: any = {businessId};
+    const where: any = {
+      businessId,
+      deletedAt: null
+    };
 
     if (search) {
       where.OR = [
@@ -171,224 +147,265 @@ export class SupplierService {
         {email: {contains: search, mode: 'insensitive'}}
       ];
     }
+
     if (status) where.status = status as SupplierStatus;
     if (department) where.department = department as Department;
     if (documentType) where.documentType = documentType as DocumentType;
-    if (minCreditLimit !== undefined) where.creditLimit = {gte: new Decimal(minCreditLimit)};
-    if (maxCreditLimit !== undefined) where.creditLimit = {...where.creditLimit, lte: new Decimal(maxCreditLimit)};
-    if (minBalance !== undefined) where.currentBalance = {gte: new Decimal(minBalance)};
-    if (maxBalance !== undefined) where.currentBalance = {...where.currentBalance, lte: new Decimal(maxBalance)};
+
+    if (minCreditLimit !== undefined) {
+      where.creditLimit = { gte: new Decimal(minCreditLimit) };
+    }
+    if (maxCreditLimit !== undefined) {
+      where.creditLimit = { ...where.creditLimit, lte: new Decimal(maxCreditLimit) };
+    }
+    if (minBalance !== undefined) {
+      where.currentBalance = { gte: new Decimal(minBalance) };
+    }
+    if (maxBalance !== undefined) {
+      where.currentBalance = { ...where.currentBalance, lte: new Decimal(maxBalance) };
+    }
+
+    // Configurar ordenamiento
+    const orderBy: any = {};
+    if (sortBy) {
+      orderBy[sortBy] = sortOrder || 'asc';
+    } else {
+      orderBy.name = 'asc';
+    }
 
     const [suppliers, total] = await Promise.all([
       prisma.supplier.findMany({
         where,
-        include: {
-          business: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-          purchaseOrders: {
-            select: {
-              id: true,
-              poNumber: true,
-              status: true,
-              totalAmount: true
-            }
-          },
-          supplierDebts: {
-            select: {
-              id: true,
-              amount: true,
-              paidAmount: true,
-              dueDate: true,
-              isPaid: true
-            }
-          }
-        },
         skip,
         take: limit,
-        orderBy: {name: 'asc'}
+        orderBy,
       }),
-      prisma.supplier.count({where})
+      prisma.supplier.count({ where }),
     ]);
 
-    const totalPages = Math.ceil(total / limit);
+    const mappedSuppliers = suppliers.map(supplier => this.convertToSupplierResponse(supplier));
+
     return {
-      data: suppliers.map(supplier => this.convertToSupplierResponse(supplier)),
+      data: mappedSuppliers,
       meta: {
         total,
         page,
         limit,
-        totalPages,
-        hasNextPage: page < totalPages,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: skip + limit < total,
         hasPrevPage: page > 1,
-        nextPage: page < totalPages ? page + 1 : null,
+        nextPage: skip + limit < total ? page + 1 : null,
         prevPage: page > 1 ? page - 1 : null,
-      }
+      },
     };
   }
 
-  async checkDocumentNumberExists(documentNumber: string, businessId: number = 1): Promise<boolean> {
-    const supplier = await prisma.supplier.findFirst({
-      where: {
-        documentNumber,
-        businessId
-      }
-    });
-    return !!supplier;
+  async checkDocumentNumberExists(documentNumber: string, businessId: number, excludeId?: number): Promise<boolean> {
+    const where: any = {
+      documentNumber,
+      businessId,
+      deletedAt: null
+    };
+
+    if (excludeId) {
+      where.id = { not: excludeId };
+    }
+
+    const count = await prisma.supplier.count({ where });
+    return count > 0;
   }
 
-  async checkCodeExists(code: string, businessId: number = 1): Promise<boolean> {
-    const supplier = await prisma.supplier.findFirst({
-      where: {
-        code,
-        businessId
-      }
-    });
-    return !!supplier;
+  async checkCodeExists(code: string, businessId: number, excludeId?: number): Promise<boolean> {
+    const where: any = {
+      code,
+      businessId,
+      deletedAt: null
+    };
+
+    if (excludeId) {
+      where.id = { not: excludeId };
+    }
+
+    const count = await prisma.supplier.count({ where });
+    return count > 0;
   }
 
-  async createSupplier(supplierData: CreateSupplierRequest, businessId: number = 1): Promise<SupplierResponse> {
-    const data: any = {
+  async createSupplier(supplierData: CreateSupplierRequestNew, businessId: number): Promise<SupplierResponse> {
+    // Validaciones
+    if (supplierData.code && await this.checkCodeExists(supplierData.code, businessId)) {
+      throw new ConflictError(`Ya existe un proveedor con el código '${supplierData.code}' en este negocio`);
+    }
+
+    if (supplierData.documentNumber && await this.checkDocumentNumberExists(supplierData.documentNumber, businessId)) {
+      throw new ConflictError(`Ya existe un proveedor con el documento '${supplierData.documentNumber}' en este negocio`);
+    }
+
+    const newSupplierData: any = {
       businessId,
       name: supplierData.name,
       paymentTerms: supplierData.paymentTerms || 30,
-      status: supplierData.status || SupplierStatus.ACTIVE
+      status: supplierData.status || SupplierStatus.ACTIVE,
+      currentBalance: new Decimal(0),
+      country: supplierData.country || 'Bolivia',
+      documentType: supplierData.documentType || DocumentType.NIT,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     // Agregar campos opcionales solo si están definidos
-    if (supplierData.code !== undefined) data.code = supplierData.code;
-    if (supplierData.documentType !== undefined) data.documentType = supplierData.documentType;
-    if (supplierData.documentNumber !== undefined) data.documentNumber = supplierData.documentNumber;
-    if (supplierData.contactPerson !== undefined) data.contactPerson = supplierData.contactPerson;
-    if (supplierData.email !== undefined) data.email = supplierData.email;
-    if (supplierData.phone !== undefined) data.phone = supplierData.phone;
-    if (supplierData.address !== undefined) data.address = supplierData.address;
-    if (supplierData.city !== undefined) data.city = supplierData.city;
-    if (supplierData.department !== undefined) data.department = supplierData.department;
-    if (supplierData.country !== undefined) data.country = supplierData.country;
-    if (supplierData.postalCode !== undefined) data.postalCode = supplierData.postalCode;
-    if (supplierData.creditLimit !== undefined) data.creditLimit = new Decimal(supplierData.creditLimit);
-    if (supplierData.notes !== undefined) data.notes = supplierData.notes;
+    if (supplierData.code !== undefined) newSupplierData.code = supplierData.code;
+    if (supplierData.documentNumber !== undefined) newSupplierData.documentNumber = supplierData.documentNumber;
+    if (supplierData.contactPerson !== undefined) newSupplierData.contactPerson = supplierData.contactPerson;
+    if (supplierData.email !== undefined) newSupplierData.email = supplierData.email;
+    if (supplierData.phone !== undefined) newSupplierData.phone = supplierData.phone;
+    if (supplierData.address !== undefined) newSupplierData.address = supplierData.address;
+    if (supplierData.city !== undefined) newSupplierData.city = supplierData.city;
+    if (supplierData.department !== undefined) newSupplierData.department = supplierData.department;
+    if (supplierData.postalCode !== undefined) newSupplierData.postalCode = supplierData.postalCode;
+    if (supplierData.creditLimit !== undefined) newSupplierData.creditLimit = new Decimal(supplierData.creditLimit);
+    if (supplierData.notes !== undefined) newSupplierData.notes = supplierData.notes;
 
     const supplier = await prisma.supplier.create({
-      data,
-      include: {
-        business: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      }
+      data: newSupplierData,
     });
+
     return this.convertToSupplierResponse(supplier);
   }
 
-  async updateSupplier(id: number, supplierData: UpdateSupplierRequest): Promise<SupplierResponse> {
-    const data: any = {};
-
-    // Agregar campos solo si están definidos
-    if (supplierData.code !== undefined) data.code = supplierData.code;
-    if (supplierData.name !== undefined) data.name = supplierData.name;
-    if (supplierData.documentType !== undefined) data.documentType = supplierData.documentType;
-    if (supplierData.documentNumber !== undefined) data.documentNumber = supplierData.documentNumber;
-    if (supplierData.contactPerson !== undefined) data.contactPerson = supplierData.contactPerson;
-    if (supplierData.email !== undefined) data.email = supplierData.email;
-    if (supplierData.phone !== undefined) data.phone = supplierData.phone;
-    if (supplierData.address !== undefined) data.address = supplierData.address;
-    if (supplierData.city !== undefined) data.city = supplierData.city;
-    if (supplierData.department !== undefined) data.department = supplierData.department;
-    if (supplierData.country !== undefined) data.country = supplierData.country;
-    if (supplierData.postalCode !== undefined) data.postalCode = supplierData.postalCode;
-    if (supplierData.paymentTerms !== undefined) data.paymentTerms = supplierData.paymentTerms;
-    if (supplierData.creditLimit !== undefined) data.creditLimit = new Decimal(supplierData.creditLimit);
-    if (supplierData.status !== undefined) data.status = supplierData.status;
-    if (supplierData.notes !== undefined) data.notes = supplierData.notes;
-
-    const supplier = await prisma.supplier.update({
-      where: {id},
-      data,
-      include: {
-        business: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        purchaseOrders: {
-          select: {
-            id: true,
-            poNumber: true,
-            status: true,
-            totalAmount: true
-          }
-        },
-        supplierDebts: {
-          select: {
-            id: true,
-            amount: true,
-            paidAmount: true,
-            dueDate: true,
-            isPaid: true
-          }
-        }
+  async updateSupplier(id: number, supplierData: UpdateSupplierRequest, businessId: number): Promise<SupplierResponse> {
+    // Verificar que el proveedor existe y pertenece al business
+    const existingSupplier = await prisma.supplier.findFirst({
+      where: {
+        id,
+        businessId,
+        deletedAt: null
       }
     });
+
+    if (!existingSupplier) {
+      throw new NotFoundError(`Proveedor con ID ${id} no encontrado en este negocio`);
+    }
+
+    // Validaciones de duplicados
+    if (supplierData.code && supplierData.code !== existingSupplier.code) {
+      if (await this.checkCodeExists(supplierData.code, businessId, id)) {
+        throw new ConflictError(`Ya existe un proveedor con el código '${supplierData.code}' en este negocio`);
+      }
+    }
+
+    if (supplierData.documentNumber && supplierData.documentNumber !== existingSupplier.documentNumber) {
+      if (await this.checkDocumentNumberExists(supplierData.documentNumber, businessId, id)) {
+        throw new ConflictError(`Ya existe un proveedor con el documento '${supplierData.documentNumber}' en este negocio`);
+      }
+    }
+
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Solo actualizar campos que están definidos
+    if (supplierData.code !== undefined) updateData.code = supplierData.code;
+    if (supplierData.name !== undefined) updateData.name = supplierData.name;
+    if (supplierData.documentType !== undefined) updateData.documentType = supplierData.documentType;
+    if (supplierData.documentNumber !== undefined) updateData.documentNumber = supplierData.documentNumber;
+    if (supplierData.contactPerson !== undefined) updateData.contactPerson = supplierData.contactPerson;
+    if (supplierData.email !== undefined) updateData.email = supplierData.email;
+    if (supplierData.phone !== undefined) updateData.phone = supplierData.phone;
+    if (supplierData.address !== undefined) updateData.address = supplierData.address;
+    if (supplierData.city !== undefined) updateData.city = supplierData.city;
+    if (supplierData.department !== undefined) updateData.department = supplierData.department;
+    if (supplierData.country !== undefined) updateData.country = supplierData.country;
+    if (supplierData.postalCode !== undefined) updateData.postalCode = supplierData.postalCode;
+    if (supplierData.paymentTerms !== undefined) updateData.paymentTerms = supplierData.paymentTerms;
+    if (supplierData.creditLimit !== undefined) updateData.creditLimit = new Decimal(supplierData.creditLimit);
+    if (supplierData.status !== undefined) updateData.status = supplierData.status;
+    if (supplierData.notes !== undefined) updateData.notes = supplierData.notes;
+
+    const supplier = await prisma.supplier.update({
+      where: { id },
+      data: updateData,
+    });
+
     return this.convertToSupplierResponse(supplier);
   }
 
-  async softDeleteSupplier(id: number): Promise<SupplierResponse> {
-    const supplier = await prisma.supplier.update({
-      where: {id},
+  async deleteSupplier(id: number, businessId: number): Promise<void> {
+    const existingSupplier = await prisma.supplier.findFirst({
+      where: {
+        id,
+        businessId,
+        deletedAt: null
+      }
+    });
+
+    if (!existingSupplier) {
+      throw new NotFoundError(`Proveedor con ID ${id} no encontrado en este negocio`);
+    }
+
+    await prisma.supplier.update({
+      where: { id },
       data: {
         deletedAt: new Date(),
-        status: SupplierStatus.INACTIVE
+        updatedAt: new Date()
       },
-      include: {
-        business: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      }
     });
-    return this.convertToSupplierResponse(supplier);
   }
 
-  async getSupplierStats(businessId: number = 1): Promise<SupplierStats> {
+  async activateSupplier(id: number, businessId: number): Promise<SupplierResponse> {
+    const supplier = await this.updateSupplier(id, { status: SupplierStatus.ACTIVE }, businessId);
+    return supplier;
+  }
+
+  async deactivateSupplier(id: number, businessId: number): Promise<SupplierResponse> {
+    const supplier = await this.updateSupplier(id, { status: SupplierStatus.INACTIVE }, businessId);
+    return supplier;
+  }
+
+  async suspendSupplier(id: number, businessId: number): Promise<SupplierResponse> {
+    const supplier = await this.updateSupplier(id, { status: SupplierStatus.SUSPENDED }, businessId);
+    return supplier;
+  }
+
+  async getSupplierStats(businessId: number): Promise<SupplierStats> {
     const [
       totalSuppliers,
       activeSuppliers,
       inactiveSuppliers,
-      totalCreditLimit,
-      totalCurrentBalance,
+      suspendedSuppliers,
       suppliersWithDebt,
-      averagePaymentTerms
+      totalDebt,
+      averageCreditLimit
     ] = await Promise.all([
-      prisma.supplier.count({where: {businessId}}),
-      prisma.supplier.count({where: {businessId, status: SupplierStatus.ACTIVE}}),
-      prisma.supplier.count({where: {businessId, status: SupplierStatus.INACTIVE}}),
-      prisma.supplier.aggregate({
-        where: {businessId},
-        _sum: {creditLimit: true}
+      prisma.supplier.count({
+        where: { businessId, deletedAt: null }
       }),
-      prisma.supplier.aggregate({
-        where: {businessId},
-        _sum: {currentBalance: true}
+      prisma.supplier.count({
+        where: { businessId, status: SupplierStatus.ACTIVE, deletedAt: null }
+      }),
+      prisma.supplier.count({
+        where: { businessId, status: SupplierStatus.INACTIVE, deletedAt: null }
+      }),
+      prisma.supplier.count({
+        where: { businessId, status: SupplierStatus.SUSPENDED, deletedAt: null }
       }),
       prisma.supplier.count({
         where: {
           businessId,
-          currentBalance: {gt: new Decimal(0)}
+          currentBalance: { gt: 0 },
+          deletedAt: null
         }
       }),
       prisma.supplier.aggregate({
-        where: {businessId},
-        _avg: {paymentTerms: true}
+        where: { businessId, deletedAt: null },
+        _sum: { currentBalance: true }
+      }),
+      prisma.supplier.aggregate({
+        where: {
+          businessId,
+          creditLimit: { not: null },
+          deletedAt: null
+        },
+        _avg: { creditLimit: true }
       })
     ]);
 
@@ -396,39 +413,49 @@ export class SupplierService {
       totalSuppliers,
       activeSuppliers,
       inactiveSuppliers,
-      totalCreditLimit: totalCreditLimit._sum.creditLimit || new Decimal(0),
-      totalCurrentBalance: totalCurrentBalance._sum.currentBalance || new Decimal(0),
+      suspendedSuppliers,
       suppliersWithDebt,
-      averagePaymentTerms: averagePaymentTerms._avg.paymentTerms || 0
+      totalDebt: Number(totalDebt._sum.currentBalance || 0),
+      averageCreditLimit: Number(averageCreditLimit._avg.creditLimit || 0)
     };
   }
 
-  async getSuppliersWithDebt(businessId: number = 1): Promise<SupplierResponse[]> {
+  async getSuppliersWithDebt(businessId: number): Promise<SupplierResponse[]> {
     const suppliers = await prisma.supplier.findMany({
       where: {
         businessId,
-        currentBalance: {gt: new Decimal(0)}
+        currentBalance: { gt: 0 },
+        deletedAt: null
       },
-      include: {
-        business: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        supplierDebts: {
-          where: {isPaid: false},
-          select: {
-            id: true,
-            amount: true,
-            paidAmount: true,
-            dueDate: true,
-            isPaid: true
-          }
-        }
-      },
-      orderBy: {currentBalance: 'desc'}
+      orderBy: { currentBalance: 'desc' }
     });
+
+    return suppliers.map(supplier => this.convertToSupplierResponse(supplier));
+  }
+
+  async getSuppliersByStatus(status: string, businessId: number): Promise<SupplierResponse[]> {
+    const suppliers = await prisma.supplier.findMany({
+      where: {
+        businessId,
+        status: status as SupplierStatus,
+        deletedAt: null
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    return suppliers.map(supplier => this.convertToSupplierResponse(supplier));
+  }
+
+  async getSuppliersByDepartment(department: string, businessId: number): Promise<SupplierResponse[]> {
+    const suppliers = await prisma.supplier.findMany({
+      where: {
+        businessId,
+        department: department as Department,
+        deletedAt: null
+      },
+      orderBy: { name: 'asc' }
+    });
+
     return suppliers.map(supplier => this.convertToSupplierResponse(supplier));
   }
 }

@@ -62,15 +62,18 @@ export class SupplierRepository implements ISupplierRepository {
       maxCreditLimit?: number;
       minBalance?: number;
       maxBalance?: number;
+      businessId?: number;
     }
   ): Promise<SupplierListResponse> {
     const { page = 1, limit = 10, search, sortBy, sortOrder } = paginationParams;
     const skip = (page - 1) * limit;
-    const businessId = 1; // Default business ID
+    const businessId = additionalFilters?.businessId || 1;
 
-    const where: any = { businessId };
+    const where: any = {
+      businessId,
+      deletedAt: null
+    };
 
-    // Search filter
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -81,7 +84,6 @@ export class SupplierRepository implements ISupplierRepository {
       ];
     }
 
-    // Additional filters
     if (additionalFilters?.status) {
       where.status = additionalFilters.status as SupplierStatus;
     }
@@ -104,7 +106,6 @@ export class SupplierRepository implements ISupplierRepository {
       where.currentBalance = { ...where.currentBalance, lte: new Decimal(additionalFilters.maxBalance) };
     }
 
-    // Sorting
     const orderBy: any = {};
     if (sortBy) {
       orderBy[sortBy] = sortOrder || 'asc';
@@ -299,31 +300,41 @@ export class SupplierRepository implements ISupplierRepository {
       totalSuppliers,
       activeSuppliers,
       inactiveSuppliers,
-      totalCreditLimit,
-      totalCurrentBalance,
+      suspendedSuppliers,
       suppliersWithDebt,
-      averagePaymentTerms,
+      totalDebt,
+      averageCreditLimit,
     ] = await Promise.all([
-      this.prisma.supplier.count({ where: { businessId } }),
-      this.prisma.supplier.count({ where: { businessId, status: SupplierStatus.ACTIVE } }),
-      this.prisma.supplier.count({ where: { businessId, status: SupplierStatus.INACTIVE } }),
-      this.prisma.supplier.aggregate({
-        where: { businessId },
-        _sum: { creditLimit: true },
+      this.prisma.supplier.count({
+        where: { businessId, deletedAt: null }
       }),
-      this.prisma.supplier.aggregate({
-        where: { businessId },
-        _sum: { currentBalance: true },
+      this.prisma.supplier.count({
+        where: { businessId, status: SupplierStatus.ACTIVE, deletedAt: null }
+      }),
+      this.prisma.supplier.count({
+        where: { businessId, status: SupplierStatus.INACTIVE, deletedAt: null }
+      }),
+      this.prisma.supplier.count({
+        where: { businessId, status: SupplierStatus.SUSPENDED, deletedAt: null }
       }),
       this.prisma.supplier.count({
         where: {
           businessId,
           currentBalance: { gt: new Decimal(0) },
+          deletedAt: null
         },
       }),
       this.prisma.supplier.aggregate({
-        where: { businessId },
-        _avg: { paymentTerms: true },
+        where: { businessId, deletedAt: null },
+        _sum: { currentBalance: true },
+      }),
+      this.prisma.supplier.aggregate({
+        where: {
+          businessId,
+          creditLimit: { not: null },
+          deletedAt: null
+        },
+        _avg: { creditLimit: true },
       }),
     ]);
 
@@ -331,10 +342,10 @@ export class SupplierRepository implements ISupplierRepository {
       totalSuppliers,
       activeSuppliers,
       inactiveSuppliers,
-      totalCreditLimit: Number(totalCreditLimit._sum.creditLimit || 0),
-      totalCurrentBalance: Number(totalCurrentBalance._sum.currentBalance || 0),
+      suspendedSuppliers,
       suppliersWithDebt,
-      averagePaymentTerms: averagePaymentTerms._avg.paymentTerms || 0,
+      totalDebt: Number(totalDebt._sum.currentBalance || 0),
+      averageCreditLimit: Number(averageCreditLimit._avg.creditLimit || 0),
     };
   }
 

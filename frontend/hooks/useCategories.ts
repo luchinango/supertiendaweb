@@ -2,13 +2,14 @@ import useSWR from "swr";
 import type {Category} from "@/types/Category";
 import {
   getCategories,
+  getCategoriesPaginated,
   createCategory,
   updateCategory,
   deleteCategory
 } from "@/services/categoriesService";
 
 export function useCategories() {
-  const {data, error, isLoading, mutate} = useSWR<Category[]>("/api/categories", getCategories);
+  const {data, error, isLoading, mutate} = useSWR<Category[]>("categories", getCategories);
 
   const addCategory = async (category: Partial<Category>) => {
     try {
@@ -54,5 +55,21 @@ export function useCategories() {
     addCategory,
     editCategory,
     removeCategory,
+  };
+}
+
+export function useCategoriesPaginated(page: number = 1, limit: number = 10) {
+  const {data, error, isLoading, mutate} = useSWR(
+    `categories-paginated-${page}-${limit}`,
+    () => getCategoriesPaginated(page, limit)
+  );
+
+  return {
+    response: data,
+    categories: data?.data || [],
+    meta: data?.meta,
+    error,
+    isLoading,
+    mutate,
   };
 }

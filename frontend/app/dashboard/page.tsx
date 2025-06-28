@@ -5,18 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { CashRegisterManager } from '@/components/features/cash-register/CashRegisterManager'
 import useSWR from "swr";
-
-interface ReportData {
-  totalCredits: number;
-  totalDebts: number;
-  salesThisMonth: number;
-}
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { getReports, type ReportData } from "@/services/reportsService";
 
 export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data, error } = useSWR<ReportData>("/api/reports", fetcher);
+  const { data, error } = useSWR<ReportData>("reports", getReports);
 
   if (error) return <div>Error al cargar datos</div>;
   if (!data) return <div>Cargando…</div>;

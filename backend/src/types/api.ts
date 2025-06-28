@@ -91,7 +91,55 @@ export interface ProductResponse {
   };
 }
 
-export interface CategoryResponse extends Category {}
+export interface CategoryResponse extends Category {
+  productCount?: number;
+  children?: CategoryResponse[];
+  parent?: CategoryResponse;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  parentId?: number;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface UpdateCategoryRequest {
+  name?: string;
+  description?: string;
+  parentId?: number;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface CategoryListResponse {
+  data: CategoryResponse[];
+  meta: PaginationMeta;
+}
+
+export interface CategoryTreeNode {
+  id: number;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  sortOrder: number;
+  productCount: number;
+  children: CategoryTreeNode[];
+}
+
+export interface CategoryStats {
+  totalCategories: number;
+  activeCategories: number;
+  inactiveCategories: number;
+  categoriesWithProducts: number;
+  averageProductsPerCategory: number;
+  topCategoriesByProducts: {
+    id: number;
+    name: string;
+    productCount: number;
+  }[];
+}
 
 export interface SupplierResponse {
   id: number;
@@ -580,10 +628,10 @@ export interface SupplierStats {
   totalSuppliers: number;
   activeSuppliers: number;
   inactiveSuppliers: number;
-  totalCreditLimit: number;
-  totalCurrentBalance: number;
+  suspendedSuppliers: number;
   suppliersWithDebt: number;
-  averagePaymentTerms: number;
+  totalDebt: number;
+  averageCreditLimit: number;
 }
 
 export interface SupplierSearchResult {
@@ -650,5 +698,13 @@ export interface UpdatePurchaseOrderRequest {
 export interface ApprovePurchaseOrderRequest {
   approvedBy: number;
 }
+
+export {
+  BusinessProductCatalogItem,
+  BusinessProductCatalogResponse,
+  BusinessProductCatalogFilters,
+  BulkConfigureProductsRequest,
+  BulkConfigureProductsResponse
+} from './businessProductTypes';
 
 export { PaginationMeta };
