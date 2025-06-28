@@ -35,13 +35,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.me()
       console.log("Respuesta de /auth/me:", response)
 
-      if (response.success && response.data) {
-        const userData = response.data as any
-        console.log("Datos del usuario:", userData)
+      if (response.success && response.data && response.data.user) {
+        const { user } = response.data
+        const role = user.role
 
-        if (userData.role) {
+        console.log("Datos del usuario:", user)
+
+        if (role) {
           console.log("Usuario autenticado correctamente")
-          setUser(userData as User)
+          setUser(user as User)
         } else {
           console.log("Usuario sin rol válido, removiendo token")
           removeAuthToken()
@@ -67,12 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthToken(response.data.token)
         const userData = response.data.user as any
         console.log(userData)
-        if (userData.role) {
+        if (userData && userData.role) {
           setUser(userData as User)
           return { success: true }
         } else {
           removeAuthToken()
-          return { success: false, error: "Rol de usuario inválido" }
+          return { success: false, error: "Rol de usuario inválido o usuario no encontrado" }
         }
       } else {
         return { success: false, error: response.error || "Error de autenticación" }

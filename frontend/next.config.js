@@ -51,7 +51,7 @@ const nextConfig = {
   },
 
   async rewrites() {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://206.183.128.36:5500/api';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://206.183.128.36:5500';
     return [
       {
         source: '/api/:path*',

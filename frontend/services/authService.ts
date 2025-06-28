@@ -48,16 +48,17 @@ export const authService = {
 
   me: async (): Promise<ApiResponse<any>> => {
     try {
-      const response = await apiClient.get('/auth/verify')
+      // Usa la ruta y método que tu backend espera
+      const response = await apiClient.get('/auth/me')
       return {
         success: true,
-        data: response.data.user,
+        data: response.data,
       }
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
       return {
         success: false,
-        error: axiosError.response?.data?.message || 'Error al verificar autenticación',
+        error: axiosError.response?.data?.message || 'Error de autenticación',
       }
     }
   },
