@@ -329,19 +329,19 @@ async function handleAddSupplier(data: NewSupplierPayload) {
       </div>
 
       {/* Header alineado */}
-      <div className="grid grid-cols-8 gap-6 min-w-[1300px] w-[1300px] mx-auto pr-8">
-        <div className="text-sm font-semibold text-left pl-2">Proveedor</div>
-        <div className="text-sm font-semibold text-left">Código</div>
-        <div className="text-sm font-semibold text-left">Dirección</div>
-        <div className="text-sm font-semibold text-right">Teléfono</div>
-        <div className="text-sm font-semibold text-right min-w-[120px]">Total comprado</div>
-        <div className="text-sm font-semibold text-right min-w-[120px]">Deuda total</div>
-        <div className="text-sm font-semibold text-right min-w-[120px]">Última compra</div>
-        <div className="text-sm font-semibold text-right">Editar</div>
+      <div className="grid grid-cols-8 gap-6 min-w-[1300px] w-[1300px] mx-auto pr-8 bg-gray-100 rounded-lg border border-gray-200">
+        <div className="text-sm font-semibold text-left pl-2 py-2">Proveedor</div>
+        <div className="text-sm font-semibold text-left py-2">Código</div>
+        <div className="text-sm font-semibold text-left py-2">Dirección</div>
+        <div className="text-sm font-semibold text-right py-2">Teléfono</div>
+        <div className="text-sm font-semibold text-right min-w-[120px] py-2">Total comprado</div>
+        <div className="text-sm font-semibold text-right min-w-[120px] py-2">Deuda total</div>
+        <div className="text-sm font-semibold text-right min-w-[120px] py-2">Última compra</div>
+        <div className="text-sm font-semibold text-right py-2">Editar</div>
       </div>
 
       <div className="space-y-2">
-        {paginatedSuppliers.map((supplier) => {
+        {paginatedSuppliers.map((supplier, idx) => {
           // Filtra compras hechas a este proveedor
           const supplierPurchases = filteredPurchasesMain.filter(p => p.supplierId === supplier.id)
           const totalComprado = supplierPurchases.reduce((sum, p) => sum + p.amount, 0)
@@ -354,7 +354,12 @@ async function handleAddSupplier(data: NewSupplierPayload) {
           return (
             <div
               key={supplier.id}
-              className="grid grid-cols-8 gap-6 min-w-[1300px] w-[1300px] items-center mx-auto pr-8 hover:bg-accent rounded-lg cursor-pointer"
+              className={
+                `grid grid-cols-8 gap-6 min-w-[1300px] w-[1300px] items-center mx-auto pr-8 rounded-lg cursor-pointer border 
+                ${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} 
+                hover:bg-blue-50 transition-colors duration-150`
+              }
+              style={{ borderColor: "#e5e7eb" }}
               onClick={() => {
                 setSelectedSupplier(supplier)
                 setShowKardex(true)
@@ -380,7 +385,7 @@ async function handleAddSupplier(data: NewSupplierPayload) {
               <div className={`text-sm text-right ${lastPurchaseStatus.color}`}>
                 {lastPurchaseStatus.text}
               </div>
-              {/* Lápiz (evita que abra el Kardex con e.stopPropagation()) */}
+              {/* Lápiz */}
               <div className="text-right">
                 <Button
                   variant="ghost"
