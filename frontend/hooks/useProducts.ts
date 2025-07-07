@@ -1,9 +1,11 @@
 import useSWR from "swr";
 import type {Product} from "@/types/Product";
-import type {ApiError} from "@/types/Api";
+import type {ApiError, NewPaginatedResponse} from "@/types/Api";
 import {
   getProducts,
   getProductsByCategory,
+  getProductsPaginated,
+  getProductsPaginatedWithFilters,
   createProduct,
   updateProduct,
   deleteProduct
@@ -20,6 +22,15 @@ interface ProductsStats {
 
 interface UseProductsOptions {
   categoryId?: number
+  enabled?: boolean
+  refreshInterval?: number
+}
+
+interface UseProductsPaginatedOptions {
+  page?: number
+  limit?: number
+  categoryId?: number
+  search?: string
   enabled?: boolean
   refreshInterval?: number
 }
@@ -140,5 +151,75 @@ export function useProducts(options: UseProductsOptions = {}) {
     getProductById,
     getProductsByCategoryId,
     searchProducts,
+  };
+}
+
+export function useProductsPaginated(options: UseProductsPaginatedOptions = {}) {
+  const { page = 1, limit = 10, categoryId, search, enabled = true, refreshInterval } = options;
+
+  const key = enabled ? `products-paginated-${page}-${limit}-${categoryId || 'all'}-${search || ''}` : null;
+
+  const {data, error, isLoading, mutate} = useSWR<NewPaginatedResponse<Product>>(
+    key,
+    () => getProductsPaginatedWithFilters({
+      page,
+      limit,
+      categoryId,
+      search
+    }),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 30000,
+      errorRetryCount: 3,
+      errorRetryInterval: 5000,
+      refreshInterval,
+    }
+  );
+
+  const products = useMemo(() => data?.data || [], [data?.data]);
+  const pagination = useMemo(() => data?.meta, [data?.meta]);
+
+  const addProduct = useCallback(async (product: Partial<Product>): Promise<Product> => {
+    try {
+      const created = await createProduct(product);
+      mutate();
+      return created;
+    } catch (error) {
+      console.error("Error adding product:", error);
+      throw error;
+    }
+  }, [mutate]);
+
+  const editProduct = useCallback(async (id: number, updatedData: Partial<Product>): Promise<Product> => {
+    try {
+      const updated = await updateProduct(id, updatedData);
+      mutate();
+      return updated;
+    } catch (error) {
+      console.error("Error updating product:", error);
+      throw error;
+    }
+  }, [mutate]);
+
+  const removeProduct = useCallback(async (id: number): Promise<void> => {
+    try {
+      await deleteProduct(id);
+      mutate();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      throw error;
+    }
+  }, [mutate]);
+
+  return {
+    products,
+    pagination,
+    error: error as ApiError | null,
+    isLoading,
+    mutate,
+    addProduct,
+    editProduct,
+    removeProduct,
   };
 }

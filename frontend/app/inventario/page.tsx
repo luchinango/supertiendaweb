@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Download, Grid2X2, Plus, ChevronDown } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search, Download, Grid2X2, Plus, ChevronDown, Check, ChevronLeft, ChevronRight } from "lucide-react"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CategoriesDialog } from '@/components/features/products/CategoriesDialog'
 import { ProductFormWrapper } from '@/components/features/products/ProductFormWrapper'
 import { useProductForm } from "@/contexts/ProductFormContext"
@@ -12,21 +13,18 @@ import { AddProductPanel } from '@/components/features/products/AddProductPanel'
 import { DownloadReportPanel } from '@/components/features/reports/DownloadReportPanel'
 import { ProductDetailPanel } from "@/components/features/products/ProductDetailPanel"
 import { EditProductPanel } from "@/components/features/products/EditProductPanel"
-import {SkeletonShimmer} from "@/components/ui/SkeletonShimmer";
-import type {Category} from "@/types/Category";
 import type {Product} from "@/types/Product"
 import {useCategories} from "@/hooks/useCategories";
-import {useProducts} from "@/hooks/useProducts";
-
-interface ProductWithPrices extends Product {
-  costPrice: number;
-  sellingPrice: number;
-}
+import {useProductsPaginated} from "@/hooks/useProducts";
 
 export default function Inventario() {
-  const [products, setProducts] = useState<ProductWithPrices[]>([])
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showCategories, setShowCategories] = useState(false)
+  const [openCategoryPopover, setOpenCategoryPopover] = useState(false)
   const [showAddProduct, setShowAddProduct] = useState(false)
   const [showDownloadReport, setShowDownloadReport] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -34,59 +32,98 @@ export default function Inventario() {
   const [showEditProduct, setShowEditProduct] = useState(false)
   const { openProductForm } = useProductForm()
   const [mounted, setMounted] = useState(false)
-  const {products: apiProducts, isLoading: isLoadingProducts} = useProducts();
+
+  const {categories, isLoading: isLoadingCategories} = useCategories();
+
+  const categoryId = selectedCategory === "all" ? undefined : parseInt(selectedCategory)
+  const {products, pagination, isLoading: isLoadingProducts} = useProductsPaginated({
+    page: currentPage,
+    limit: itemsPerPage,
+    categoryId,
+    search: debouncedSearchTerm || undefined,
+    enabled: true
+  });
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   useEffect(() => {
-    fetch("/api/products")
-      .then(res => res.json())
-      .then(data => {
-        // Asegúrate de usar sólo el array:
-        const list = Array.isArray(data.products) ? data.products : []
-        setProducts(list)
-      })
-      .catch(err => {
-        console.error(err)
-        setProducts([])
-      })
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedCategory, debouncedSearchTerm])
+
+  useEffect(() => {
+    if (pagination?.limit && pagination.limit !== itemsPerPage) {
+      setItemsPerPage(pagination.limit)
+    }
+  }, [pagination?.limit, itemsPerPage])
+
+  useEffect(() => {
+    if (pagination?.page && pagination.page !== currentPage) {
+      setCurrentPage(pagination.page)
+    }
+  }, [pagination?.page, currentPage])
+
+  const totalInventoryCost = useMemo(() => {
+    return products.reduce((sum, product) => sum + (product.cost || 0) * product.stock, 0)
+  }, [products])
+
+  const selectedCategoryName = useMemo(() => {
+    if (selectedCategory === "all") return "Ver todas las categorías"
+    return categories.find(category => category.id.toString() === selectedCategory)?.name || "Seleccionar categoría"
+  }, [selectedCategory, categories])
+
+  const formatNumber = useCallback((num: number) => {
+    return num.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }, [])
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  // Calculate total inventory cost
-  const totalInventoryCost = products.reduce((sum, product) => sum + product.cost * product.stock, 0)
-
-  // Format number with commas
-  const formatNumber = (num: number) => {
-    return num.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
-
-  const handleProductClick = (product: Product) => {
+  const handleProductClick = useCallback((product: Product) => {
     setSelectedProduct(product)
     setShowProductDetail(true)
-  }
+  }, [])
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = useCallback((product: Product) => {
     setSelectedProduct(product)
     setShowProductDetail(false)
     setShowEditProduct(true)
-  }
+  }, [])
 
-  const handleDeleteProduct = (product: Product) => {
-    // Implement delete functionality
+  const handleDeleteProduct = useCallback((product: Product) => {
     console.log("Delete product:", product)
     setShowProductDetail(false)
-  }
+  }, [])
 
-  const handleSaveProduct = (product: Product) => {
-    // Implement save functionality
+  const handleSaveProduct = useCallback((product: Product) => {
     console.log("Save product:", product)
-  }
+  }, [])
+
+  const handleCategorySelect = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId)
+    setOpenCategoryPopover(false)
+  }, [])
+
+  const getCategoryName = useCallback((categoryId: number | undefined) => {
+    return categories.find(cat => cat.id === categoryId)?.name || 'Sin categoría'
+  }, [categories])
+
+  const handlePageChange = useCallback((page: number) => {
+    if (pagination && page >= 1 && page <= pagination.totalPages) {
+      setCurrentPage(page)
+    }
+  }, [pagination])
+
+  const handleItemsPerPageChange = useCallback((limit: number) => {
+    setItemsPerPage(limit)
+    setCurrentPage(1)
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -121,17 +158,58 @@ export default function Inventario() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select>
-          <SelectTrigger className="w-[240px] bg-white">
-            <SelectValue placeholder="Ver todas las categorías" />
-          </SelectTrigger>
-          <SelectContent className="bg-white">
-            <SelectItem value="all">Ver todas las categorías</SelectItem>
-            <SelectItem value="snacks">Snacks</SelectItem>
-            <SelectItem value="abarrotes">Abarrotes</SelectItem>
-            <SelectItem value="electronica">Electrónica</SelectItem>
-          </SelectContent>
-        </Select>
+        <Popover open={openCategoryPopover} onOpenChange={setOpenCategoryPopover}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={openCategoryPopover}
+              className="w-[240px] justify-between bg-white"
+            >
+              {selectedCategoryName}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[240px] p-0 bg-white">
+            <Command key={openCategoryPopover ? 'open' : 'closed'}>
+              <CommandInput placeholder="Buscar categoría..." />
+              <CommandList>
+                <CommandEmpty>No se encontraron categorías.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="all"
+                    onSelect={() => handleCategorySelect("all")}
+                  >
+                    <Check
+                      className={`mr-2 h-4 w-4 ${
+                        selectedCategory === "all" ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                    Ver todas las categorías
+                  </CommandItem>
+                  {isLoadingCategories ? (
+                    <CommandItem disabled>Cargando categorías...</CommandItem>
+                  ) : (
+                    categories.map((category) => (
+                      <CommandItem
+                        key={category.id}
+                        value={category.name}
+                        onSelect={() => handleCategorySelect(category.id.toString())}
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 ${
+                            selectedCategory === category.id.toString() ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                        {category.name}
+                      </CommandItem>
+                    ))
+                  )}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
         <div className="flex-1" />
         <Button variant="outline" className="gap-2" onClick={() => setShowDownloadReport(true)}>
           <Download className="h-4 w-4" />
@@ -160,8 +238,11 @@ export default function Inventario() {
             </svg>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Total de referencias</p>
-            <p className="text-2xl font-semibold">1477</p>
+            <p className="text-sm text-gray-600">Total de productos</p>
+            <p className="text-2xl font-semibold">{pagination?.total || 0}</p>
+            {pagination?.totalPages && pagination.totalPages > 1 && (
+              <p className="text-xs text-gray-500">{pagination.totalPages} páginas</p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4 p-6 bg-white rounded-lg border border-gray-200">
@@ -197,16 +278,162 @@ export default function Inventario() {
         </div>
 
         <div className="divide-y">
-          {filteredProducts.map((product, idx) => {
-  const key = product.id != null ? String(product.id) : `no-id-${idx}`
-  return (
-    <tr key={key}>
-      <td>{product.costPrice ?? "—"}</td>
-      {/* …más celdas… */}
-    </tr>
-  )
-})}
+          {isLoadingProducts ? (
+            <div className="p-8 text-center text-gray-500">
+              Cargando productos...
+            </div>
+          ) : products.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              {searchTerm ? 'No se encontraron productos con esa búsqueda' : 'No hay productos en esta categoría'}
+            </div>
+          ) : (
+            products.map((product, idx) => {
+              const key = product.id != null ? String(product.id) : `no-id-${idx}`
+              const profit = (product.price || 0) - (product.cost || 0)
+              const profitPercentage = product.cost ? ((profit / product.cost) * 100) : 0
+
+              return (
+                <div key={key} className="grid grid-cols-[1fr_200px_200px_200px_200px_160px] gap-4 p-4 hover:bg-gray-50 cursor-pointer" onClick={() => handleProductClick(product)}>
+                  <div>
+                    <div className="font-medium">{product.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {getCategoryName(product.category_id)}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium">Bs {formatNumber(product.price || 0)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium">Bs {formatNumber(product.cost || 0)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-medium ${product.stock <= (product.min_stock || 0) ? 'text-red-600' : 'text-green-600'}`}>
+                      {product.stock}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-500">{product.min_stock || 0}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {profitPercentage.toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
+
+        {/* Paginación */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="relative flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50">
+            {isLoadingProducts && (
+              <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10">
+                <div className="text-sm text-gray-500">Cargando...</div>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>
+                Mostrando {((pagination.page - 1) * pagination.limit) + 1} a {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} productos
+              </span>
+              {pagination.totalPages > 1 && (
+                <span className="text-gray-400">
+                  • Página {pagination.page} de {pagination.totalPages} páginas
+                </span>
+              )}
+            </div>
+
+                        <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={!pagination.hasPrevPage}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+
+                            <div className="flex items-center gap-1">
+                {(() => {
+                  const totalPages = pagination.totalPages;
+                  const currentPage = pagination.page;
+                  const maxVisible = 7;
+
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+                  if (endPage - startPage + 1 < maxVisible) {
+                    startPage = Math.max(1, endPage - maxVisible + 1);
+                  }
+
+                  const pages = [];
+
+                  if (startPage > 1) {
+                    pages.push(1);
+                    if (startPage > 2) {
+                      pages.push('...');
+                    }
+                  }
+
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                  }
+
+                  if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                      pages.push('...');
+                    }
+                    pages.push(totalPages);
+                  }
+
+                  return pages.map((pageNum, index) => (
+                    pageNum === '...' ? (
+                      <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+                        ...
+                      </span>
+                    ) : (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum as number)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  ));
+                })()}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={!pagination.hasNextPage}
+              >
+                Siguiente
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Mostrar:</span>
+              <select
+                value={pagination?.limit || itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sliding panels */}

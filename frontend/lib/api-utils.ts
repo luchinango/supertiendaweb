@@ -29,7 +29,7 @@ export class PaginatedService<T> {
   }
 
   async getAll(): Promise<T[]> {
-    const response = await this.getList({ limit: 1000 });
+    const response = await this.getList({ limit: 100 });
     return response.data;
   }
 

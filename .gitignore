@@ -65,3 +65,5 @@ frontend/pnpm-lock.yaml
 /backend/examples
 *.md
 *.backup
+
+backend/backend.code-workspace
