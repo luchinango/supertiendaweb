@@ -37,18 +37,18 @@ export function EditSupplierDialog({
 
     setLoading(true)
     setError(null)
-    apiClient.get(`/api/suppliers/${supplierId}`)
+    apiClient.get(`/suppliers/${supplierId}`)
       .then((response: any) => {
-        console.log("Loaded supplier data:", response.data)
-        if (response.data && response.data.id) {
-          setSupplier(response.data)
+        // El proveedor está en response.data.data
+        const supplierData = response.data?.data
+        if (supplierData && supplierData.id) {
+          setSupplier(supplierData)
         } else {
           setError("No se encontraron datos para el proveedor.")
         }
         setLoading(false)
       })
       .catch((err: any) => {
-        console.error("Fetch error:", err)
         setError(err.response?.data?.message || err.message || 'Error loading supplier')
         setLoading(false)
       })
@@ -67,7 +67,35 @@ export function EditSupplierDialog({
     if (!supplier) return
     setError(null)
     try {
-      await apiClient.put(`/api/suppliers/${supplierId}`, supplier)
+      // Obtén token y businessId del localStorage
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+      const businessId = typeof window !== "undefined" ? (localStorage.getItem("businessId") || "1") : "1"
+      await apiClient.put(
+        `/suppliers/${supplierId}?businessId=${businessId}`,
+        {
+          code: supplier.code?.trim(),
+          name: supplier.name?.trim(),
+          documentType: supplier.documentType || "NIT",
+          documentNumber: supplier.documentNumber?.trim(),
+          contactPerson: supplier.contactPerson?.trim(),
+          email: supplier.email?.trim(),
+          phone: supplier.phone?.trim(),
+          address: supplier.address?.trim(),
+          city: supplier.city?.trim(),
+          department: supplier.department || "LA_PAZ",
+          country: supplier.country?.trim(),
+          postalCode: supplier.postalCode?.trim(),
+          paymentTerms: Number(supplier.paymentTerms) || 0,
+          creditLimit: Number(supplier.creditLimit) || 0,
+          status: supplier.status || "ACTIVE",
+          notes: supplier.notes?.trim() || "",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
       onOpenChange(false)
       onEdit?.(supplier)
     } catch (err: any) {
@@ -245,16 +273,7 @@ export function EditSupplierDialog({
                   onChange={handleChange}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="currentBalance">Saldo Actual</Label>
-                <Input
-                  id="currentBalance"
-                  name="currentBalance"
-                  type="number"
-                  value={supplier.currentBalance || ""}
-                  onChange={handleChange}
-                />
-              </div>
+              {/* Si 'currentBalance' no existe en Supplier, elimina este campo o reemplázalo por uno válido */}
               {/* Estado y Notas */}
               <div className="space-y-2">
                 <Label htmlFor="status">Estado</Label>

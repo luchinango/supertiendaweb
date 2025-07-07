@@ -11,34 +11,46 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-
-interface NewSupplierPayload {
-  code: string
-  name: string
-  documentType: string
-  documentNumber: string
-  contactPerson: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  department: string
-  country: string
-  postalCode: string
-  paymentTerms: number
-  creditLimit: number
-  status: string
-  notes: string
-}
+import type { NewSupplierPayload, Supplier } from "@/types/types"
 
 interface NewSupplierDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAdd: (data: NewSupplierPayload) => Promise<void>
+  suppliers: Supplier[] // <-- nuevo
+  onAddSupplier: (data: NewSupplierPayload) => Promise<void> // <-- nuevo
 }
 
-export function NewSupplierDialog({ open, onOpenChange, onAdd }: NewSupplierDialogProps) {
+// Define Supplier type (adjust fields as needed)
+// interface Supplier {
+//   id: number
+//   code?: string // <--- permite undefined
+//   name: string
+//   documentType: string
+//   documentNumber: string
+//   contactPerson: string
+//   email: string
+//   phone: string
+//   address: string
+//   city: string
+//   department: string
+//   country: string
+//   postalCode: string
+//   paymentTerms: number
+//   creditLimit: number
+//   status: string
+//   notes: string
+// }
+
+export function NewSupplierDialog({
+  open,
+  onOpenChange,
+  onAdd,
+  suppliers,
+  onAddSupplier,
+}: NewSupplierDialogProps) {
   const [formData, setFormData] = useState<NewSupplierPayload>({
+    businessId: "1", // <-- string
     code: "",
     name: "",
     documentType: "NIT",
@@ -57,6 +69,7 @@ export function NewSupplierDialog({ open, onOpenChange, onAdd }: NewSupplierDial
     notes: "",
   })
   const [error, setError] = useState<string | null>(null)
+  const [showOverlay, setShowOverlay] = useState(false)
 
   // Aceptamos eventos de <input>, <select> o <textarea>
   function handleChange(
@@ -70,17 +83,29 @@ export function NewSupplierDialog({ open, onOpenChange, onAdd }: NewSupplierDial
     e.preventDefault()
     setError(null)
     try {
-      await onAdd(formData)
+      await onAdd({ ...formData, businessId: "1" }) // <-- string
       onOpenChange(false)
     } catch (err: any) {
-      setError(err.message)
+      if (err instanceof Response && err.status === 409) {
+        setError("Ya existe un proveedor con ese código o documento.")
+      } else {
+        setError(err.message || "Error al crear proveedor.")
+      }
     }
+  }
+
+  const handleAddSupplier = async (newSupplier: NewSupplierPayload) => {
+    await onAddSupplier(newSupplier)
   }
 
   if (!open) return null
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      // Agrega una clase personalizada para el fondo del overlay
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Crear proveedor</DialogTitle>

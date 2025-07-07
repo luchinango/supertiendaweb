@@ -34,6 +34,11 @@ export default function LoginPage() {
 
     if (!result.success) {
       setError(result.error || "Error de autenticación")
+    } else {
+      // Guardar token y businessId en el localStorage
+      const data = (result as typeof result & { data: { token: string; user: { employee: { businessId: number } } } }).data
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("businessId", data.user.employee.businessId.toString())
     }
 
     setIsLoading(false)

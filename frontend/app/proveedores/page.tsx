@@ -5,13 +5,32 @@
 import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Edit } from "lucide-react"
+import { Edit, Search } from "lucide-react"
 import { NewSupplierDialog } from '@/components/features/suppliers/NewSupplierDialog'
 import { EditSupplierDialog } from '@/components/features/suppliers/EditSupplierDialog'
 import { ProveedoresOverlay } from '@/components/features/suppliers/ProveedoresOverlay'
 import { useSuppliers, useSuppliersStats, useSuppliersWithDebt } from '@/hooks/useSuppliers'
+import { useDebounce } from "@/hooks/useDebounce"
 import type {Supplier} from "@/types/types"; // Ajusta la ruta según tu proyecto
-// Ajusta la ruta según tu proyecto
+import apiClient from "@/lib/api-client"
+import { Switch } from "@/components/ui/switch" // Ajusta la ruta según tu proyecto
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+
+// Define el tipo para el payload de nuevo proveedor localmente
+type NewSupplierPayload = {
+  name: string
+  code?: string
+  documentType?: string
+  documentNumber?: string
+  contactPerson?: string
+  email?: string
+  phone?: string
+  address?: string
+  city?: string
+  department?: string
+  country?: string
+  status?: string
+}
 
 // --- Nuevos tipos y función utilitaria ---
 interface APIResponse {
@@ -86,15 +105,15 @@ export default function Proveedores() {
   const { stats, isLoading: isLoadingStats } = useSuppliersStats();
   const { suppliers: suppliersWithDebt, isLoading: isLoadingDebt } = useSuppliersWithDebt();
 
+  // Hooks y estados SIEMPRE aquí dentro
   const [editId, setEditId]         = useState<number | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
-
-  // + nuevos estados para búsqueda y "ver más"
   const [searchTerm, setSearchTerm]     = useState<string>("")
   const [pageSize, setPageSize]         = useState<number>(10)
   const [visibleCount, setVisibleCount] = useState<number>(10)
   const [page, setPage]                 = useState<number>(1)
   const [totalPages, setTotalPages]     = useState<number>(0)
+  const debouncedSearchTerm = useDebounce(searchTerm, 400) // Opcional: para evitar muchas peticiones
   const pageSizeOptions = [10, 20, 30, 50, 100]
 
   // filtros, dialogs y selección
@@ -110,6 +129,12 @@ export default function Proveedores() {
   const [kardexEnd,   setKardexEnd]   = useState<string>("")
   const [selectedId, setSelectedId]   = useState<number|null>(null)
   const [detail, setDetail]           = useState<SupplierDetail|null>(null)
+  const [searchResults, setSearchResults] = useState<Supplier[]>([]);
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmSwitch, setConfirmSwitch] = useState<"ACTIVE" | "INACTIVE" | "SUSPENDED" | null>(null)
+  const [pendingSwitch, setPendingSwitch] = useState(false)
+
   // Los debtSuppliers y stats ahora vienen de los hooks
 
   // Detalle al click - mantener este ya que es específico
@@ -123,9 +148,10 @@ export default function Proveedores() {
   }, [selectedId])
 
   // --- 2) añade tipos a los filtros/maps ---
-  const filteredSuppliers = suppliers.filter((supplier: Supplier) =>
-    supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // const filteredSuppliers = suppliers.filter((supplier: Supplier) =>
+  //   supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //   (supplier.phone ?? "").includes(searchTerm)
+  // )
 
   const filteredPurchasesMain = sampleSupplierPurchases.filter((p: Purchase) => {
     const purchaseDate = new Date(p.date)
@@ -135,45 +161,16 @@ export default function Proveedores() {
     if (end   && purchaseDate > end)   return false
     return true
   })
+// Define el tipo para el payload de nuevo proveedor
+// (Eliminado: usar el import de NewSupplierPayload)
 
-  // Define el tipo para el payload de nuevo proveedor
-  interface NewSupplierPayload {
-    name: string;
-    phone?: string;
-    contactPerson?: string;
-    email?: string;
-    // Agrega aquí otros campos requeridos por tu backend
-  }
-
-  async function handleAddSupplier(data: {
-    code: string
-    name: string
-    documentType: string
-    documentNumber: string
-    contactPerson: string
-    email: string
-    phone: string
-    address: string
-    city: string
-    department: string
-    country: string
-    postalCode: string
-    paymentTerms: number
-    creditLimit: number
-    status: string
-    notes: string
-  }) {
-    try {
-      await addSupplier(data);
-      console.log("✅ Proveedor creado exitosamente");
-    } catch (error) {
-      console.error("❌ Error al crear proveedor:", error);
-      throw error;
-    }
-  }
+async function handleAddSupplier(data: NewSupplierPayload) {
+  await addSupplier(data);
+  if (typeof mutateSuppliers === "function") mutateSuppliers();
+}
 
   function handleEditSupplier(supplier: Supplier) {
-    setEditId(supplier.id)
+    setEditingSupplier(supplier)
     setIsEditOpen(true)
   }
 
@@ -191,6 +188,33 @@ export default function Proveedores() {
     }
   }
 
+  async function handleDeleteSupplier() {
+    if (!selectedSupplier) return
+    if (!window.confirm(`¿Seguro que deseas eliminar al proveedor "${selectedSupplier.name}"?`)) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const businessId = typeof window !== "undefined" ? (localStorage.getItem("businessId") || "1") : "1"
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+      await apiClient.delete(
+        `/suppliers/${selectedSupplier.id}?businessId=${businessId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      setShowKardex(false)
+      setSelectedSupplier(null)
+      // Si tienes un hook para refrescar la lista de proveedores, llámalo aquí
+      if (typeof mutateSuppliers === "function") mutateSuppliers()
+    } catch (err: any) {
+      setDeleteError(err.response?.data?.message || err.message || "Error al eliminar proveedor")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   // filtrar siempre sobre todo el array
   const filtered = suppliers
 
@@ -204,17 +228,97 @@ export default function Proveedores() {
 
   // Este useEffect ya no es necesario porque los datos vienen del hook
 
+  // Búsqueda de proveedores
+  /*useEffect(() => {
+    if (!debouncedSearchTerm) {
+      setSearchResults([])
+      return
+    }
+    setIsSearching(true)
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+    const businessId = typeof window !== "undefined" ? localStorage.getItem("businessId") : "1"
+    fetch(`/suppliers/search?query=${encodeURIComponent(debouncedSearchTerm)}&businessId=${businessId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+            setSearchResults(
+              data.data.map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                code: s.code ?? "",
+                address: s.address ?? "",
+                phone: s.phone ?? "",
+                hasDebt: s.hasDebt ?? false,
+                debtAmount: s.debtAmount ?? 0,
+                documentType: s.documentType ?? "",
+                documentNumber: s.documentNumber ?? "",
+                contactPerson: s.contactPerson ?? "",
+                email: s.email ?? "",
+                city: s.city ?? "",
+                department: s.department ?? "",
+                country: s.country ?? "",
+                status: s.status ?? "",
+                postalCode: s.postalCode ?? "",
+                paymentTerms: typeof s.paymentTerms === "number" ? s.paymentTerms : Number(s.paymentTerms) || 0,
+                creditLimit: s.creditLimit ?? 0,
+                notes: s.notes ?? "",
+                initials: s.name ? s.name.split(" ").map((n: string) => n[0]).join("").toUpperCase() : "",
+              }))
+            )
+        } else {
+          setSearchResults([])
+        }
+      })
+      .catch(() => setSearchResults([]))
+      .finally(() => setIsSearching(false))
+  }, [debouncedSearchTerm])*/
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+  const businessId = typeof window !== "undefined" ? localStorage.getItem("businessId") : "1"
+
+  // Nueva línea para determinar qué proveedores mostrar
+  const suppliersToShow = searchTerm && searchResults.length > 0 ? searchResults : suppliers
+
+  // Calcula los proveedores filtrados
+  const filteredSuppliers = suppliers.filter((supplier: Supplier) =>
+    supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (supplier.phone ?? "").includes(searchTerm)
+  );
+
+  // Calcula el total de páginas cada vez que cambian los filtros o el tamaño de página
+  useEffect(() => {
+    setTotalPages(Math.max(1, Math.ceil(filteredSuppliers.length / pageSize)));
+    // Reinicia la página si el filtro cambia y la página actual ya no existe
+    setPage((prev) => {
+      const newTotal = Math.max(1, Math.ceil(filteredSuppliers.length / pageSize));
+      return prev > newTotal ? 1 : prev;
+    });
+  }, [filteredSuppliers.length, pageSize]);
+
+  // Obtén los proveedores a mostrar en la página actual
+  const paginatedSuppliers = filteredSuppliers.slice((page - 1) * pageSize, page * pageSize);
+
+  // Ordenar proveedores por nombre
+  const sortedSuppliers = [...suppliers].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <h1 className="text-2xl font-bold">Proveedores</h1>
         <div className="flex gap-2 items-end">
-          <Input
-            placeholder="Buscar proveedor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 w-52"
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar proveedor..."
+              className="pl-9 w-52"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <Button
             className="bg-black text-white border border-gray-300"
             onClick={() => setShowOverlay(true)}
@@ -237,7 +341,7 @@ export default function Proveedores() {
       </div>
 
       <div className="space-y-2">
-        {visible.map((supplier) => {
+        {paginatedSuppliers.map((supplier) => {
           // Filtra compras hechas a este proveedor
           const supplierPurchases = filteredPurchasesMain.filter(p => p.supplierId === supplier.id)
           const totalComprado = supplierPurchases.reduce((sum, p) => sum + p.amount, 0)
@@ -344,19 +448,47 @@ export default function Proveedores() {
         </Button>
       </div>
 
+      {showNewSupplier && (
+        <NewSupplierDialog
+          open={showNewSupplier}
+          onOpenChange={setShowNewSupplier}
+          onAdd={handleAddSupplier}
+          suppliers={suppliers}
+          onAddSupplier={handleAddSupplier}
+        />
+      )}
+
       {/* Overlay de proveedores */}
-      <ProveedoresOverlay
-        open={showOverlay}
-        onOpenChange={setShowOverlay}
-        suppliers={suppliers.map((s) => ({
-          id: s.id,
-          name: s.name,
-          phone: s.phone || "—",
-          initials: s.name.split(" ").map(n => n[0]).join("").toUpperCase(),
-          hasDebt: s.hasDebt || false,
-          debtAmount: s.debtAmount || 0,
-        }))}
-      />
+      {showOverlay && (
+        <ProveedoresOverlay
+          open={showOverlay}
+          onOpenChange={setShowOverlay}
+          suppliers={suppliers.map(s => ({
+            id: s.id,
+            name: s.name,
+            phone: s.phone || "—",
+            initials: s.name.split(" ").map(n => n[0]).join("").toUpperCase(),
+            hasDebt: s.hasDebt ?? false,
+            debtAmount: s.debtAmount ?? 0,
+            code: s.code ?? "",
+            documentType: s.documentType ?? "",
+            documentNumber: s.documentNumber ?? "",
+            contactPerson: s.contactPerson ?? "",
+            email: s.email ?? "",
+            address: s.address ?? "",
+            city: s.city ?? "",
+            department: s.department ?? "",
+            country: s.country ?? "",
+            status: s.status ?? "",
+            postalCode: s.postalCode ?? "",
+            paymentTerms: typeof s.paymentTerms === "number" ? s.paymentTerms : Number(s.paymentTerms) || 0,
+            creditLimit: s.creditLimit ?? 0,
+            notes: s.notes ?? "",
+          }))}
+          onAddSupplier={handleAddSupplier}
+          mutateSuppliers={mutateSuppliers}
+        />
+      )}
 
       {editingSupplier && (
         <EditSupplierDialog
@@ -452,6 +584,85 @@ export default function Proveedores() {
                       })()}
                     </div>
                   </div>
+                  {/* Cambiar estado de proveedor (activar/desactivar) */}
+                  <div className="flex items-center gap-3 mt-4">
+                    <SupplierStatusSelect
+                      status={selectedSupplier.status}
+                      onChange={(newStatus) => setConfirmSwitch(newStatus as "ACTIVE" | "INACTIVE" | "SUSPENDED")}
+                      disabled={deleting || pendingSwitch}
+                    />
+                    <span className={selectedSupplier.status === "ACTIVE" ? "text-green-700 font-semibold" : selectedSupplier.status === "SUSPENDED" ? "text-yellow-700 font-semibold" : "text-gray-400"}>
+                      {selectedSupplier.status === "ACTIVE" ? "Activo" : selectedSupplier.status === "SUSPENDED" ? "Suspendido" : "Inactivo"}
+                    </span>
+                  </div>
+                  {/* Modal de confirmación */}
+                  <Dialog open={!!confirmSwitch} onOpenChange={open => !open && setConfirmSwitch(null)}>
+                    <DialogContent className="bg-white text-gray-900">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {confirmSwitch === "ACTIVE"
+                            ? "¿Activar proveedor?"
+                            : confirmSwitch === "SUSPENDED"
+                            ? "¿Suspender proveedor?"
+                            : "¿Desactivar proveedor?"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="mb-4">
+                        {confirmSwitch === "ACTIVE"
+                          ? "¿Estás seguro que deseas activar este proveedor? Podrá ser usado en compras y reportes."
+                          : confirmSwitch === "SUSPENDED"
+                          ? "¿Estás seguro que deseas suspender este proveedor? No podrá ser usado hasta que lo actives nuevamente."
+                          : "¿Estás seguro que deseas desactivar este proveedor? No podrá ser usado en compras ni reportes hasta que lo actives nuevamente."}
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => setConfirmSwitch(null)}
+                          disabled={pendingSwitch}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          variant={
+                            confirmSwitch === "ACTIVE"
+                              ? "default"
+                              : confirmSwitch === "SUSPENDED"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                          onClick={async () => {
+                            setPendingSwitch(true)
+                            const businessId = typeof window !== "undefined" ? (localStorage.getItem("businessId") || "1") : "1";
+                            const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+                            let endpoint = "";
+                            if (confirmSwitch === "ACTIVE") endpoint = "activate";
+                            else if (confirmSwitch === "SUSPENDED") endpoint = "suspend";
+                            else endpoint = "deactivate";
+                            try {
+                              await apiClient.put(
+                                `/suppliers/${selectedSupplier.id}/${endpoint}?businessId=${businessId}`,
+                                {},
+                                { headers: { Authorization: `Bearer ${token}` } }
+                              );
+                              if (typeof mutateSuppliers === "function") mutateSuppliers();
+                              setConfirmSwitch(null)
+                            } catch (err: any) {
+                              alert("Error al cambiar el estado del proveedor");
+                            } finally {
+                              setPendingSwitch(false)
+                            }
+                          }}
+                          disabled={pendingSwitch}
+                        >
+                          {confirmSwitch === "ACTIVE"
+                            ? "Activar"
+                            : confirmSwitch === "SUSPENDED"
+                            ? "Suspender"
+                            : "Desactivar"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                   {/* Historial de compras */}
                   <div>
                     <div className="font-semibold mb-2">Historial de compras</div>
@@ -505,7 +716,28 @@ export default function Proveedores() {
               <NewSupplierDialog
                 open={showNewSupplier}
                 onOpenChange={setShowNewSupplier}
-                onAdd={handleAddSupplier} // << usa la función padre
+                onAdd={handleAddSupplier}
+                suppliers={suppliers.map(s => ({
+                  ...s,
+                  code: s.code ?? "",
+                  documentType: s.documentType ?? "",
+                  documentNumber: s.documentNumber ?? "",
+                  contactPerson: s.contactPerson ?? "",
+                  email: s.email ?? "",
+                  phone: s.phone ?? "",
+                  address: s.address ?? "",
+                  city: s.city ?? "",
+                  department: s.department ?? "",
+                  country: s.country ?? "",
+                  status: s.status ?? "",
+                  hasDebt: s.hasDebt ?? false,
+                  debtAmount: s.debtAmount ?? 0,
+                  postalCode: s.postalCode ?? "",
+                  paymentTerms: typeof s.paymentTerms === "number" ? s.paymentTerms : Number(s.paymentTerms) || 0,
+                  creditLimit: s.creditLimit ?? 0,
+                  notes: s.notes ?? "",
+                }))}
+                onAddSupplier={handleAddSupplier}
               />
             </div>
           </div>
@@ -513,4 +745,27 @@ export default function Proveedores() {
       )}
     </div>
   )
+}
+
+function SupplierStatusSelect({
+  status,
+  onChange,
+  disabled,
+}: {
+  status: string;
+  onChange: (newStatus: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <select
+      value={status}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className="border rounded px-2 py-1"
+    >
+      <option value="ACTIVE">Activo</option>
+      <option value="INACTIVE">Inactivo</option>
+      <option value="SUSPENDED">Suspendido</option>
+    </select>
+  );
 }

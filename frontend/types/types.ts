@@ -1,31 +1,25 @@
 export interface Supplier {
   // Requeridos
   id: number
+  code: string // <--- cambia aquí
   name: string
-  phone: string
+  documentType: string
+  documentNumber: string
+  contactPerson: string
   email: string
-  // Campos que exigen tus endpoints
-  code?: string
-  documentType?: string
-  documentNumber?: string
-  contactPerson?: string
-  address?: string
-  city?: string
-  department?: string
-  country?: string
-  postalCode?: string
-  paymentTerms?: number
-  creditLimit?: number | string
-  currentBalance?: number | string
-  status?: string
-  notes?: string
-
-  // Campos adicionales que usas en tu componente
-  contact?: string
-  initials?: string
-  hasDebt?: boolean
+  phone: string
+  address: string
+  city: string
+  department: string
+  country: string
+  postalCode: string
+  paymentTerms: number
+  creditLimit: number
+  status: string
+  notes: string
+  initials: string
+  hasDebt: boolean
   debtAmount?: number
-  // ...agrega más si los usas en page.tsx
 }
 
 export interface Business {
@@ -38,4 +32,24 @@ export interface Business {
   email: string;
   document: string;
   logo?: string;
+}
+
+export interface NewSupplierPayload {
+  businessId: string
+  code: string
+  name: string
+  documentType: string
+  documentNumber: string
+  contactPerson: string
+  email: string
+  phone: string
+  address: string
+  city: string
+  department: string
+  country: string
+  postalCode: string
+  paymentTerms: number
+  creditLimit: number
+  status: string
+  notes: string
 }

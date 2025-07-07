@@ -6,51 +6,33 @@ import { Input } from "@/components/ui/input"
 import { Search, MoreVertical, X } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { NewSupplierDialog } from "./NewSupplierDialog"
+import type { Supplier, NewSupplierPayload } from "@/types/types"
 
-interface Supplier {
-  id: number
-  name: string
-  phone: string
-  initials: string
-  hasDebt: boolean
-  debtAmount?: number
-}
+// Remove local Supplier interface and use the one from "@/types/types"
 
 interface ProveedoresOverlayProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   suppliers: Supplier[]
+  onAddSupplier: (supplier: NewSupplierPayload) => Promise<void>
+  mutateSuppliers: () => void
 }
 
-export function ProveedoresOverlay({ open, onOpenChange, suppliers: initialSuppliers }: ProveedoresOverlayProps) {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers)
+export function ProveedoresOverlay({ open, onOpenChange, suppliers, onAddSupplier, mutateSuppliers }: ProveedoresOverlayProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showNewSupplier, setShowNewSupplier] = useState(false)
 
-  const filteredSuppliers = suppliers.filter(
+  const sortedSuppliers = [...suppliers].sort((a, b) => a.name.localeCompare(b.name));
+
+  const filteredSuppliers = sortedSuppliers.filter(
     (supplier) =>
       supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       supplier.phone.includes(searchTerm)
   )
 
-  const handleAddSupplier = async (newSupplier: { name: string; phone: string }) => {
-    const initials = newSupplier.name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
-
-    setSuppliers([
-      ...suppliers,
-      {
-        id: suppliers.length + 1,
-        ...newSupplier,
-        initials,
-        hasDebt: false,
-        debtAmount: 0,
-      },
-    ])
+  const handleAddSupplier = async (newSupplier: NewSupplierPayload) => {
+    await onAddSupplier(newSupplier)
+    if (typeof mutateSuppliers === "function") mutateSuppliers();
   }
 
   return (
@@ -112,14 +94,22 @@ export function ProveedoresOverlay({ open, onOpenChange, suppliers: initialSuppl
             ))}
           </div>
           <div className="p-4 border-t mt-auto">
-            <Button className="w-full bg-[#1e293b] text-white" onClick={() => setShowNewSupplier(true)}>
-              Crear proveedor
+            <Button onClick={() => setShowNewSupplier(true)} className="w-full bg-[#1e293b] text-white">
+              Nuevo proveedor
             </Button>
           </div>
         </div>
       </div>
 
-      <NewSupplierDialog open={showNewSupplier} onOpenChange={setShowNewSupplier} onAdd={handleAddSupplier} />
+      {showNewSupplier && (
+        <NewSupplierDialog
+          open={showNewSupplier}
+          onOpenChange={setShowNewSupplier}
+          onAdd={handleAddSupplier}
+          suppliers={suppliers}
+          onAddSupplier={onAddSupplier}
+        />
+      )}
     </>
   )
 }
