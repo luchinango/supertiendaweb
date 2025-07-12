@@ -21,13 +21,15 @@ export default function NuevaOrdenCompra() {
   const [allProducts, setAllProducts] = useState<{ id: number, name: string, price: number }[]>([])
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1)
+  const [supplierSearch, setSupplierSearch] = useState("")
   const router = useRouter()
 
   // Cargar productos disponibles
   useEffect(() => {
+    const token = localStorage.getItem("token") // o el nombre de tu key
     fetch("/api/products?page=1&limit=100", {
       headers: {
-        Authorization: "Bearer TU_TOKEN_AQUI",
+        Authorization: `Bearer ${token}`,
         Accept: "application/json"
       }
     })
@@ -36,14 +38,26 @@ export default function NuevaOrdenCompra() {
   }, [])
 
   useEffect(() => {
-    fetch("/api/suppliers?page=1&limit=100", {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    fetch("/suppliers", {
       headers: {
-        Authorization: "Bearer TU_TOKEN_AQUI", // reemplaza por tu token real
-        Accept: "application/json"
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
       }
     })
       .then(res => res.json())
-      .then(data => setSuppliers(data.suppliers || []))
+      .then(data => {
+        if (Array.isArray(data.data)) {
+          setSuppliers(data.data.filter((prov: any) => prov.status === "ACTIVE").map((prov: any) => ({
+            id: prov.id,
+            name: prov.name
+          })))
+        } else {
+          setSuppliers([])
+        }
+      })
+      .catch(() => setSuppliers([]))
   }, [])
 
   // Buscar producto por código de barras
@@ -127,6 +141,10 @@ export default function NuevaOrdenCompra() {
     }
   }
 
+  const filteredSuppliers = suppliers.filter(s =>
+    s.name.toLowerCase().includes(supplierSearch.toLowerCase())
+  )
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/15 backdrop-blur-[2px]" onClick={() => router.push("/ordenes-compra")} />
@@ -151,8 +169,16 @@ export default function NuevaOrdenCompra() {
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un proveedor" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(s => (
+                  <SelectContent className="bg-white">
+                    <div className="p-2">
+                      <Input
+                        placeholder="Buscar proveedor..."
+                        value={supplierSearch}
+                        onChange={e => setSupplierSearch(e.target.value)}
+                        className="mb-2"
+                      />
+                    </div>
+                    {filteredSuppliers.map(s => (
                       <SelectItem key={s.id} value={String(s.id)}>
                         {s.name}
                       </SelectItem>

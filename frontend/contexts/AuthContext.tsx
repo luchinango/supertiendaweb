@@ -126,8 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const token = getAuthToken()
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, register, checkAuth }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, register, checkAuth, token }}>
       {children}
     </AuthContext.Provider>
   )

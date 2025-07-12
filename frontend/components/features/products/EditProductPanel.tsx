@@ -19,19 +19,40 @@ interface EditProductPanelProps {
   onSave: (product: Product) => void
 }
 
+function normalizeProduct(apiProduct: any): Product {
+  return {
+    id: apiProduct.id,
+    name: apiProduct.name,
+    barcode: apiProduct.barcode ?? "",
+    image: apiProduct.image ?? "",
+    stock: apiProduct.stock ?? 0,
+    cost: apiProduct.costPrice ?? 0,
+    price: apiProduct.sellingPrice ?? 0,
+    category: apiProduct.category ?? undefined,
+    min_stock: apiProduct.min_stock ?? 0,
+    max_stock: apiProduct.max_stock ?? 0,
+    category_id: apiProduct.category_id ?? (apiProduct.category?.id ?? 0),
+    business_id: apiProduct.business_id ?? 0,
+    description: apiProduct.description ?? "",
+    unit: apiProduct.unit ?? "",
+    is_active: apiProduct.is_active ?? true,
+    created_at: apiProduct.created_at ?? "",
+    updated_at: apiProduct.updated_at ?? "",
+    // ...agrega otras propiedades necesarias
+  }
+}
 
 export function EditProductPanel({ open, onOpenChange, product, onSave }: EditProductPanelProps) {
   const {categories, isLoading: isLoadingCategories, error, editCategory, mutate} = useCategories()
-  if (!product) return null // <-- Soluciona el error
 
-  const [editedProduct, setEditedProduct] = useState<Product | null>(null)
-  const [useUnits, setUseUnits] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+  const [editedProduct, setEditedProduct] = useState<Product | null>(null);
+  const [useUnits, setUseUnits] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   useEffect(() => {
     if (product) {
-      setEditedProduct({ ...product })
+      setEditedProduct(normalizeProduct(product))
     }
   }, [product])
 
@@ -94,13 +115,13 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
           <div className="flex-1 overflow-auto p-4">
             <div className="space-y-6">
               {/* Image */}
-              {product.image && (
+              {product?.image && (
                 <div className="flex justify-center mb-4">
                   <div className="relative">
                     <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
                       <img
                         src={product.image || "/placeholder.png"}
-                        alt={product.name}
+                        alt={product.name ?? ""}
                         className="w-full h-full object-cover rounded-lg"
                       />
                     </div>
@@ -182,7 +203,7 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                     id="quantity"
                     type="text"
                     inputMode="numeric"
-                    value={editedProduct.stock.toString()}
+                    value={(editedProduct.stock ?? 0).toString()}
                     onChange={(e) => {
                       const value = Number.parseInt(e.target.value.replace(/[^0-9]/g, "")) || 0
                       setEditedProduct({
@@ -263,7 +284,7 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                     className="border rounded-md p-3 flex justify-between items-center cursor-pointer"
                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                   >
-                    <span>{editedProduct.category.name || "Productos para cocina"}</span>
+                    <span>{editedProduct?.category?.name || "Productos para cocina"}</span>
                     <svg
                       width="15"
                       height="15"
@@ -311,7 +332,7 @@ export function EditProductPanel({ open, onOpenChange, product, onSave }: EditPr
                             onClick={() => {
                               setEditedProduct({
                                 ...editedProduct,
-                                category: category,
+                                category: category, // <-- ya no da error si el tipo está corregido
                               })
                               setShowCategoryDropdown(false)
                             }}

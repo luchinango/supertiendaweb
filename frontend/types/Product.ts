@@ -1,3 +1,8 @@
+export interface Category {
+  id: number
+  name: string
+  description?: string
+}
 
 export interface Product {
   id: number
@@ -20,6 +25,7 @@ export interface Product {
   is_active: boolean
   created_at: string
   updated_at: string
+  category?: Category // <-- agrega esta línea
 }
 
 export interface ProductFormData {

@@ -9,6 +9,8 @@ import { Search, Plus, Eye } from "lucide-react"
 import Link from "next/link"
 import { OrderDetailPanel } from "@/components/features/inventory/OrderDetailPanel"
 import { Badge } from "@/components/ui/badge"
+import apiClient from "@/lib/api-client"
+import { mapOrderStatus } from "@/utils/orderStatus"
 
 interface PurchaseOrder {
   id: number
@@ -35,37 +37,56 @@ export default function OrdenesCompra() {
   const [typeFilter, setTypeFilter] = useState("todas")
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     async function fetchOrders() {
-      const res = await fetch("/api/purchase-orders", {
-        headers: {
-          Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoibWdvbnphbGVzIiwicm9sZSI6InN1cGVyX2FkbWluIiwiYnVzaW5lc3NJZCI6MSwiaWF0IjoxNzUwNjIwODE2LCJleHAiOjE3NTMyMTI4MTZ9.V3VNLCuSleU8ef4WY1SaYRNRSMAQBle1RlEx_qx008UaFEaCHfIv25HPEAwiHEek4kNvaIABGBhf2llMTB2Z0fRb2OQh47rBgTYVcnsarDHEunuF7_EnCgpyN6khnnSDtXqC-FIvir9O_2ejBOnOJvZ33B9x6fzQRXnfCbqoNJEwihUwbfyIKvKCkkTPVmEAD5E2jvf-A9Yo6MzOZYgZXvJVm45woHZJSK0WFHZNCYUTLugB-0NEMzDqpvmcmQXuoXr5dJgyeVJ-XnVcEDqMfSapeaGVP0Jae4_oqDOdM9-wRbWF7jZBhFKVO10xHEt96w2TKB-VkKMgb3rTmEpSX5DcMxi6Pl4kCeYhd7nLWVLnGWmLaSZrvqZBQe67l-j9ekg14kB3wN33XSVaAhEismxbK4GXhgO7fNkGy2ke6bW-EmIuvRJ86oS_MUv3d5M-o4ampGrXCS78ezRwdzy2uFhr0j9kFkFTwl7GTESr9noCNnZ_UnFd8JssAduMLte3j5qB8j4jqT4dONU-xLxKeMdN_EAQEEzzjIGU0tpnNBJC3WXp1IP_d5BPmGwci9t-rYzPV80-rO8KxpLWyUpUFFsCaP_ZOm3fUy3JVeEpGt7mmfWuHRZSLxDi_e8ugqxcbwD01KAZxfoiWq-8WZHrtmbgAk1QUorBtTuuBlQrMdM", // Reemplaza con tu token real
-        }, 
+      const token = localStorage.getItem("token") || ""
+      const businessId = localStorage.getItem("businessId") || "1"
+      const res = await apiClient.get(
+        `/purchase-orders?businessId=${businessId}&page=${page}&limit=10`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      const response = res.data
+      // Mapear los datos según tu modelo
+      const mapped = (response.data || []).map((order: any) => {
+        const totalGeneral = (order.items || []).reduce(
+          (sum: number, item: any) => sum + Number(item.quantity) * Number(item.unitCost ?? 0),
+          0
+        )
+        const impuestos = Number(order.taxAmount ?? 0)
+        return {
+          id: order.id,
+          proveedor: order.supplier?.name || "",
+          fecha: order.orderDate ? order.orderDate.split("T")[0] : "",
+          // Cambia aquí: suma de subtotales + impuestos
+          total: totalGeneral + impuestos,
+          estado:
+            order.status === "DRAFT"
+              ? "pendiente"
+              : order.status === "APPROVED"
+              ? "aprobada"
+              : order.status === "RECEIVED"
+              ? "recibida"
+              : order.status?.toLowerCase() || "pendiente",
+          tipo: "manual",
+          productos: (order.items || []).map((item: any) => ({
+            id: item.productId,
+            nombre: item.product?.name || "",
+            cantidad: item.quantity,
+            precioUnitario: Number(item.unitCost ?? 0),
+            subtotal: Number(item.quantity) * Number(item.unitCost ?? 0),
+          })),
+          formaPago: "contado",
+          plazoCredito: undefined,
+        }
       })
-      const data = await res.json()
-      // Mapea los datos de la API al formato esperado por la tabla
-      const mapped = data.map((order: any) => ({
-        id: order.id,
-        proveedor: order.supplier?.name || "",
-        fecha: order.orderDate ? order.orderDate.split("T")[0] : "",
-        total: Number(order.totalAmount ?? 0),
-        estado: order.status === "DRAFT" ? "pendiente" : order.status,
-        tipo: "manual", // Puedes ajustar esto si tienes el dato real
-        productos: (order.items || []).map((item: any) => ({
-          id: item.productId,
-          nombre: item.product?.name || "",
-          cantidad: item.quantity,
-          precioUnitario: Number(item.unitCost ?? 0),
-          subtotal: Number(item.quantity) * Number(item.unitCost ?? 0),
-        })),
-        formaPago: "contado", // Ajusta si tienes el dato real
-        plazoCredito: undefined, // Ajusta si tienes el dato real
-      }))
       setPurchaseOrders(mapped)
+      setTotalPages(response.meta?.totalPages || 1)
     }
     fetchOrders()
-  }, [])
+  }, [page])
 
   const filteredOrders = purchaseOrders.filter(
     (order) =>
@@ -80,9 +101,45 @@ export default function OrdenesCompra() {
     )
   }
 
-  const handleViewDetails = (order: PurchaseOrder) => {
-    setSelectedOrder(order)
-    setIsDetailPanelOpen(true)
+  const handleViewDetails = async (order: PurchaseOrder) => {
+    const token = localStorage.getItem("token") || ""
+    try {
+      const res = await apiClient.get(
+        `/purchase-orders/${order.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      const data = res.data.data
+      // Mapear la orden recibida del backend al modelo de tu UI
+      const mappedOrder: PurchaseOrder = {
+        id: data.id,
+        proveedor: data.supplier?.name || "",
+        fecha: data.orderDate ? data.orderDate.split("T")[0] : "",
+        total: Number(data.totalAmount ?? 0),
+        estado:
+          data.status === "DRAFT"
+            ? "pendiente"
+            : data.status === "APPROVED"
+            ? "aprobada"
+            : data.status === "RECEIVED"
+            ? "recibida"
+            : data.status?.toLowerCase() || "pendiente",
+        tipo: "manual", // O ajusta según tu lógica
+        productos: (data.items || []).map((item: any) => ({
+          id: item.productId,
+          nombre: item.product?.name || "",
+          cantidad: item.quantity,
+          precioUnitario: Number(item.unitCost ?? 0),
+          subtotal: Number(item.quantity) * Number(item.unitCost ?? 0),
+        })),
+        formaPago: "contado",
+        plazoCredito: undefined,
+      }
+      setSelectedOrder(mappedOrder)
+      setIsDetailPanelOpen(true)
+    } catch (error) {
+      // Manejo de error opcional
+      alert("No se pudo cargar la orden de compra.")
+    }
   }
 
   const crearOrdenCompra = () => {
@@ -92,13 +149,13 @@ export default function OrdenesCompra() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-      <h1 className="text-2xl font-bold">Órdenes de Compra</h1>
-      <Link href="/ordenes-compra/nueva">
-        <Button className="gap-2">
-        <Plus className="h-4 w-4" />
-        Nueva Orden de Compra
-        </Button>
-      </Link>
+        <h1 className="text-2xl font-bold">Órdenes de Compra</h1>
+        <Link href="/ordenes-compra/nueva">
+          <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nueva Orden de Compra
+          </Button>
+        </Link>
       </div>
 
       <div className="flex flex-wrap gap-4 items-center">
@@ -117,6 +174,7 @@ export default function OrdenesCompra() {
         </SelectTrigger>
         <SelectContent>
         <SelectItem value="todas">Todos los estados</SelectItem>
+        <SelectItem value="pendiente">Pendiente</SelectItem>
         <SelectItem value="pendiente">Pendiente</SelectItem>
         <SelectItem value="aprobada">Aprobada</SelectItem>
         <SelectItem value="recibida">Recibida</SelectItem>
@@ -152,7 +210,11 @@ export default function OrdenesCompra() {
           <TableCell>{order.id}</TableCell>
           <TableCell>{order.proveedor}</TableCell>
           <TableCell>{order.fecha}</TableCell>
-          <TableCell>Bs {order.total.toFixed(2)}</TableCell>
+          <TableCell>
+          <div className="text-xl font-bold">
+            Bs {order.total.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          </TableCell>
           <TableCell>
           <Badge variant={order.tipo === "automatizada" ? "secondary" : "outline"}>
             {order.tipo === "automatizada" ? "Automatizada" : "Manual"}
@@ -194,7 +256,10 @@ export default function OrdenesCompra() {
             variant="outline"
             size="sm"
             className="flex items-center gap-1"
-            onClick={() => handleViewDetails(order)}
+            onClick={() => {
+              setSelectedOrder(order)
+              setIsDetailPanelOpen(true)
+            }}
           >
             <Eye className="h-4 w-4" />
             Ver detalles
@@ -210,9 +275,7 @@ export default function OrdenesCompra() {
           isOpen={isDetailPanelOpen}
           onClose={() => setIsDetailPanelOpen(false)}
           orderId={selectedOrder.id}
-          onStatusChange={(newStatus: "pendiente" | "aprobada" | "recibida") =>
-            handleStatusChange(selectedOrder.id, newStatus)
-          }
+          onStatusChange={(newStatus) => handleStatusChange(selectedOrder.id, newStatus)}
         />
       )}
 

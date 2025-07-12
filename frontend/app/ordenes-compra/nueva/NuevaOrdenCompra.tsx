@@ -23,6 +23,12 @@ interface OrderItem {
   quantity: number
 }
 
+interface Supplier {
+  id: number
+  name: string
+  status: string
+}
+
 const sampleProducts: Product[] = [
   { id: 1, nombre: "Manzanas", precio: 2.5, stock: 100, stockMinimo: 50, categoria: "Frutas" },
   { id: 2, nombre: "Leche", precio: 3, stock: 10, stockMinimo: 20, categoria: "Lácteos" },
@@ -38,6 +44,8 @@ export default function NuevaOrdenCompra() {
   const [items, setItems] = useState<OrderItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null)
   const [quantity, setQuantity] = useState("")
+  const [proveedores, setProveedores] = useState<Supplier[]>([])
+  const [proveedorId, setProveedorId] = useState<number | null>(null)
 
   useEffect(() => {
     if (isClient && searchParams) {
@@ -50,6 +58,19 @@ export default function NuevaOrdenCompra() {
       }
     }
   }, [searchParams, isClient])
+
+  useEffect(() => {
+    fetch("http://206.183.128.36:5500/suppliers", {
+      headers: {
+        "accept": "application/json",
+        "Authorization": "Bearer TU_TOKEN_AQUI"
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setProveedores(data.data.filter((p: Supplier) => p.status === "ACTIVE"))
+      })
+  }, [])
 
   const addItem = () => {
     if (selectedProduct && quantity) {
@@ -81,7 +102,21 @@ export default function NuevaOrdenCompra() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="proveedor">Proveedor</Label>
-          <Input id="proveedor" value={proveedor} onChange={(e) => setProveedor(e.target.value)} required />
+          <Select
+            value={proveedorId?.toString() || ""}
+            onValueChange={value => setProveedorId(Number(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar proveedor" />
+            </SelectTrigger>
+            <SelectContent>
+              {proveedores.map((p) => (
+                <SelectItem key={p.id} value={p.id.toString()}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex gap-4">
           <div className="flex-1">

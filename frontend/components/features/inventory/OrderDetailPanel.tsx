@@ -9,6 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { X, Printer, Save, Package, Barcode, Plus, Minus } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext" // suponiendo que tienes un contexto de autenticación
+import { Switch } from "@/components/ui/switch" // Asegúrate de importar el Switch
+import { Checkbox } from "@/components/ui/checkbox"
+import { mapOrderStatus } from "@/utils/orderStatus"
 
 interface Product {
   id: number
@@ -38,46 +42,107 @@ interface OrderDetailPanelProps {
 }
 
 export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: OrderDetailPanelProps) {
+  // Ajusta aquí según la estructura real de tu AuthContext
+    const auth = useAuth() // extrae el contexto de autenticación
+    const token = auth.token || "" // Usa el nombre correcto de la propiedad del token
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [barcodeInput, setBarcodeInput] = useState("")
   const [quantities, setQuantities] = useState<Record<number, number>>({})
+  const [catalogProducts, setCatalogProducts] = useState<any[]>([])
+  const [showProductSelector, setShowProductSelector] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [calcularImpuestos, setCalcularImpuestos] = useState(true);
 
   useEffect(() => {
     if (!isOpen || !orderId) return
     setLoading(true)
     fetch(`/api/purchase-orders/${orderId}`, {
       headers: {
-        Authorization: "Bearer TU_TOKEN_AQUI", // pon tu token real aquí
+        Authorization: `Bearer ${token}`,
         Accept: "*/*"
       }
     })
       .then(res => res.json())
       .then(data => {
-        setOrder(data)
-        // Inicializa cantidades
-        const q: Record<number, number> = {}
-        data.items?.forEach((item: any) => {
-          q[item.productId] = Number(item.quantity)
-        })
-        setQuantities(q)
+        if (data && data.data) {
+          setOrder(data.data)
+          // Inicializa cantidades
+          const q: Record<number, number> = {}
+          data.data.items?.forEach((item: any) => {
+            q[item.productId] = Number(item.quantity)
+          })
+          setQuantities(q)
+        }
       })
       .finally(() => setLoading(false))
-  }, [isOpen, orderId])
+  }, [isOpen, orderId, token])
+
+  useEffect(() => {
+    if (!isOpen) return
+    fetch(`/api/businesses/${order?.businessId || 1}/products`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(data => setCatalogProducts(data.data || []))
+  }, [isOpen, order?.businessId, token])
+
+  useEffect(() => {
+    if (!showProductSelector) return
+    if (!searchTerm.trim()) {
+      setSearchResults([])
+      return
+    }
+    setSearchLoading(true)
+    const timeout = setTimeout(() => {
+      console.log("Buscando:", searchTerm)
+      fetch(`/api/products?search=${encodeURIComponent(searchTerm)}&limit=10`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log("Resultados:", data)
+          setSearchResults(data.data || [])
+        })
+        .finally(() => setSearchLoading(false))
+    }, 350) // debounce para evitar demasiadas peticiones
+
+    return () => clearTimeout(timeout)
+  }, [searchTerm, showProductSelector, token])
+
+  const handleProductSearch = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSearchLoading(true)
+    fetch(`/api/products?search=${encodeURIComponent(searchTerm)}&limit=10`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+      }
+    })
+      .then(res => res.json())
+      .then(data => setSearchResults(data.data || []))
+      .finally(() => setSearchLoading(false))
+  }
 
   if (!isOpen || !order) return null
 
   // Mapea los datos de la API al formato visual
-  // Si tu API no tiene tipo y formaPago, puedes dejarlo fijo y eliminar las comparaciones
-  // const tipo: "manual" | "automatizada" = "manual"
-  // const formaPago: "contado" | "credito" = "contado"
-  const tipo: "manual" | "automatizada" = order.tipo ?? "manual" // Usa order.tipo si existe en la API
-  const formaPago: "contado" | "credito" = order.formaPago ?? "contado" // Usa order.formaPago si existe en la API
-  const estado = order.status === "DRAFT" ? "pendiente" : order.status
-  const plazoCredito = undefined // Ajusta si tienes el dato real
+  // Si tu API no lo tiene, déjalo fijo como string
+  const tipo = "manual" // "manual" o "automatizada"
+  const formaPago: "contado" | "credito" = order.paymentType === "CREDIT" ? "credito" : "contado" // Asume que order.paymentType existe
+  const estado = mapOrderStatus(order.status)
+  const plazoCredito = order.supplier?.paymentTerms ?? undefined
   const total = Number(order.totalAmount ?? 0)
   const productos = (order.items || []).map((item: any) => ({
-    id: item.id, // Usa el id del ítem, no del producto
+    id: item.id,
     nombre: item.product?.name || "",
     cantidad: Number(item.quantity),
     precioUnitario: Number(item.unitCost ?? 0),
@@ -86,17 +151,51 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
 
   const totalCantidad = productos.reduce((sum: number, p: Product) => sum + p.cantidad, 0)
   const totalGeneral = productos.reduce((sum: number, p: Product) => sum + p.subtotal, 0)
+  const totalCalculado = totalGeneral + (calcularImpuestos ? Number(order.taxAmount ?? 0) : 0);
 
   const handleQuantityChange = (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return
     setQuantities({ ...quantities, [productId]: newQuantity })
   }
 
-  const handleBarcodeSubmit = (e: React.FormEvent) => {
+  const handleBarcodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would implement barcode scanning logic
-    alert(`Código de barras escaneado: ${barcodeInput}`)
-    setBarcodeInput("")
+    if (!barcodeInput.trim()) return
+
+    setSearchLoading(true)
+    try {
+      const res = await fetch(`/api/products?search=${encodeURIComponent(barcodeInput)}&limit=1`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
+        }
+      })
+      const data = await res.json()
+      const found = data.data?.[0]
+      if (found) {
+        setQuantities(q => ({ ...q, [found.id]: 1 }))
+        setOrder((prev: any) => ({
+          ...prev,
+          items: [
+            ...(prev.items || []),
+            {
+              id: Math.random(),
+              productId: found.id,
+              quantity: 1,
+              unitCost: found.costPrice || 0,
+              product: found
+            }
+          ]
+        }))
+      } else {
+        alert("Producto no encontrado")
+      }
+    } catch {
+      alert("Error buscando producto")
+    } finally {
+      setSearchLoading(false)
+      setBarcodeInput("")
+    }
   }
 
   const handleSaveChanges = async () => {
@@ -136,12 +235,15 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
     setOrder((prev: any) => ({ ...prev, status: newStatus }));
   };
 
+  const esRecibida = estado === "recibida"
+  const esEditable = estado === "pendiente";
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Overlay with blur effect */}
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/15 backdrop-blur-[2px]" onClick={onClose} />
 
-      {/* Detail panel */}
+      {/* Panel principal */}
       <div className="relative w-full max-w-4xl bg-white h-full overflow-y-auto shadow-xl animate-slide-in-from-right">
         <div className="p-6 flex flex-col h-full">
           <div className="flex items-center justify-between mb-6">
@@ -170,13 +272,13 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Tipo</h3>
-                <Badge variant={tipo === "automatizada" ? "secondary" : "outline"}>
-                  {tipo === "automatizada" ? "Automatizada" : "Manual"}
+                <Badge variant="outline">
+                  Manual
                 </Badge>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Estado</h3>
-                <Select value={estado} onValueChange={handleStatusChange}>
+                <Select value={estado} onValueChange={handleStatusChange} disabled={esRecibida}>
                   <SelectTrigger className="w-[130px]">
                     <SelectValue>
                       <Badge
@@ -220,7 +322,7 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
                 <div>
                   <div className="text-sm text-gray-500">Valor total</div>
                   <div className="text-xl font-bold">
-                    Bs {totalGeneral.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    Bs {totalCalculado.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>
@@ -243,39 +345,132 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
             </div>
 
             <div>
-              <h3 className="font-medium mb-3">Productos</h3>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-medium">Productos</h3>
+                <Button
+                  onClick={() => setShowProductSelector(true)}
+                  disabled={!esEditable}
+                >
+                  <Plus className="h-4 w-4" /> Agregar producto
+                </Button>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Producto</TableHead>
-                    <TableHead className="text-right">Precio Unitario</TableHead>
-                    <TableHead className="text-right">Cantidad</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
+                    <TableHead className="text-center">Producto</TableHead>
+                    <TableHead className="text-center">Precio Unitario</TableHead>
+                    <TableHead className="text-center">Cantidad</TableHead>
+                    <TableHead className="text-center">Subtotal</TableHead>
+                    {/* <TableHead className="text-right">Acciones</TableHead> <-- ELIMINADO */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {productos.map((product: Product) => (
                     <TableRow key={product.id}>
-                      <TableCell>{product.nombre}</TableCell>
-                      <TableCell className="text-right">
-                        Bs {product.precioUnitario.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <TableCell className="text-center">{product.nombre}</TableCell>
+                      <TableCell className="text-center">
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={product.precioUnitario}
+                          onChange={e => {
+                            const newPrice = Number(e.target.value)
+                            setOrder((prev: any) => ({
+                              ...prev,
+                              items: prev.items.map((item: any) =>
+                                item.id === product.id ? { ...item, unitCost: newPrice } : item
+                              )
+                            }))
+                          }}
+                          className="w-20 text-right"
+                          disabled={!esEditable}
+                        />
                       </TableCell>
-                      <TableCell className="text-right">
-                        {product.cantidad.toLocaleString("es-BO")}
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              const newQty = Math.max(1, (quantities[product.id] ?? product.cantidad) - 1)
+                              setQuantities(q => ({ ...q, [product.id]: newQty }))
+                              setOrder((prev: any) => ({
+                                ...prev,
+                                items: prev.items.map((item: any) =>
+                                  item.id === product.id ? { ...item, quantity: newQty } : item
+                                )
+                              }))
+                            }}
+                            disabled={!esEditable}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={quantities[product.id] ?? product.cantidad}
+                            onChange={e => {
+                              const newQty = Number(e.target.value)
+                              setQuantities(q => ({ ...q, [product.id]: newQty }))
+                              setOrder((prev: any) => ({
+                                ...prev,
+                                items: prev.items.map((item: any) =>
+                                  item.id === product.id ? { ...item, quantity: newQty } : item
+                                )
+                              }))
+                            }}
+                            className="w-12 text-right"
+                            disabled={!esEditable}
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              const newQty = (quantities[product.id] ?? product.cantidad) + 1
+                              setQuantities(q => ({ ...q, [product.id]: newQty }))
+                              setOrder((prev: any) => ({
+                                ...prev,
+                                items: prev.items.map((item: any) =>
+                                  item.id === product.id ? { ...item, quantity: newQty } : item
+                                )
+                              }))
+                            }}
+                            disabled={!esEditable}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-right">
-                        Bs {product.subtotal.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <TableCell className="text-center">
+                        Bs {(product.precioUnitario * (quantities[product.id] ?? product.cantidad)).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              <div className="flex justify-end mt-2 gap-8">
+              <div className="flex items-center gap-2 mt-4">
+                <Checkbox
+                  checked={calcularImpuestos}
+                  onCheckedChange={checked => setCalcularImpuestos(checked === true)}
+                  id="calcular-impuestos"
+                  disabled={!esEditable}
+                />
+                <label htmlFor="calcular-impuestos" className="font-medium select-none">
+                  Calcular impuestos
+                </label>
+              </div>
+              <div className="flex flex-col items-end gap-1 mt-2">
                 <div>
-                  <span className="font-semibold">Total cantidad:</span> {totalCantidad.toLocaleString("es-BO")}
+                  <span className="font-semibold">Subtotal productos:</span> Bs {totalGeneral.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
                 </div>
+                {calcularImpuestos && (
+                  <div>
+                    <span className="font-semibold">Impuestos:</span> Bs {(order.taxAmount ?? 0).toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                  </div>
+                )}
                 <div>
-                  <span className="font-semibold">Total Bs:</span> {totalGeneral.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <span className="font-semibold">Total Bs:</span> Bs {totalCalculado.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
                 </div>
               </div>
             </div>
@@ -294,6 +489,7 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
                 <Button
                   className="flex items-center gap-1"
                   onClick={handleSaveChanges}
+                  disabled={!esEditable}
                 >
                   <Save className="h-4 w-4" />
                   Guardar Cambios
@@ -302,6 +498,57 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
             )}
           </div>
         </div>
+
+        {/* Modal aquí */}
+        {showProductSelector && (
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[100]">
+            <div className="bg-white p-4 rounded shadow-lg max-w-lg w-full">
+              <h3 className="font-bold mb-2">Buscar producto</h3>
+              <Input
+                placeholder="Buscar por nombre, código, etc..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+              <ul>
+                {searchLoading && <li className="text-gray-400 py-2">Buscando...</li>}
+                {searchResults.map((item) => (
+                  <li key={item.id} className="flex justify-between items-center py-1">
+                    <span>{item.name}</span>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setQuantities(q => ({ ...q, [item.id]: 1 }))
+                        setOrder((prev: any) => ({
+                          ...prev,
+                          items: [
+                            ...(prev.items || []),
+                            {
+                              id: Math.random(),
+                              productId: item.id,
+                              quantity: 1,
+                              unitCost: item.costPrice || 0,
+                              product: item
+                            }
+                          ]
+                        }))
+                        setShowProductSelector(false)
+                        setSearchTerm("")
+                        setSearchResults([])
+                      }}
+                    >
+                      Agregar
+                    </Button>
+                  </li>
+                ))}
+                {!searchLoading && searchTerm && searchResults.length === 0 && (
+                  <li className="text-gray-400 py-2">Sin resultados</li>
+                )}
+              </ul>
+              <Button variant="outline" onClick={() => setShowProductSelector(false)}>Cerrar</Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -57,6 +57,7 @@ export interface AuthContextType {
   logout: () => void
   register: (userData: RegisterRequest) => Promise<{ success: boolean; error?: string }>
   checkAuth: () => Promise<void>
+  token: string | null 
 }
 
 export type { ApiResponse }
