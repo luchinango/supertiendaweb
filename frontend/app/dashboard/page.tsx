@@ -6,10 +6,12 @@ import { Search } from "lucide-react";
 import { CashRegisterManager } from '@/components/features/cash-register/CashRegisterManager'
 import useSWR from "swr";
 import { getReports, type ReportData } from "@/services/reportsService";
+import { useAuth } from "@/hooks/useAuth"
 
 export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const { data, error } = useSWR<ReportData>("reports", getReports);
+  const { logout } = useAuth();
 
   if (error) return <div>Error al cargar datos</div>;
   if (!data) return <div>Cargando…</div>;
@@ -33,6 +35,12 @@ export default function Dashboard() {
         <li>Sales This Month: {data.salesThisMonth}</li>
       </ul>
       <CashRegisterManager />
+      <button
+        onClick={logout}
+        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        Cerrar sesión
+      </button>
     </div>
   );
 }

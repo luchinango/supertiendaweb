@@ -54,7 +54,7 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
   const [searchTerm, setSearchTerm] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
-  const [calcularImpuestos, setCalcularImpuestos] = useState(true);
+  const [calcularImpuestos, setCalcularImpuestos] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !orderId) return
@@ -150,8 +150,10 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
   }))
 
   const totalCantidad = productos.reduce((sum: number, p: Product) => sum + p.cantidad, 0)
-  const totalGeneral = productos.reduce((sum: number, p: Product) => sum + p.subtotal, 0)
-  const totalCalculado = totalGeneral + (calcularImpuestos ? Number(order.taxAmount ?? 0) : 0);
+  // Extrae el monto de impuestos del objeto de la orden
+  const impuestos = Number(order.taxAmount ?? 0);
+  const totalGeneral = productos.reduce((sum: number, p: Product) => sum + p.subtotal, 0);
+  const totalCalculado = totalGeneral + impuestos;
 
   const handleQuantityChange = (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return
@@ -164,7 +166,7 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
 
     setSearchLoading(true)
     try {
-      const res = await fetch(`/api/products?search=${encodeURIComponent(barcodeInput)}&limit=1`, {
+      const res = await fetch(`/products?search=${encodeURIComponent(barcodeInput)}&limit=1`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json"
@@ -200,30 +202,44 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
 
   const handleSaveChanges = async () => {
     try {
-      // Prepara los datos a enviar (solo cantidades modificadas)
-      const itemsToUpdate = Object.entries(quantities).map(([productId, cantidad]) => ({
-        productId: Number(productId),
-        quantity: cantidad,
-      }));
+      const token = auth.token || "";
+      const itemsToUpdate = Object.entries(quantities).map(([productId, cantidad]) => {
+        const item = order.items.find((i: any) => i.productId === Number(productId));
+        return {
+          productId: Number(productId),
+          quantity: cantidad,
+          unitCost: item ? item.unitCost : 0,
+        };
+      });
 
-      await fetch(`/api/purchase-orders/${orderId}/items`, {
-        method: "PUT", // o PATCH según tu API
+      const body = {
+        supplierId: order.supplier?.id,
+        poNumber: order.poNumber,
+        status: order.status,
+        orderDate: order.orderDate,
+        expectedDate: order.expectedDate,
+        notes: order.notes,
+        items: itemsToUpdate,
+      };
+
+      await fetch(`/purchase-orders/${orderId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer TU_TOKEN_AQUI", // pon tu token real aquí
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
-        body: JSON.stringify({ items: itemsToUpdate }),
+        body: JSON.stringify(body),
       });
 
       alert("Cambios guardados correctamente");
-      // Opcional: recargar la orden para ver los cambios reflejados
     } catch (error) {
       alert("Error al guardar los cambios");
     }
   }
 
   const handleStatusChange = async (newStatus: "pendiente" | "aprobada" | "recibida") => {
-    await fetch(`/api/purchase-orders/${orderId}/status`, {
+    await fetch(`/purchase-orders/${orderId}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -449,26 +465,13 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
                   ))}
                 </TableBody>
               </Table>
-              <div className="flex items-center gap-2 mt-4">
-                <Checkbox
-                  checked={calcularImpuestos}
-                  onCheckedChange={checked => setCalcularImpuestos(checked === true)}
-                  id="calcular-impuestos"
-                  disabled={!esEditable}
-                />
-                <label htmlFor="calcular-impuestos" className="font-medium select-none">
-                  Calcular impuestos
-                </label>
-              </div>
               <div className="flex flex-col items-end gap-1 mt-2">
                 <div>
                   <span className="font-semibold">Subtotal productos:</span> Bs {totalGeneral.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
                 </div>
-                {calcularImpuestos && (
-                  <div>
-                    <span className="font-semibold">Impuestos:</span> Bs {(order.taxAmount ?? 0).toLocaleString("es-BO", { minimumFractionDigits: 2 })}
-                  </div>
-                )}
+                <div>
+                  <span className="font-semibold">Impuestos:</span> Bs {impuestos.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                </div>
                 <div>
                   <span className="font-semibold">Total Bs:</span> Bs {totalCalculado.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
                 </div>

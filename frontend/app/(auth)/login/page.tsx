@@ -20,28 +20,32 @@ export default function LoginPage() {
   const {loginWithRedirect} = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-    if (!username || !password) {
-      setError("Por favor completa todos los campos")
-      setIsLoading(false)
-      return
-    }
+    // Liberar el hilo principal antes de ejecutar la lógica pesada
+    setTimeout(async () => {
+      if (!username || !password) {
+        setError("Por favor completa todos los campos");
+        setIsLoading(false);
+        return;
+      }
 
-    const result = await loginWithRedirect(username, password)
+      const result = await loginWithRedirect(username, password);
+      console.log("Login result:", result);
 
-    if (!result.success) {
-      setError(result.error || "Error de autenticación")
-    } else {
-      // Guardar token y businessId en el localStorage
-      const data = (result as typeof result & { data: { token: string; user: { employee: { businessId: number } } } }).data
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("businessId", data.user.employee.businessId.toString())
-    }
+      if (!result.success) {
+        setError(result.error || "Error de autenticación");
+      } else {
+        // Guardar token y businessId en el localStorage
+        const data = (result as typeof result & { data: { token: string; user: { employee: { businessId: number } } } }).data;
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("businessId", data.user.employee.businessId.toString());
+      }
 
-    setIsLoading(false)
+      setIsLoading(false);
+    }, 0);
   }
 
   return (

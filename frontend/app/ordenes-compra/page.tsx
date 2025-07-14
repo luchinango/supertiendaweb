@@ -11,6 +11,7 @@ import { OrderDetailPanel } from "@/components/features/inventory/OrderDetailPan
 import { Badge } from "@/components/ui/badge"
 import apiClient from "@/lib/api-client"
 import { mapOrderStatus } from "@/utils/orderStatus"
+import NuevaOrdenCompra from "@/components/ordenes-compra/NuevaOrdenCompra"
 
 interface PurchaseOrder {
   id: number
@@ -39,6 +40,7 @@ export default function OrdenesCompra() {
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [showNuevaOrden, setShowNuevaOrden] = useState(false)
 
   useEffect(() => {
     async function fetchOrders() {
@@ -150,12 +152,10 @@ export default function OrdenesCompra() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Órdenes de Compra</h1>
-        <Link href="/ordenes-compra/nueva">
-          <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setShowNuevaOrden(true)}>
           <Plus className="h-4 w-4" />
           Nueva Orden de Compra
-          </Button>
-        </Link>
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-4 items-center">
@@ -279,7 +279,11 @@ export default function OrdenesCompra() {
         />
       )}
 
-      <Button onClick={crearOrdenCompra}>Crear Orden de Compra</Button>
+      {showNuevaOrden && (
+        <NuevaOrdenCompra
+          onClose={() => setShowNuevaOrden(false)}
+        />
+      )}
     </div>
   )
 }

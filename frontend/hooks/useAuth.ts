@@ -51,11 +51,30 @@ export function useAuth() {
     callback()
   }, [auth.user, router])
 
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("businessId");
+    if (auth.logout) auth.logout(); // Si tienes lógica extra en el contexto
+    router.push("/login");
+  }, [auth, router]);
+
   return {
     ...auth,
     loginWithRedirect,
     registerWithRedirect,
     requireAuth,
     requireRole,
+    logout,
   }
+}
+
+// En AuthContext o useAuth
+async function login(username: string, password: string) {
+  const res = await fetch("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await res.json();
+  return data; // <-- debe retornar { success, data, ... }
 }

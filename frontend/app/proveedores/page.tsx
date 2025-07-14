@@ -13,7 +13,6 @@ import { useSuppliers, useSuppliersStats, useSuppliersWithDebt } from '@/hooks/u
 import { useDebounce } from "@/hooks/useDebounce"
 import type {Supplier} from "@/types/types"; // Ajusta la ruta según tu proyecto
 import apiClient from "@/lib/api-client"
-import { Switch } from "@/components/ui/switch" // Ajusta la ruta según tu proyecto
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 // Define el tipo para el payload de nuevo proveedor localmente
@@ -140,7 +139,7 @@ export default function Proveedores() {
   // Detalle al click - mantener este ya que es específico
   useEffect(() => {
     if (selectedId != null) {
-      fetch(`/api/suppliers/${selectedId}`)
+      fetch(`/suppliers/${selectedId}`)
         .then(r => r.json())
         .then((d: SupplierDetail) => setDetail(d))
         .catch(() => setDetail(null))
@@ -304,6 +303,58 @@ async function handleAddSupplier(data: NewSupplierPayload) {
 
   // Ordenar proveedores por nombre
   const sortedSuppliers = [...suppliers].sort((a, b) => a.name.localeCompare(b.name));
+
+  // Nueva búsqueda de proveedores (con API externa)
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    const businessId = "1.0"
+
+    if (!token) return
+
+    // setIsLoadingSuppliers(true) // Remove this line, as isLoadingSuppliers comes from the hook
+    fetch(
+      `/suppliers?search=${encodeURIComponent(searchTerm)}&status=ACTIVE&businessId=${businessId}&limit=20`,
+      {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data.data)) {
+          setSearchResults(data.data.map((prov: any) => ({
+            id: prov.id,
+            name: prov.name,
+            code: prov.code ?? "",
+            address: prov.address ?? "",
+            phone: prov.phone ?? "",
+            hasDebt: prov.hasDebt ?? false,
+            debtAmount: prov.debtAmount ?? 0,
+            documentType: prov.documentType ?? "",
+            documentNumber: prov.documentNumber ?? "",
+            contactPerson: prov.contactPerson ?? "",
+            email: prov.email ?? "",
+            city: prov.city ?? "",
+            department: prov.department ?? "",
+            country: prov.country ?? "",
+            status: prov.status ?? "",
+            postalCode: prov.postalCode ?? "",
+            paymentTerms: typeof prov.paymentTerms === "number" ? prov.paymentTerms : Number(prov.paymentTerms) || 0,
+            creditLimit: prov.creditLimit ?? 0,
+            notes: prov.notes ?? "",
+            initials: prov.name ? prov.name.split(" ").map((n: string) => n[0]).join("").toUpperCase() : "",
+          })))
+        } else {
+          setSearchResults([])
+        }
+      })
+      .catch((err) => {
+        console.error("Error buscando proveedores:", err)
+        setSearchResults([])
+      })
+  }, [searchTerm])
 
   return (
     <div className="space-y-6">
