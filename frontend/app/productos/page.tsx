@@ -1,209 +1,328 @@
-"use client"
+'use client';
 
-import { useState, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Download, Grid2X2, Plus } from "lucide-react"
-import { CategoriesDialog } from '@/components/features/products/CategoriesDialog'
-import { ProductFormWrapper } from '@/components/features/products/ProductFormWrapper'
-import { useProductForm } from "@/contexts/ProductFormContext"
-import { useDebounce } from "@/hooks/useDebounce"
-import { OptimizedImage } from "@/components/ui/optimized-image"
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Plus, RefreshCw, Grid2X2, Share2, AlertCircle } from 'lucide-react';
+import { useCommercialCatalog } from '@/hooks/useCommercialCatalog';
+import { SyncStatusChip } from '@/components/features/catalog/SyncStatusChip';
+import {
+  AdoptSharedDialog,
+  CategoryManagerDialog,
+  CreateProductDialog,
+  EditProductDialog,
+} from '@/components/features/catalog/CatalogProductDialogs';
+import { OutboxReviewPanel } from '@/components/offline/OutboxReviewPanel';
+import { SyncStatusBadge } from '@/components/offline/SyncStatusBadge';
+import type { CommercialCatalogRow } from '@/lib/catalog/commercialTypes';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-interface Product {
-  id: number
-  nombre: string
-  precio: number
-  stock: number
-  categoria: string
-  imagen: string
+function formatMoney(n: number | null) {
+  if (n == null || Number.isNaN(n)) return '—';
+  return n.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-const productosFicticios: Product[] = [
-  {
-    id: 1,
-    nombre: "ACT II Pipoca Man-tequilla 91g",
-    precio: 14,
-    stock: 7,
-    categoria: "Snacks",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-  },
-  {
-    id: 2,
-    nombre: "ACT II Pipoca Man-tequilla Extra 91g",
-    precio: 14,
-    stock: 8,
-    categoria: "Snacks",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-  },
-  {
-    id: 3,
-    nombre: "Aguai Azucar Blanca de 1kg",
-    precio: 7,
-    stock: 24,
-    categoria: "Abarrotes",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-  },
-  {
-    id: 4,
-    nombre: "Aguai Azucar Blanca de 5kg",
-    precio: 31,
-    stock: 3,
-    categoria: "Abarrotes",
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-3Z72FIBg9b29fubQ6UHbceF9yUJJ3y.png",
-  },
-  // Add more sample products as needed
-]
+function CatalogPageInner() {
+  const cat = useCommercialCatalog();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [catsOpen, setCatsOpen] = useState(false);
+  const [adoptOpen, setAdoptOpen] = useState(false);
+  const [editRow, setEditRow] = useState<CommercialCatalogRow | null>(null);
+  const [showOutbox, setShowOutbox] = useState(false);
+  const [flash, setFlash] = useState<string | null>(null);
 
-export default function Inventario() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [showCategories, setShowCategories] = useState(false)
-  const { openProductForm } = useProductForm()
+  const pendingCount = useMemo(
+    () => cat.rows.filter((r) => r.syncStatus === 'pending' || r.syncStatus === 'conflict').length,
+    [cat.rows]
+  );
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 300)
-
-  const filteredProducts = useMemo(() => {
-    return productosFicticios.filter((product) =>
-      product.nombre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()),
-    )
-  }, [debouncedSearchTerm])
+  if (!cat.canRead) {
+    return (
+      <div className="rounded-lg border bg-white p-6 text-sm text-muted-foreground">
+        Inicia sesión con un usuario de empresa para ver el catálogo.
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-medium text-[#1e1e1e]">Inventario</h1>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setShowCategories(true)} className="gap-2">
-            <Grid2X2 className="h-4 w-4" />
-            Categorías
+    <div className="space-y-5" data-testid="commercial-catalog-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#1e1e1e]">Catálogo comercial</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Precios desde BusinessProduct · {cat.isAdmin ? 'ADMIN' : 'EMPLOYEE (solo lectura)'}
+          </p>
+          <div className="mt-2">
+            <SyncStatusBadge scope={cat.scope} />
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void cat.syncNow()}
+            disabled={cat.syncing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${cat.syncing ? 'animate-spin' : ''}`} />
+            Sincronizar
           </Button>
-          <Button variant="default" onClick={openProductForm} className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]">
-            <Plus className="h-4 w-4" />
-            Agregar productos
+          <Button variant="outline" size="sm" onClick={() => setShowOutbox((v) => !v)}>
+            Cola / conflictos {pendingCount ? `(${pendingCount})` : ''}
           </Button>
+          {cat.isAdmin ? (
+            <>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => setCatsOpen(true)}>
+                <Grid2X2 className="h-4 w-4" />
+                Categorías
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => setAdoptOpen(true)}>
+                <Share2 className="h-4 w-4" />
+                Adoptar
+              </Button>
+              <Button
+                size="sm"
+                className="gap-2 bg-[#1e1e1e] hover:bg-[#2e2e2e]"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Nuevo producto
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-[360px]">
+      {flash ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {flash}
+        </div>
+      ) : null}
+
+      {cat.error ? (
+        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{cat.error}</span>
+        </div>
+      ) : null}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar producto..."
+            placeholder="Buscar por nombre, SKU o categoría…"
             className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={cat.search}
+            onChange={(e) => cat.setSearch(e.target.value)}
+            data-testid="catalog-search"
           />
         </div>
-        <Select>
-          <SelectTrigger className="w-[240px]">
-            <SelectValue placeholder="Ver todas las categorías" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Ver todas las categorías</SelectItem>
-            <SelectItem value="snacks">Snacks</SelectItem>
-            <SelectItem value="abarrotes">Abarrotes</SelectItem>
-            <SelectItem value="electronica">Electrónica</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex-1" />
-        <Button variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          Descargar reporte
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-6">
-        <div className="flex items-center gap-4 p-6 bg-white rounded-lg border border-gray-200">
-          <div className="p-3 bg-gray-100 rounded-lg">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-gray-500">
-              <path
-                d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Total de referencias</p>
-            <p className="text-2xl font-semibold">1244</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 p-6 bg-white rounded-lg border border-gray-200">
-          <div className="p-3 bg-green-50 rounded-lg">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600">
-              <path
-                d="M12 1V23M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Costo total de inventario</p>
-            <p className="text-2xl font-semibold text-green-600">Bs 63.804,77</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-        {filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="aspect-square relative bg-gray-50">
-                <OptimizedImage
-                  src={product.imagen || "/placeholder.png"}
-                  alt={product.nombre}
-                  width={200}
-                  height={200}
-                  className="absolute inset-0 w-full h-full object-contain p-4"
-                  fallbackSrc="/placeholder.png"
-                />
-              </div>
-              <div className="p-3 space-y-2">
-                <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{product.nombre}</h3>
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold">Bs {product.precio}</p>
-                  <p className="text-sm text-gray-500">
-                    {product.stock === 0 ? (
-                      <span className="text-red-500">{product.stock} disponibles</span>
-                    ) : (
-                      `${product.stock} disponibles`
-                    )}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        <div
-          className="border rounded-lg p-4 flex flex-col items-center justify-center h-64 cursor-pointer hover:bg-gray-50"
-          onClick={openProductForm}
+        <select
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          value={cat.visibility}
+          onChange={(e) => cat.setVisibility(e.target.value as typeof cat.visibility)}
+          data-testid="catalog-visibility-filter"
         >
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            <Plus className="h-6 w-6" />
-          </div>
-          <div className="text-center">
-            <p className="font-medium">Crear</p>
-            <p>producto</p>
-          </div>
-        </div>
+          <option value="all">Todos</option>
+          <option value="private">Privados</option>
+          <option value="shared">Compartidos adoptados</option>
+        </select>
       </div>
 
-      <CategoriesDialog open={showCategories} onOpenChange={setShowCategories} />
-      <ProductFormWrapper />
+      {showOutbox && cat.scope ? (
+        <OutboxReviewPanel scope={cat.scope} />
+      ) : null}
+
+      <div className="overflow-hidden rounded-lg border bg-white">
+        {cat.loading ? (
+          <div className="p-8 text-center text-sm text-muted-foreground" data-testid="catalog-loading">
+            Cargando catálogo local…
+          </div>
+        ) : cat.rows.length === 0 ? (
+          <div className="p-8 text-center text-sm text-muted-foreground" data-testid="catalog-empty">
+            No hay productos comerciales. {cat.isAdmin ? 'Crea uno o sincroniza para descargar.' : 'Sincroniza para ver el catálogo.'}
+          </div>
+        ) : (
+          <>
+            {/* Desktop / tablet table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm" data-testid="catalog-table">
+                <thead className="border-b bg-[#f7f7f7] text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Producto</th>
+                    <th className="px-4 py-3 font-medium">SKU</th>
+                    <th className="px-4 py-3 font-medium">Categoría</th>
+                    <th className="px-4 py-3 font-medium">Precio</th>
+                    <th className="px-4 py-3 font-medium">Stock</th>
+                    <th className="px-4 py-3 font-medium">Tipo</th>
+                    <th className="px-4 py-3 font-medium">Sync</th>
+                    <th className="px-4 py-3 font-medium" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {cat.rows.map((row) => (
+                    <tr key={row.productLocalId} className="border-b last:border-0 hover:bg-slate-50/80">
+                      <td className="px-4 py-3 font-medium text-[#1e1e1e]">{row.name}</td>
+                      <td className="px-4 py-3 font-mono text-xs">{row.sku || '—'}</td>
+                      <td className="px-4 py-3">{row.categoryName}</td>
+                      <td className="px-4 py-3 tabular-nums">{formatMoney(row.customPrice)}</td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {row.availableStock ?? row.currentStock ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {row.isPrivate ? 'Privado' : 'Compartido'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <SyncStatusChip status={row.syncStatus} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {cat.isAdmin ? (
+                          <Button size="sm" variant="ghost" onClick={() => setEditRow(row)}>
+                            Editar
+                          </Button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="grid gap-3 p-3 md:hidden" data-testid="catalog-mobile-list">
+              {cat.rows.map((row) => (
+                <article key={row.productLocalId} className="rounded-md border p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-medium text-[#1e1e1e]">{row.name}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {row.sku || 'Sin SKU'} · {row.categoryName}
+                      </p>
+                    </div>
+                    <SyncStatusChip status={row.syncStatus} />
+                  </div>
+                  <div className="mt-3 flex items-end justify-between">
+                    <div>
+                      <div className="text-lg font-semibold tabular-nums">{formatMoney(row.customPrice)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Stock {row.availableStock ?? row.currentStock ?? '—'} ·{' '}
+                        {row.isPrivate ? 'Privado' : 'Compartido'}
+                      </div>
+                    </div>
+                    {cat.isAdmin ? (
+                      <Button size="sm" variant="outline" onClick={() => setEditRow(row)}>
+                        Editar
+                      </Button>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Harness técnico:{' '}
+        <Link href="/debug-offline" className="underline">
+          /debug-offline
+        </Link>
+      </p>
+
+      <CreateProductDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        categories={cat.categories}
+        onSubmit={async (v) => {
+          await cat.createProduct(v);
+          setFlash('Producto guardado localmente (pending). No confirmado en servidor aún.');
+        }}
+      />
+      <EditProductDialog
+        open={!!editRow}
+        row={editRow}
+        categories={cat.categories}
+        onClose={() => setEditRow(null)}
+        onSubmit={async (v) => {
+          if (!editRow) return;
+          if (!editRow.productServerId) {
+            await cat.revisePending({
+              productLocalId: editRow.productLocalId,
+              name: v.name,
+              sku: v.sku,
+              categoryServerId: v.categoryServerId,
+              customPrice: v.customPrice,
+            });
+            setFlash('Creación pendiente corregida (mismo UUID). Aún no confirmada en servidor.');
+            return;
+          }
+          await cat.editProduct({
+            productLocalId: editRow.productLocalId,
+            productServerId: editRow.productServerId,
+            baseVersion: editRow.productVersion,
+            name: v.name,
+            sku: v.sku,
+            categoryServerId: v.categoryServerId,
+          });
+          if (editRow.bpVersion != null && v.customPrice !== editRow.customPrice) {
+            await cat.setPrice({
+              productServerId: editRow.productServerId,
+              customPrice: v.customPrice,
+              baseVersion: editRow.bpVersion,
+              bpLocalId: editRow.bpLocalId || undefined,
+            });
+          }
+          setFlash('Cambios encolados (pending). No confirmados en servidor aún.');
+        }}
+        onPrice={async (customPrice) => {
+          if (!editRow?.productServerId || editRow.bpVersion == null) {
+            throw new Error('Sin BusinessProduct versionado — sincroniza o adopta primero');
+          }
+          await cat.setPrice({
+            productServerId: editRow.productServerId,
+            customPrice,
+            baseVersion: editRow.bpVersion,
+            bpLocalId: editRow.bpLocalId || undefined,
+          });
+          setFlash('Precio encolado (pending).');
+        }}
+      />
+      <AdoptSharedDialog
+        open={adoptOpen}
+        items={cat.adoptable}
+        onClose={() => setAdoptOpen(false)}
+        onSubmit={async (v) => {
+          await cat.adopt(v);
+          setFlash('Adopción encolada (pending).');
+        }}
+      />
+      <CategoryManagerDialog
+        open={catsOpen}
+        categories={cat.categories}
+        onClose={() => setCatsOpen(false)}
+        onCreate={async (name) => {
+          await cat.createCategory({ name });
+          setFlash('Categoría privada encolada.');
+        }}
+        onUpdate={async (c) => {
+          if (!c.serverId) return;
+          await cat.editCategory({
+            categoryLocalId: c.localId,
+            categoryServerId: c.serverId,
+            baseVersion: cat.categories.find((x) => x.localId === c.localId)?.version ?? 1,
+            name: c.name,
+          });
+        }}
+      />
     </div>
-  )
+  );
+}
+
+export default function ProductosPage() {
+  return (
+    <ProtectedRoute>
+      <CatalogPageInner />
+    </ProtectedRoute>
+  );
 }

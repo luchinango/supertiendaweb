@@ -4,8 +4,56 @@ import { createContext, useContext, useState, useEffect } from "react"
 import type { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { authService } from "@/services/authService"
-import { setTokens, getAuthToken, removeAuthToken } from "@/lib/auth-utils"
+import {
+  setTokens,
+  getAuthToken,
+  getRefreshToken,
+  removeAuthToken,
+  setBusinessId,
+  setAuthUserSnapshot,
+  getAuthUserSnapshot,
+  clearAuthUserSnapshot,
+} from "@/lib/auth-utils"
+import {
+  clearSessionExpirations,
+  getSessionGateState,
+  readJwtExpMs,
+  readJwtPayload,
+  setSessionExpirations,
+} from "@/lib/offline/sessionGate"
+import { clearNavCache } from "@/lib/pwa/registerServiceWorker"
 import type { User, AuthContextType, RegisterRequest } from "@/types"
+
+function applySessionExpirationsFromStorage() {
+  setSessionExpirations({
+    accessExpiresAt: readJwtExpMs(getAuthToken()),
+    refreshExpiresAt: readJwtExpMs(getRefreshToken()),
+  })
+}
+
+/** Login entrega role string; /auth/verify entrega { code }. */
+function normalizeRole(role: unknown): string | null {
+  if (typeof role === 'string' && role.length > 0) return role
+  if (role && typeof role === 'object' && 'code' in role) {
+    const code = (role as { code?: unknown }).code
+    if (typeof code === 'string' && code.length > 0) return code
+  }
+  return null
+}
+
+function mapAuthUser(userData: any): User | null {
+  const role = normalizeRole(userData?.role)
+  if (!role) return null
+  return {
+    ...userData,
+    role,
+    email: userData.employee?.email || userData.email,
+    name: userData.employee
+      ? `${userData.employee.firstName} ${userData.employee.lastName}`
+      : userData.name || userData.username,
+    businessId: userData.employee?.businessId ?? userData.businessId ?? undefined,
+  }
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -18,6 +66,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth().then()
   }, [])
 
+  const restoreOfflineUser = (): boolean => {
+    applySessionExpirationsFromStorage()
+    const gate = getSessionGateState()
+    // Si el refresh ya venció, no restaurar operación offline.
+    if (gate.refreshExpiresAt != null && !gate.mutationsAllowed) {
+      return false
+    }
+    const access = getAuthToken()
+    const accessExp = readJwtExpMs(access)
+    // Access vencido y sin refresh usable: no restaurar UI operativa
+    if (accessExp != null && accessExp < Date.now() && !gate.mutationsAllowed) {
+      return false
+    }
+
+    let snap = getAuthUserSnapshot()
+    if (!snap) {
+      const claims = readJwtPayload(access)
+      const userId = claims?.['userId'] != null ? Number(claims['userId']) : NaN
+      const businessIdRaw = claims?.['businessId']
+      const businessId =
+        businessIdRaw != null && Number.isFinite(Number(businessIdRaw))
+          ? Number(businessIdRaw)
+          : undefined
+      if (
+        claims &&
+        Number.isFinite(userId) &&
+        typeof claims['username'] === "string" &&
+        typeof claims['role'] === "string"
+      ) {
+        snap = {
+          id: userId,
+          username: claims['username'] as string,
+          role: claims['role'] as string,
+          businessId,
+        }
+        setAuthUserSnapshot(snap)
+      }
+    }
+    if (!snap) return false
+    if (snap.role !== "PLATFORM_ADMIN" && snap.businessId == null) return false
+    if (snap.businessId != null) setBusinessId(snap.businessId)
+    setUser(snap as User)
+    return true
+  }
+
   const checkAuth = async () => {
     try {
       const token = getAuthToken()
@@ -28,28 +121,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const response = await authService.me()
+      applySessionExpirationsFromStorage()
 
-      if (response.success && response.data) {
-        const userData = response.data as any
+      try {
+        const response = await authService.me()
 
-        if (userData.role) {
-          const mappedUser: User = {
-            ...userData,
-            businessId: userData.employee?.businessId
+        if (response.success && response.data) {
+          const mappedUser = mapAuthUser(response.data)
+
+          if (mappedUser) {
+            // PLATFORM_ADMIN no tiene empresa; ADMIN/EMPLOYEE sí
+            if (mappedUser.role !== "PLATFORM_ADMIN" && mappedUser.businessId == null) {
+              removeAuthToken()
+              clearAuthUserSnapshot()
+              return
+            }
+            if (mappedUser.businessId != null) {
+              setBusinessId(mappedUser.businessId)
+            }
+            setUser(mappedUser)
+            setAuthUserSnapshot(mappedUser)
+            applySessionExpirationsFromStorage()
+          } else {
+            console.log("Usuario sin rol válido, removiendo token")
+            removeAuthToken()
+            clearSessionExpirations()
           }
-          setUser(mappedUser)
         } else {
-          console.log("Usuario sin rol válido, removiendo token")
+          // Si el navegador ya está offline, preferir restauración local antes de borrar.
+          if (typeof navigator !== "undefined" && !navigator.onLine && restoreOfflineUser()) {
+            return
+          }
+          // 401/403 u otro rechazo de API: no restaurar snapshot (sesión inválida)
+          console.log("Error en respuesta de /auth/me, removiendo token")
           removeAuthToken()
+          clearSessionExpirations()
         }
-      } else {
-        console.log("Error en respuesta de /auth/me, removiendo token")
-        removeAuthToken()
+      } catch (error) {
+        // Arranque offline: conservar sesión local si refresh vigente + snapshot
+        console.warn("Auth online falló; intentando restauración offline", error)
+        if (!restoreOfflineUser()) {
+          removeAuthToken()
+          clearSessionExpirations()
+        }
       }
     } catch (error) {
       console.error("Error checking auth:", error)
-      removeAuthToken()
+      if (!restoreOfflineUser()) {
+        removeAuthToken()
+        clearSessionExpirations()
+      }
     } finally {
       setIsLoading(false)
       console.log("Verificación de autenticación completada")
@@ -62,18 +183,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setTokens(response.data.token, response.data.refreshToken)
 
-        const userData = response.data.user as any
-        if (userData.role) {
-          const mappedUser: User = {
-            ...userData,
-            email: userData.employee?.email || userData.email,
-            name: userData.employee ? `${userData.employee.firstName} ${userData.employee.lastName}` : userData.name,
-            businessId: userData.employee?.businessId || userData.businessId
+        const mappedUser = mapAuthUser(response.data.user)
+        if (mappedUser) {
+          const isPlatform = mappedUser.role === "PLATFORM_ADMIN"
+          if (!isPlatform && mappedUser.businessId == null) {
+            removeAuthToken()
+            return { success: false, error: "Usuario sin empresa asignada" }
+          }
+          if (mappedUser.businessId != null) {
+            setBusinessId(mappedUser.businessId)
           }
           setUser(mappedUser)
-          return { success: true }
+          setAuthUserSnapshot(mappedUser)
+          applySessionExpirationsFromStorage()
+          // Evitar HTML de navegación de otro usuario/empresa en Cache Storage
+          void clearNavCache()
+          return { success: true, data: response.data }
         } else {
           removeAuthToken()
+          clearSessionExpirations()
           return { success: false, error: "Rol de usuario inválido o usuario no encontrado" }
         }
       } else {
@@ -91,7 +219,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
+      // Conservar IndexedDB / outbox del scope; limpia tokens, snapshot y caché de navegación HTML.
       removeAuthToken()
+      clearAuthUserSnapshot()
+      clearSessionExpirations()
+      void clearNavCache()
       setUser(null)
       router.push("/login")
     }
@@ -103,14 +235,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.success && response.data) {
         setTokens(response.data.token, "")
-        const userData = response.data.user as any
-        if (userData.role) {
-          const mappedUser: User = {
-            ...userData,
-            email: userData.employee?.email || userData.email,
-            name: userData.employee ? `${userData.employee.firstName} ${userData.employee.lastName}` : userData.name,
-            businessId: userData.employee?.businessId || userData.businessId
-          }
+        const mappedUser = mapAuthUser(response.data.user)
+        if (mappedUser) {
           setUser(mappedUser)
           return { success: true }
         } else {

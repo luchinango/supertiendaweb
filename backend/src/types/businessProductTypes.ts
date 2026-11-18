@@ -1,4 +1,4 @@
-import { Department, DocumentType, PaymentMethod, BusinessProduct, Product, Category } from '../../prisma/generated';
+import { Department, DocumentType, PaymentMethod, BusinessProduct, Product, Category } from '../../generated';
 import { PaginationMeta } from './pagination';
 
 

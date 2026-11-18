@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import {BusinessStatus, BusinessType, Department, Currency} from '../../prisma/generated';
+import {BusinessStatus, BusinessType, Department, Currency} from '../../generated';
 import {NotFoundError} from '../errors';
 import {CreateBusinessData, UpdateBusinessData, BusinessFilters} from '../types/businessTypes';
 
@@ -83,12 +83,15 @@ class BusinessService {
     const {
       status,
       businessType,
-      department
+      department,
+      id
     } = additionalFilters;
 
     const skip = (page - 1) * limit;
     const where: any = {};
 
+    // Aislamiento multiempresa: si se provee id, limitar a esa empresa
+    if (id != null) where.id = id;
     if (status) where.status = status;
     if (businessType) where.businessType = businessType;
     if (department) where.department = department;
@@ -172,24 +175,30 @@ class BusinessService {
       throw new NotFoundError('Producto no encontrado');
     }
 
-    return prisma.businessProduct.upsert({
-      where: {
-        businessId_productId: {
-          businessId,
-          productId
-        }
-      },
-      update: {
-        customPrice: customPrice || 0
-      },
-      create: {
+    const active = await prisma.businessProduct.findFirst({
+      where: { businessId, productId, deletedAt: null },
+    });
+    if (active) {
+      return prisma.businessProduct.update({
+        where: { id: active.id },
+        data: {
+          customPrice: customPrice || 0,
+          updatedAt: new Date(),
+          version: { increment: 1 },
+        },
+      });
+    }
+    // Soft-deleted: no reactivar; crear fila activa nueva
+    return prisma.businessProduct.create({
+      data: {
         businessId,
         productId,
         customPrice: customPrice || 0,
         currentStock: 0,
         reservedStock: 0,
-        availableStock: 0
-      }
+        availableStock: 0,
+        version: 1,
+      },
     });
   }
 
@@ -199,13 +208,8 @@ class BusinessService {
     reservedStock?: number;
     availableStock?: number;
   }) {
-    const businessProduct = await prisma.businessProduct.findUnique({
-      where: {
-        businessId_productId: {
-          businessId,
-          productId
-        }
-      }
+    const businessProduct = await prisma.businessProduct.findFirst({
+      where: { businessId, productId, deletedAt: null },
     });
 
     if (!businessProduct) {
@@ -213,33 +217,35 @@ class BusinessService {
     }
 
     return prisma.businessProduct.update({
-      where: {
-        businessId_productId: {
-          businessId,
-          productId
-        }
-      },
+      where: { id: businessProduct.id },
       data: {
         ...data,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        version: { increment: 1 },
       }
     });
   }
 
   async removeProductFromBusiness(businessId: number, productId: number) {
-    return prisma.businessProduct.delete({
-      where: {
-        businessId_productId: {
-          businessId,
-          productId
-        }
-      }
+    const businessProduct = await prisma.businessProduct.findFirst({
+      where: { businessId, productId, deletedAt: null },
+    });
+    if (!businessProduct) {
+      throw new NotFoundError('Producto no encontrado en el negocio');
+    }
+    return prisma.businessProduct.update({
+      where: { id: businessProduct.id },
+      data: {
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+        version: { increment: 1 },
+      },
     });
   }
 
   async getBusinessProducts(businessId: number) {
     return prisma.businessProduct.findMany({
-      where: {businessId},
+      where: { businessId, deletedAt: null },
       include: {
         product: {
           include: {

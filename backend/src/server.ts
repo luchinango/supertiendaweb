@@ -1,18 +1,9 @@
-import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import app from './app'
 
 dotenv.config();
 
-// Configuración de CORS
-app.use(cors({
-  origin: process.env.cors_origin, // Cambia esto en producción
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true, // Si usas autenticación con cookies o JWT
-}));
-
-app.use(express.json());
+// CORS se monta en app.ts (antes de rutas). No añadir middleware aquí después del import.
 
 /*
 // Configurar Swagger UI

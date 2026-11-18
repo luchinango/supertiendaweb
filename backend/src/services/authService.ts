@@ -6,13 +6,26 @@ import {promisify} from 'util';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma';
 import {UnauthorizedError} from '../errors';
-import {EmployeeStatus, Gender, UserStatus} from '../../prisma/generated';
-import {TokenPayload, AuthResponse} from '../types/authTypes';
+import {UserStatus} from '../../generated';
+import {TokenPayload, AuthResponse, JwtTokenType} from '../types/authTypes';
+import {PLATFORM_ADMIN_ROLE, isPlatformRole} from '../helpers/platformAuth';
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
 const SALT_ROUNDS = 12;
+/** Access: corto. Refresh: largo. Sin persistencia server-side en P1-D. */
+const ACCESS_TOKEN_EXPIRES_IN =
+  process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '1h';
+const REFRESH_TOKEN_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+/** Usuario listo para firmar JWT (tenant con businessId o plataforma con null). */
+type AuthTokenUser = {
+  id: number;
+  username: string;
+  role: {code: string};
+  businessId: number | null;
+};
 
 class AuthService {
   private readonly privateKeyPath: string;
@@ -126,8 +139,9 @@ class AuthService {
       throw new UnauthorizedError('Credenciales inválidas');
     }
 
-    const token = this.generateToken(user);
-    const refreshToken = this.generateRefreshToken(user);
+    const scopedUser = this.toAuthTokenUser(user);
+    const token = this.generateToken(scopedUser);
+    const refreshToken = this.generateRefreshToken(scopedUser);
 
     return {
       token,
@@ -141,7 +155,41 @@ class AuthService {
     };
   }
 
-  private generateToken(user: any): string {
+  /**
+   * Construye el sujeto del JWT desde BD.
+   * PLATFORM_ADMIN: sin Employee y businessId null.
+   * ADMIN/EMPLOYEE: exigen employee.businessId.
+   */
+  private toAuthTokenUser(user: {
+    id: number;
+    username: string;
+    role: {code: string};
+    employee?: {businessId: number | null} | null;
+  }): AuthTokenUser {
+    if (isPlatformRole(user.role.code)) {
+      if (user.employee?.businessId != null) {
+        throw new UnauthorizedError('Usuario de plataforma no debe tener empresa asignada');
+      }
+      return {
+        id: user.id,
+        username: user.username,
+        role: {code: PLATFORM_ADMIN_ROLE},
+        businessId: null,
+      };
+    }
+
+    if (user.employee?.businessId == null) {
+      throw new UnauthorizedError('Usuario sin empresa asignada');
+    }
+    return {
+      id: user.id,
+      username: user.username,
+      role: {code: user.role.code},
+      businessId: user.employee.businessId,
+    };
+  }
+
+  private generateToken(user: AuthTokenUser): string {
     if (!this.privateKey) {
       throw new Error('Llave privada no inicializada');
     }
@@ -150,16 +198,17 @@ class AuthService {
       userId: user.id,
       username: user.username,
       role: user.role.code,
-      businessId: user.employee?.businessId
+      businessId: user.businessId,
+      tokenType: 'access',
     };
 
     return jwt.sign(payload, this.privateKey, {
       algorithm: 'RS256',
-      expiresIn: '30d' // 1h
+      expiresIn: ACCESS_TOKEN_EXPIRES_IN as jwt.SignOptions['expiresIn'],
     });
   }
 
-  private generateRefreshToken(user: any): string {
+  private generateRefreshToken(user: AuthTokenUser): string {
     if (!this.privateKey) {
       throw new Error('Llave privada no inicializada');
     }
@@ -168,23 +217,36 @@ class AuthService {
       userId: user.id,
       username: user.username,
       role: user.role.code,
-      businessId: user.employee?.businessId
+      businessId: user.businessId,
+      tokenType: 'refresh',
     };
 
     return jwt.sign(payload, this.privateKey, {
       algorithm: 'RS256',
-      expiresIn: '30d' // 7d
+      expiresIn: REFRESH_TOKEN_EXPIRES_IN as jwt.SignOptions['expiresIn'],
     });
   }
 
-  async verifyToken(token: string): Promise<TokenPayload> {
+  /**
+   * Verifica firma RS256 y rehidrata role/businessId desde BD.
+   * @param expectedType Por defecto `access` (middleware). Usar `refresh` en renovación.
+   */
+  async verifyToken(token: string, expectedType: JwtTokenType = 'access'): Promise<TokenPayload> {
     if (!this.publicKey) {
       console.error('Error: Llave pública no inicializada');
       throw new Error('Llave pública no inicializada');
     }
 
     try {
-      const decoded = jwt.verify(token, this.publicKey, {algorithms: ['RS256']}) as TokenPayload
+      const decoded = jwt.verify(token, this.publicKey, {algorithms: ['RS256']}) as TokenPayload;
+
+      if (decoded.tokenType !== expectedType) {
+        throw new UnauthorizedError(
+          expectedType === 'refresh'
+            ? 'Se requiere un refresh token válido'
+            : 'Se requiere un access token válido'
+        );
+      }
 
       const user = await prisma.user.findUnique({
         where: {id: decoded.userId},
@@ -207,49 +269,89 @@ class AuthService {
         throw new UnauthorizedError('Usuario no válido o inactivo');
       }
 
-      if (decoded.role !== user.role.code) {
-        throw new UnauthorizedError('El rol del usuario ha cambiado');
+      // Rol efectivo solo desde BD (claims de cliente no escalan privilegios)
+      const roleCode = user.role.code;
+      if (isPlatformRole(roleCode)) {
+        if (user.employee?.businessId != null) {
+          throw new UnauthorizedError('Usuario de plataforma no debe tener empresa asignada');
+        }
+        return {
+          userId: decoded.userId,
+          username: decoded.username,
+          role: PLATFORM_ADMIN_ROLE,
+          businessId: null,
+          tokenType: expectedType,
+          iat: decoded.iat,
+          exp: decoded.exp,
+        };
       }
 
-      // decoded.businessId = decoded.businessId || user.employee?.businessId
-      return decoded;
+      const businessId = user.employee?.businessId;
+      if (businessId == null) {
+        throw new UnauthorizedError('Usuario sin empresa asignada');
+      }
+
+      return {
+        userId: decoded.userId,
+        username: decoded.username,
+        role: roleCode,
+        businessId,
+        tokenType: expectedType,
+        iat: decoded.iat,
+        exp: decoded.exp,
+      };
     } catch (error) {
-      console.error('Error detallado verificando token:', error);
+      if (error instanceof UnauthorizedError) {
+        throw error;
+      }
+      console.error('Error verificando token:', error instanceof Error ? error.message : 'unknown');
       if (error instanceof jwt.TokenExpiredError) {
         throw new UnauthorizedError('Token expirado');
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        console.error('Error específico de JWT:', error.message);
         throw new UnauthorizedError(`Token inválido: ${error.message}`);
       }
       throw error;
     }
   }
 
-  async refreshAccessToken(refreshToken: string): Promise<{ token: string }> {
+  async refreshAccessToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
     try {
-      const decoded = await this.verifyToken(refreshToken);
+      const decoded = await this.verifyToken(refreshToken, 'refresh');
 
       const user = await prisma.user.findUnique({
         where: {id: decoded.userId},
         select: {
           id: true,
           username: true,
+          status: true,
           role: {
             select: {
               code: true
+            }
+          },
+          employee: {
+            select: {
+              businessId: true
             }
           }
         }
       });
 
-      if (!user) {
-        throw new UnauthorizedError('Usuario no encontrado');
+      if (!user || user.status !== UserStatus.ACTIVE) {
+        throw new UnauthorizedError('Usuario no encontrado o inactivo');
       }
 
-      const newToken = this.generateToken(user);
-      return {token: newToken};
+      const scopedUser = this.toAuthTokenUser(user);
+
+      return {
+        token: this.generateToken(scopedUser),
+        refreshToken: this.generateRefreshToken(scopedUser),
+      };
     } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        throw error;
+      }
       throw new UnauthorizedError('Token de actualización inválido');
     }
   }

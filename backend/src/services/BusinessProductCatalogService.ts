@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../prisma/generated';
+import { PrismaClient } from '../../generated';
 import {
   BusinessProductCatalogItem,
   BusinessProductCatalogResponse,
@@ -64,7 +64,7 @@ export class BusinessProductCatalogService {
         include: {
           category: true,
           businessProducts: {
-            where: { businessId },
+            where: { businessId, deletedAt: null },
             take: 1
           }
         },
@@ -169,9 +169,11 @@ export class BusinessProductCatalogService {
           continue;
         }
 
-        const existingBusinessProduct = await this.prisma.businessProduct.findUnique({
+        const existingBusinessProduct = await this.prisma.businessProduct.findFirst({
           where: {
-            businessId_productId: { businessId, productId }
+            businessId,
+            productId,
+            deletedAt: null,
           }
         });
 
@@ -179,6 +181,7 @@ export class BusinessProductCatalogService {
           skipped++;
           continue;
         }
+        // Soft-deleted: no reactivar; create() inserta fila activa nueva
 
         const customPrice = defaultCustomPrice ?? Number(product.sellingPrice);
 
@@ -216,9 +219,9 @@ export class BusinessProductCatalogService {
       businessProducts
     ] = await Promise.all([
       this.prisma.product.count({ where: { isActive: true } }),
-      this.prisma.businessProduct.count({ where: { businessId } }),
+      this.prisma.businessProduct.count({ where: { businessId, deletedAt: null } }),
       this.prisma.businessProduct.findMany({
-        where: { businessId },
+        where: { businessId, deletedAt: null },
         include: { product: true }
       })
     ]);

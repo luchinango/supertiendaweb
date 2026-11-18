@@ -1,5 +1,4 @@
 import {
-  Controller,
   Get,
   Post,
   Put,
@@ -7,12 +6,15 @@ import {
   Path,
   Body,
   Query,
+  Header,
   Route,
   Tags,
   Security,
   SuccessResponse,
   Response,
+  Request,
 } from 'tsoa';
+import { Request as ExpressRequest } from 'express';
 import { CategoryService } from '../services/CategoryService';
 import { CategoryRepository } from '../repositories/CategoryRepository';
 import { BasePaginationController } from './basePaginationController';
@@ -20,20 +22,28 @@ import {
   CategoryResponse,
   CreateCategoryRequest,
   UpdateCategoryRequest,
-  CategoryListResponse,
   CategoryStats,
-  CategoryTreeNode
+  CategoryTreeNode,
 } from '../types/categoryTypes';
-import { ApiResponse, PaginatedApiResponse } from '../types/api';
+import { ApiResponse, ErrorResponse, PaginatedApiResponse } from '../types/api';
 import { PaginationParams } from '../types/pagination';
-import { NotFoundError, ValidationError } from '../errors';
-import { BusinessError } from '../utils/errors';
+import { NotFoundError } from '../errors';
+import { rejectCatalogMasterMutation } from '../helpers/catalogContainment';
 import prisma from '../config/prisma';
+import { CatalogCommercialService } from '../services/CatalogCommercialService';
+import { requireAuthUser } from '../helpers/tenantContext';
+import { readCommercialDeviceId, requireIdempotencyKey } from './privateCatalogHttp';
+import {
+  CreatePrivateCategoryBody,
+  PrivateCategoryDto,
+  UpdatePrivateCategoryBody,
+} from '../types/catalogCommercialTypes';
 
 @Route('categories')
 @Tags('Categorías')
 export class CategoryController extends BasePaginationController {
   private categoryService: CategoryService;
+  private catalog = new CatalogCommercialService(prisma);
 
   constructor() {
     super();
@@ -41,15 +51,11 @@ export class CategoryController extends BasePaginationController {
     this.categoryService = new CategoryService(categoryRepository);
   }
 
-  /**
-   * Obtener todas las categorías con paginación
-   */
   @Get()
   @Security('bearerAuth')
   @SuccessResponse('200', 'Categorías obtenidas exitosamente')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getCategories(
+    @Request() request: ExpressRequest,
     @Query() page: number = 1,
     @Query() limit: number = 10,
     @Query() search?: string,
@@ -59,35 +65,77 @@ export class CategoryController extends BasePaginationController {
     @Query() sortBy?: string,
     @Query() sortOrder?: 'asc' | 'desc'
   ): Promise<PaginatedApiResponse<CategoryResponse>> {
+    const businessId = this.getBusinessId(undefined, request);
     const paginationParams: PaginationParams = {
       page: Math.max(1, page),
       limit: Math.min(100, Math.max(1, limit)),
       sortBy,
-      sortOrder
+      sortOrder,
     };
 
-    const additionalFilters = {
+    const result = await this.categoryService.findMany(paginationParams, businessId, {
       search,
       isActive,
       parentId,
-      hasProducts
-    };
-
-    const result = await this.categoryService.findMany(paginationParams, additionalFilters);
+      hasProducts,
+    });
     return this.createPaginatedResponseDirect(result.items, result.meta, 'Categorías obtenidas exitosamente');
   }
 
-  /**
-   * Obtener una categoría por ID
-   */
+  @Post('private')
+  @Security('bearerAuth')
+  @Tags('Catálogo privado')
+  @SuccessResponse(200, 'OK')
+  @Response(400, 'Validación')
+  @Response(403, 'Prohibido')
+  @Response(409, 'Conflicto')
+  public async createPrivateCategory(
+    @Body() body: CreatePrivateCategoryBody,
+    @Request() request: ExpressRequest,
+    @Header('Idempotency-Key') idempotencyKey?: string,
+    @Header('X-Device-Id') xDeviceId?: string
+  ): Promise<PrivateCategoryDto> {
+    const actor = requireAuthUser(request);
+    return this.catalog.createPrivateCategory(
+      actor,
+      requireIdempotencyKey(idempotencyKey),
+      body,
+      readCommercialDeviceId(xDeviceId)
+    );
+  }
+
+  @Put('private/{id}')
+  @Security('bearerAuth')
+  @Tags('Catálogo privado')
+  @SuccessResponse(200, 'OK')
+  @Response(403, 'Prohibido')
+  @Response(404, 'No encontrado')
+  @Response(409, 'Conflicto')
+  public async updatePrivateCategory(
+    @Path() id: number,
+    @Body() body: UpdatePrivateCategoryBody,
+    @Request() request: ExpressRequest,
+    @Header('Idempotency-Key') idempotencyKey?: string,
+    @Header('X-Device-Id') xDeviceId?: string
+  ): Promise<PrivateCategoryDto> {
+    const actor = requireAuthUser(request);
+    return this.catalog.updatePrivateCategory(
+      actor,
+      id,
+      requireIdempotencyKey(idempotencyKey),
+      body,
+      readCommercialDeviceId(xDeviceId)
+    );
+  }
+
   @Get('{id}')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Categoría obtenida exitosamente')
-  @Response<ApiResponse<string>>('404', 'Categoría no encontrada')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async getCategoryById(@Path() id: number): Promise<ApiResponse<CategoryResponse>> {
-    const category = await this.categoryService.findById(id);
+  public async getCategoryById(
+    @Path() id: number,
+    @Request() request: ExpressRequest
+  ): Promise<ApiResponse<CategoryResponse>> {
+    const businessId = this.getBusinessId(undefined, request);
+    const category = await this.categoryService.findById(id, businessId);
 
     if (!category) {
       this.setStatus(404);
@@ -97,116 +145,62 @@ export class CategoryController extends BasePaginationController {
     return this.createSuccessResponse(category, 'Categoría obtenida exitosamente');
   }
 
-  /**
-   * Crear una nueva categoría
-   */
   @Post()
   @Security('bearerAuth')
-  @SuccessResponse('201', 'Categoría creada exitosamente')
-  @Response<ApiResponse<string>>('400', 'Datos inválidos')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  @Response<ErrorResponse>(403, 'Mutación de catálogo maestro bloqueada')
   public async createCategory(
-    @Body() categoryData: CreateCategoryRequest
+    @Body() categoryData: CreateCategoryRequest,
+    @Request() request: ExpressRequest
   ): Promise<ApiResponse<CategoryResponse>> {
-    try {
-      const category = await this.categoryService.create(categoryData);
-      this.setStatus(201);
-      return this.createSuccessResponse(category, 'Categoría creada exitosamente');
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        this.setStatus(400);
-        throw error;
-      }
-      this.setStatus(500);
-      throw new Error('Error interno del servidor');
-    }
+    this.getBusinessId(undefined, request);
+    this.setStatus(403);
+    rejectCatalogMasterMutation();
   }
 
-  /**
-   * Actualizar una categoría existente
-   */
   @Put('{id}')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Categoría actualizada exitosamente')
-  @Response<ApiResponse<string>>('400', 'Datos inválidos')
-  @Response<ApiResponse<string>>('404', 'Categoría no encontrada')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
+  @Response<ErrorResponse>(403, 'Mutación de catálogo maestro bloqueada')
   public async updateCategory(
     @Path() id: number,
-    @Body() categoryData: UpdateCategoryRequest
+    @Body() categoryData: UpdateCategoryRequest,
+    @Request() request: ExpressRequest
   ): Promise<ApiResponse<CategoryResponse>> {
-    try {
-      const category = await this.categoryService.update(id, categoryData);
-      return this.createSuccessResponse(category, 'Categoría actualizada exitosamente');
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        this.setStatus(404);
-        throw error;
-      }
-      if (error instanceof ValidationError) {
-        this.setStatus(400);
-        throw error;
-      }
-      this.setStatus(500);
-      throw new Error('Error interno del servidor');
-    }
+    this.getBusinessId(undefined, request);
+    this.setStatus(403);
+    rejectCatalogMasterMutation();
   }
 
-  /**
-   * Eliminar una categoría (soft delete)
-   */
   @Delete('{id}')
   @Security('bearerAuth')
-  @SuccessResponse('204', 'Categoría eliminada exitosamente')
-  @Response<ApiResponse<string>>('400', 'No se puede eliminar la categoría')
-  @Response<ApiResponse<string>>('404', 'Categoría no encontrada')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async deleteCategory(@Path() id: number): Promise<void> {
-    try {
-      await this.categoryService.delete(id);
-      this.setStatus(204);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        this.setStatus(404);
-        throw error;
-      }
-      if (error instanceof BusinessError) {
-        this.setStatus(400);
-        throw error;
-      }
-      this.setStatus(500);
-      throw new Error('Error interno del servidor');
-    }
+  @Response<ErrorResponse>(403, 'Mutación de catálogo maestro bloqueada')
+  public async deleteCategory(
+    @Path() id: number,
+    @Request() request: ExpressRequest
+  ): Promise<void> {
+    this.getBusinessId(undefined, request);
+    this.setStatus(403);
+    rejectCatalogMasterMutation();
   }
 
-  /**
-   * Obtener árbol jerárquico de categorías
-   */
   @Get('tree')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Árbol de categorías obtenido exitosamente')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async getCategoryTree(): Promise<ApiResponse<CategoryTreeNode[]>> {
-    const tree = await this.categoryService.findTree();
+  public async getCategoryTree(
+    @Request() request: ExpressRequest
+  ): Promise<ApiResponse<CategoryTreeNode[]>> {
+    const businessId = this.getBusinessId(undefined, request);
+    const tree = await this.categoryService.findTree(businessId);
     return this.createSuccessResponse(tree, 'Árbol de categorías obtenido exitosamente');
   }
 
-  /**
-   * Obtener subcategorías de una categoría padre
-   */
   @Get('{id}/children')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Subcategorías obtenidas exitosamente')
-  @Response<ApiResponse<string>>('404', 'Categoría padre no encontrada')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async getCategoryChildren(@Path() id: number): Promise<ApiResponse<CategoryResponse[]>> {
+  public async getCategoryChildren(
+    @Path() id: number,
+    @Request() request: ExpressRequest
+  ): Promise<ApiResponse<CategoryResponse[]>> {
+    const businessId = this.getBusinessId(undefined, request);
     try {
-      const children = await this.categoryService.findChildren(id);
+      const children = await this.categoryService.findChildren(id, businessId);
       return this.createSuccessResponse(children, 'Subcategorías obtenidas exitosamente');
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -218,85 +212,48 @@ export class CategoryController extends BasePaginationController {
     }
   }
 
-  /**
-   * Activar una categoría
-   */
   @Put('{id}/activate')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Categoría activada exitosamente')
-  @Response<ApiResponse<string>>('400', 'La categoría ya está activa')
-  @Response<ApiResponse<string>>('404', 'Categoría no encontrada')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async activateCategory(@Path() id: number): Promise<ApiResponse<CategoryResponse>> {
-    try {
-      const category = await this.categoryService.activate(id);
-      return this.createSuccessResponse(category, 'Categoría activada exitosamente');
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        this.setStatus(404);
-        throw error;
-      }
-      if (error instanceof BusinessError) {
-        this.setStatus(400);
-        throw error;
-      }
-      this.setStatus(500);
-      throw new Error('Error interno del servidor');
-    }
+  @Response<ErrorResponse>(403, 'Mutación de catálogo maestro bloqueada')
+  public async activateCategory(
+    @Path() id: number,
+    @Request() request: ExpressRequest
+  ): Promise<ApiResponse<CategoryResponse>> {
+    this.getBusinessId(undefined, request);
+    this.setStatus(403);
+    rejectCatalogMasterMutation();
   }
 
-  /**
-   * Desactivar una categoría
-   */
   @Put('{id}/deactivate')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Categoría desactivada exitosamente')
-  @Response<ApiResponse<string>>('400', 'No se puede desactivar la categoría')
-  @Response<ApiResponse<string>>('404', 'Categoría no encontrada')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async deactivateCategory(@Path() id: number): Promise<ApiResponse<CategoryResponse>> {
-    try {
-      const category = await this.categoryService.deactivate(id);
-      return this.createSuccessResponse(category, 'Categoría desactivada exitosamente');
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        this.setStatus(404);
-        throw error;
-      }
-      if (error instanceof BusinessError) {
-        this.setStatus(400);
-        throw error;
-      }
-      this.setStatus(500);
-      throw new Error('Error interno del servidor');
-    }
+  @Response<ErrorResponse>(403, 'Mutación de catálogo maestro bloqueada')
+  public async deactivateCategory(
+    @Path() id: number,
+    @Request() request: ExpressRequest
+  ): Promise<ApiResponse<CategoryResponse>> {
+    this.getBusinessId(undefined, request);
+    this.setStatus(403);
+    rejectCatalogMasterMutation();
   }
 
-  /**
-   * Obtener estadísticas de categorías
-   */
   @Get('stats')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Estadísticas obtenidas exitosamente')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async getCategoryStats(): Promise<ApiResponse<CategoryStats>> {
-    const stats = await this.categoryService.getStats();
+  public async getCategoryStats(
+    @Request() request: ExpressRequest
+  ): Promise<ApiResponse<CategoryStats>> {
+    const businessId = this.getBusinessId(undefined, request);
+    const stats = await this.categoryService.getStats(businessId);
     return this.createSuccessResponse(stats, 'Estadísticas obtenidas exitosamente');
   }
 
-  /**
-   * Buscar categoría por nombre
-   */
   @Get('search/{name}')
   @Security('bearerAuth')
-  @SuccessResponse('200', 'Búsqueda completada')
-  @Response<ApiResponse<string>>('401', 'No autorizado')
-  @Response<ApiResponse<string>>('500', 'Error interno del servidor')
-  public async searchCategoryByName(@Path() name: string): Promise<ApiResponse<CategoryResponse | null>> {
-    const category = await this.categoryService.findByName(name);
+  public async searchCategoryByName(
+    @Path() name: string,
+    @Request() request: ExpressRequest
+  ): Promise<ApiResponse<CategoryResponse | null>> {
+    const businessId = this.getBusinessId(undefined, request);
+    const category = await this.categoryService.findByName(name, businessId);
     return this.createSuccessResponse(category, 'Búsqueda completada');
   }
 }

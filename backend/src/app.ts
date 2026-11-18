@@ -1,4 +1,5 @@
 import express, {Express} from 'express'
+import cors from 'cors'
 import prisma, {connectDB, disconnectDB} from './config/prisma';
 import {errorHandler} from './middlewares/errorHandler'
 import { RegisterRoutes } from './routes/routes';
@@ -10,7 +11,7 @@ import swaggerDocument from './swagger.json';
 // import rolePermissionRoutes from './routes/rolePermissionRoutes';
 // import userRoutes from './routes/userRoutes';
 // import businessRoutes from './routes/businessRoutes';
-// import employeeRoutes from './routes/employeeRoutes'
+import employeeRoutes from './routes/employeeRoutes';
 // import categoryRoutes from './routes/categoryRoutes';
 // import productRoutes from './routes/productRoutes';
 // import businessProductRoutes from './routes/businessProductRoutes';
@@ -31,6 +32,29 @@ import swaggerDocument from './swagger.json';
 // import posRoutes from './routes/posRoutes';
 
 const app: Express = express()
+
+/** CORS debe ir ANTES de RegisterRoutes; si se monta en server.ts después, no aplica. */
+const corsOrigin = process.env.CORS_ORIGIN || process.env.cors_origin || 'http://127.0.0.1:3000'
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      const allowed = new Set([
+        corsOrigin,
+        'http://127.0.0.1:3000',
+        'http://localhost:3000',
+        // FE producción local (G1/G2) suele correr en :3001 junto al next dev :3000
+        'http://127.0.0.1:3001',
+        'http://localhost:3001',
+      ])
+      if (!origin || allowed.has(origin)) return cb(null, true)
+      return cb(null, false)
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Id', 'Idempotency-Key'],
+  })
+)
+
 app.use(express.json())
 app.use(async (req, res, next) => {
   await connectDB()
@@ -99,7 +123,7 @@ RegisterRoutes(app);
 // app.use('/api', rolePermissionRoutes);
 // app.use('/api', userRoutes);
 // app.use('/api', businessRoutes);
-// app.use('/api', employeeRoutes)
+app.use('/api', employeeRoutes);
 // app.use('/api', categoryRoutes);
 // app.use('/api', productRoutes);
 // app.use('/api', businessProductRoutes);

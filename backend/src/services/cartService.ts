@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import {CartStatus, Cart, CartItem} from '../../prisma/generated';
+import {CartStatus, Cart, CartItem} from '../../generated';
 import {BusinessError} from '../utils/errors';
 
 export class CartService {
@@ -61,7 +61,8 @@ export class CartService {
           include: {
             businessProducts: {
               where: {
-                productId: productId
+                productId: productId,
+                deletedAt: null,
               }
             }
           }
@@ -134,7 +135,8 @@ export class CartService {
               include: {
                 businessProducts: {
                   where: {
-                    productId: productId
+                    productId: productId,
+                    deletedAt: null,
                   }
                 }
               }

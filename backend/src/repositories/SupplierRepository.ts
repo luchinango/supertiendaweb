@@ -1,4 +1,4 @@
-import { PrismaClient, SupplierStatus, DocumentType, Department } from '../../prisma/generated';
+import { PrismaClient, SupplierStatus, DocumentType, Department } from '../../generated';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ISupplierRepository } from '../interfaces/repositories/ISupplierRepository';
 import {
@@ -67,7 +67,10 @@ export class SupplierRepository implements ISupplierRepository {
   ): Promise<SupplierListResponse> {
     const { page = 1, limit = 10, search, sortBy, sortOrder } = paginationParams;
     const skip = (page - 1) * limit;
-    const businessId = additionalFilters?.businessId || 1;
+    const businessId = additionalFilters?.businessId;
+    if (businessId == null) {
+      throw new Error('businessId es obligatorio para listar proveedores');
+    }
 
     const where: any = {
       businessId,

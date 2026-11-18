@@ -1,9 +1,10 @@
 import { Controller } from 'tsoa';
 import { PaginationParams, PaginatedResult } from '../types/pagination';
 import { validatePaginationParams } from '../middlewares/paginationMiddleware';
-import { ValidationError } from '../errors';
+import { ForbiddenError, UnauthorizedError, ValidationError } from '../errors';
 import { ApiResponse, PaginatedApiResponse, PaginationMeta } from '../types/api';
 import { createSuccessResponse, createPaginatedResponse, convertPaginatedResult } from '../helpers/responseHelpers';
+import { resolveBusinessId } from '../helpers/tenantContext';
 import { Request as ExpressRequest } from 'express';
 
 /**
@@ -12,25 +13,11 @@ import { Request as ExpressRequest } from 'express';
 export abstract class BasePaginationController extends Controller {
 
   /**
-   * Obtiene el businessId del token si no se proporciona
+   * Obtiene el businessId desde el JWT autenticado.
+   * Un businessId provisto por el cliente solo se acepta si coincide con el token.
    */
   protected getBusinessId(providedBusinessId: number | undefined, request: ExpressRequest): number {
-    if (providedBusinessId) {
-      return providedBusinessId;
-    }
-
-    const user = (request as any).user;
-
-    if (!user) {
-      throw new Error('No se encontró información del usuario en el token de autenticación');
-    }
-
-    if (!user.businessId) {
-      console.log('⚠️ BusinessId no encontrado en token, usando business por defecto');
-      return 1;
-    }
-
-    return user.businessId;
+    return resolveBusinessId(request, providedBusinessId);
   }
 
   /**
@@ -112,6 +99,16 @@ export abstract class BasePaginationController extends Controller {
   protected handlePaginationError(error: any): never {
     if (error instanceof ValidationError) {
       this.setStatus(400);
+      throw error;
+    }
+
+    if (error instanceof UnauthorizedError) {
+      this.setStatus(401);
+      throw error;
+    }
+
+    if (error instanceof ForbiddenError) {
+      this.setStatus(403);
       throw error;
     }
 

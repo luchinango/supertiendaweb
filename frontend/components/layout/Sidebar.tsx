@@ -9,6 +9,7 @@ import {
   ArrowLeftRight,
   BarChart2,
   Package,
+  Tags,
   Scale,
   Users2,
   UserCircle,
@@ -38,6 +39,7 @@ const menuItems = [
   { icon: DollarSign, label: "Ventas", href: ROUTES.SALES },
   { icon: ArrowLeftRight, label: "Movimientos", href: ROUTES.MOVEMENTS },
   { icon: BarChart2, label: "Estadísticas", href: ROUTES.STATISTICS },
+  { icon: Tags, label: "Catálogo", href: ROUTES.PRODUCTS },
   { icon: Package, label: "Inventario", href: ROUTES.INVENTORY },
   { icon: Scale, label: "Mermas", href: ROUTES.LOSSES },
   { icon: Users2, label: "Empleados", href: ROUTES.EMPLOYEES },
@@ -100,14 +102,14 @@ const MenuItem = React.memo(({ item, isActive }: { item: typeof menuItems[0], is
 
 MenuItem.displayName = 'MenuItem';
 
-export function Sidebar() {
+export function Sidebar({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
   const menuItemsList = useMemo(() => {
     return menuItems.map((item) => ({
       ...item,
-      isActive: pathname === item.href
+      isActive: pathname === item.href || pathname.startsWith(`${item.href}/`)
     }));
   }, [pathname]);
 
@@ -131,15 +133,17 @@ export function Sidebar() {
   return (
     <aside
       style={{
-        width: '250px',
+        width: compact ? '100%' : '250px',
         backgroundColor: '#000',
         color: 'white',
-        minHeight: '100vh',
+        minHeight: compact ? '100%' : '100vh',
+        height: compact ? '100%' : undefined,
         display: 'flex',
         flexDirection: 'column'
       }}
       role="complementary"
       aria-label="Navegación principal"
+      id={compact ? 'mobile-nav' : undefined}
     >
       <header style={{ padding: '16px', borderBottom: '1px solid #444' }}>
         <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 500 }}>

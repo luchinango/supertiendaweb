@@ -1,4 +1,4 @@
-import { Category } from '../../prisma/generated';
+import { Category } from '../../generated';
 import { PaginationMeta } from './pagination';
 
 export interface CategoryResponse extends Category {

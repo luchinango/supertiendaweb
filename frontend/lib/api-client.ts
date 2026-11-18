@@ -1,12 +1,5 @@
 import axios from 'axios'
-
-// Si usas localStorage o cookies para guardar el token:
-function getAuthToken() {
-  // Si usas localStorage:
-  return localStorage.getItem('auth_token')
-  // Si usas cookies, usa una librería como js-cookie:
-  // return Cookies.get('auth_token')
-}
+import { getAuthToken } from '@/lib/auth-utils'
 
 const apiClient = axios.create({
   baseURL: '/api',

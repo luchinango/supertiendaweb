@@ -9,17 +9,19 @@ import {
   ProductSearchResult
 } from '../types/api';
 import { PaginationParams } from '../types/pagination';
-import { ValidationError, NotFoundError, ConflictError } from '../errors';
+import { ValidationError } from '../errors';
+import { rejectCatalogMasterMutation } from '../helpers/catalogContainment';
 
 export class ProductService implements IProductService {
   constructor(private productRepository: IProductRepository) {}
 
-  async findById(id: number): Promise<ProductResponse | null> {
-    return await this.productRepository.findById(id);
+  async findById(id: number, businessId: number): Promise<ProductResponse | null> {
+    return await this.productRepository.findById(id, businessId);
   }
 
   async findMany(
     paginationParams: PaginationParams,
+    businessId: number,
     additionalFilters?: {
       categoryId?: number;
       status?: string;
@@ -32,91 +34,19 @@ export class ProductService implements IProductService {
       taxType?: string;
     }
   ): Promise<ProductListResponse> {
-    return await this.productRepository.findMany(paginationParams, additionalFilters);
+    return await this.productRepository.findMany(paginationParams, businessId, additionalFilters);
   }
 
-  async create(data: CreateProductRequest, businessId: number): Promise<ProductResponse> {
-    if (!data.name || data.name.trim().length === 0) {
-      throw new ValidationError('El nombre del producto es requerido');
-    }
-
-    if (data.costPrice < 0) {
-      throw new ValidationError('El precio de costo no puede ser negativo');
-    }
-
-    if (data.sellingPrice < 0) {
-      throw new ValidationError('El precio de venta no puede ser negativo');
-    }
-
-    if (data.sellingPrice < data.costPrice) {
-      throw new ValidationError('El precio de venta no puede ser menor al precio de costo');
-    }
-
-    if (data.sku) {
-      const existingSku = await this.productRepository.existsBySku(data.sku, businessId);
-      if (existingSku) {
-        throw new ConflictError(`Ya existe un producto con el SKU: ${data.sku}`);
-      }
-    }
-
-    if (data.barcode) {
-      const existingBarcode = await this.productRepository.existsByBarcode(data.barcode, businessId);
-      if (existingBarcode) {
-        throw new ConflictError(`Ya existe un producto con el código de barras: ${data.barcode}`);
-      }
-    }
-
-    return await this.productRepository.create(data, businessId);
+  async create(_data: CreateProductRequest, _businessId: number): Promise<ProductResponse> {
+    rejectCatalogMasterMutation();
   }
 
-  async update(id: number, data: UpdateProductRequest): Promise<ProductResponse> {
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
-      throw new NotFoundError('Producto no encontrado');
-    }
-
-    if (data.name !== undefined && (!data.name || data.name.trim().length === 0)) {
-      throw new ValidationError('El nombre del producto es requerido');
-    }
-
-    if (data.costPrice !== undefined && data.costPrice < 0) {
-      throw new ValidationError('El precio de costo no puede ser negativo');
-    }
-
-    if (data.sellingPrice !== undefined && data.sellingPrice < 0) {
-      throw new ValidationError('El precio de venta no puede ser negativo');
-    }
-
-    if (data.costPrice !== undefined && data.sellingPrice !== undefined) {
-      if (data.sellingPrice < data.costPrice) {
-        throw new ValidationError('El precio de venta no puede ser menor al precio de costo');
-      }
-    }
-
-    if (data.sku && data.sku !== existingProduct.sku) {
-      const existingSku = await this.productRepository.existsBySku(data.sku, 1, id); // TODO: get businessId from context
-      if (existingSku) {
-        throw new ConflictError(`Ya existe un producto con el SKU: ${data.sku}`);
-      }
-    }
-
-    if (data.barcode && data.barcode !== existingProduct.barcode) {
-      const existingBarcode = await this.productRepository.existsByBarcode(data.barcode, 1, id); // TODO: get businessId from context
-      if (existingBarcode) {
-        throw new ConflictError(`Ya existe un producto con el código de barras: ${data.barcode}`);
-      }
-    }
-
-    return await this.productRepository.update(id, data);
+  async update(_id: number, _data: UpdateProductRequest): Promise<ProductResponse> {
+    rejectCatalogMasterMutation();
   }
 
-  async delete(id: number): Promise<void> {
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
-      throw new NotFoundError('Producto no encontrado');
-    }
-
-    await this.productRepository.delete(id);
+  async delete(_id: number): Promise<void> {
+    rejectCatalogMasterMutation();
   }
 
   async search(query: string, businessId: number): Promise<ProductSearchResult[]> {
@@ -127,51 +57,20 @@ export class ProductService implements IProductService {
     return await this.productRepository.search(query.trim(), businessId);
   }
 
-  async activate(id: number): Promise<ProductResponse> {
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
-      throw new NotFoundError('Producto no encontrado');
-    }
-
-    return await this.productRepository.update(id, {
-      status: 'ACTIVE',
-      isActive: true
-    });
+  async activate(_id: number): Promise<ProductResponse> {
+    rejectCatalogMasterMutation();
   }
 
-  async deactivate(id: number): Promise<ProductResponse> {
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
-      throw new NotFoundError('Producto no encontrado');
-    }
-
-    return await this.productRepository.update(id, {
-      status: 'INACTIVE',
-      isActive: false
-    });
+  async deactivate(_id: number): Promise<ProductResponse> {
+    rejectCatalogMasterMutation();
   }
 
-  async discontinue(id: number): Promise<ProductResponse> {
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
-      throw new NotFoundError('Producto no encontrado');
-    }
-
-    return await this.productRepository.update(id, {
-      status: 'DISCONTINUED',
-      isActive: false
-    });
+  async discontinue(_id: number): Promise<ProductResponse> {
+    rejectCatalogMasterMutation();
   }
 
-  async markOutOfStock(id: number): Promise<ProductResponse> {
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
-      throw new NotFoundError('Producto no encontrado');
-    }
-
-    return await this.productRepository.update(id, {
-      status: 'OUT_OF_STOCK'
-    });
+  async markOutOfStock(_id: number): Promise<ProductResponse> {
+    rejectCatalogMasterMutation();
   }
 
   async findByCategory(categoryId: number, businessId: number): Promise<ProductResponse[]> {

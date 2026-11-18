@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import {EmployeeStatus, Gender} from '../../prisma/generated';
+import {EmployeeStatus, Gender} from '../../generated';
 import {NotFoundError} from '../errors';
 
 interface CreateEmployeeData {
@@ -14,6 +14,8 @@ interface CreateEmployeeData {
   address: string;
   mobilePhone: string;
   userId: number;
+  /** Obligatorio tras P1-A: sin @default(1) en businessId */
+  businessId: number;
 }
 
 interface UpdateEmployeeData {
@@ -59,10 +61,18 @@ class EmployeeService {
 
     return prisma.employee.create({
       data: {
-        ...data,
+        firstName: data.firstName,
         lastName: data.lastName || '',
         position: data.position || '',
-        gender: data.gender || 'UNSPECIFIED'
+        startDate: data.startDate,
+        status: data.status,
+        gender: data.gender || 'UNSPECIFIED',
+        birthDate: data.birthDate,
+        email: data.email,
+        address: data.address,
+        phone: data.mobilePhone,
+        userId: data.userId,
+        businessId: data.businessId,
       },
       include: {
         user: {
@@ -81,9 +91,9 @@ class EmployeeService {
     });
   }
 
-  async update(id: number, data: UpdateEmployeeData) {
-    const employee = await prisma.employee.findUnique({
-      where: {id}
+  async update(id: number, businessId: number, data: UpdateEmployeeData) {
+    const employee = await prisma.employee.findFirst({
+      where: {id, businessId}
     });
 
     if (!employee) {
@@ -144,9 +154,9 @@ class EmployeeService {
     });
   }
 
-  async getById(id: number) {
-    const employee = await prisma.employee.findUnique({
-      where: {id},
+  async getById(id: number, businessId: number) {
+    const employee = await prisma.employee.findFirst({
+      where: {id, businessId},
       include: {
         user: {
           select: {
@@ -170,12 +180,16 @@ class EmployeeService {
     return employee;
   }
 
-  async getAll(filters?: {
-    status?: EmployeeStatus;
-    gender?: Gender;
-    search?: string;
-  }) {
+  async getAll(
+    businessId: number,
+    filters?: {
+      status?: EmployeeStatus;
+      gender?: Gender;
+      search?: string;
+    }
+  ) {
     const where = {
+      businessId,
       ...(filters?.status && {status: filters.status}),
       ...(filters?.gender && {gender: filters.gender}),
       ...(filters?.search && {
@@ -183,7 +197,7 @@ class EmployeeService {
           {firstName: {contains: filters.search}},
           {lastName: {contains: filters.search}},
           {email: {contains: filters.search}},
-          {mobilePhone: {contains: filters.search}}
+          {phone: {contains: filters.search}}
         ]
       })
     };
@@ -212,9 +226,9 @@ class EmployeeService {
     });
   }
 
-  async delete(id: number) {
-    const employee = await prisma.employee.findUnique({
-      where: {id}
+  async delete(id: number, businessId: number) {
+    const employee = await prisma.employee.findFirst({
+      where: {id, businessId}
     });
 
     if (!employee) {
@@ -229,9 +243,9 @@ class EmployeeService {
     });
   }
 
-  async getByUserId(userId: number) {
-    const employee = await prisma.employee.findUnique({
-      where: {userId: userId},
+  async getByUserId(userId: number, businessId: number) {
+    const employee = await prisma.employee.findFirst({
+      where: {userId, businessId},
       include: {
         user: {
           select: {

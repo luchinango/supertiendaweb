@@ -67,6 +67,10 @@ export const authService = {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>
+      // Sin respuesta HTTP = red/offline: propagar para restauración local (P2-C1.F2)
+      if (!axiosError.response) {
+        throw error
+      }
       return {
         success: false,
         error: axiosError.response?.data?.message || 'Error de autenticación',
@@ -74,10 +78,14 @@ export const authService = {
     }
   },
 
+  /**
+   * Logout local-only: no hay revocación server-side de JWT en P1-D.
+   * El caller debe borrar token/refresh del almacenamiento local.
+   */
   logout: async (): Promise<ApiResponse> => {
     return {
       success: true,
-      message: 'Sesión cerrada exitosamente',
+      message: 'Sesión cerrada localmente (sin revocación server-side)',
     }
   },
 }

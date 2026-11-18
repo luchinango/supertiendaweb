@@ -9,10 +9,13 @@ import {
   Body,
   Query,
   Security,
-  Response} from 'tsoa';
+  Response,
+  Request,
+} from 'tsoa';
+import { Request as ExpressRequest } from 'express';
 import { BasePaginationController } from './basePaginationController';
 import businessService from '../services/businessService';
-import { ValidationError, NotFoundError, ConflictError } from '../errors';
+import { ValidationError, NotFoundError, ConflictError, ForbiddenError } from '../errors';
 import {
   BusinessResponse,
   CreateBusinessRequest,
@@ -53,15 +56,18 @@ export class BusinessController extends BasePaginationController {
     @Query() search?: string,
     @Query() status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING',
     @Query() businessType?: 'EMPRESA_UNIPERSONAL' | 'SOCIEDAD_ANONIMA' | 'SOCIEDAD_LIMITADA' | 'SOCIEDAD_COOPERATIVA' | 'EMPRESA_PUBLICA' | 'ORGANIZACION_NO_LUCRATIVA' | 'PERSONA_NATURAL',
-    @Query() department?: 'LA_PAZ' | 'COCHABAMBA' | 'SANTA_CRUZ' | 'ORURO' | 'POTOSI' | 'CHUQUISACA' | 'TARIJA' | 'BENI' | 'PANDO'
+    @Query() department?: 'LA_PAZ' | 'COCHABAMBA' | 'SANTA_CRUZ' | 'ORURO' | 'POTOSI' | 'CHUQUISACA' | 'TARIJA' | 'BENI' | 'PANDO',
+    @Request() request?: ExpressRequest
   ): Promise<PaginatedApiResponse<BusinessResponse>> {
     try {
       const paginationParams = this.validatePagination(page, limit, search);
+      const allowedBusinessId = this.getBusinessId(undefined, request!);
 
       const additionalFilters = {
         status,
         businessType,
         department,
+        id: allowedBusinessId,
       };
 
       const result = await this.businessService.getBusinesses(paginationParams, additionalFilters);
@@ -80,13 +86,21 @@ export class BusinessController extends BasePaginationController {
   @Response<ApiResponse<BusinessResponse>>(200, 'Negocio obtenido exitosamente')
   @Response<ErrorResponse>(404, 'Negocio no encontrado')
   @Response<ErrorResponse>(401, 'No autorizado')
-  public async getBusinessById(@Path() id: number): Promise<ApiResponse<BusinessResponse>> {
+  public async getBusinessById(
+    @Path() id: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<BusinessResponse>> {
     try {
+      this.getBusinessId(id, request!);
       const business = await this.businessService.getById(id);
       const validatedBusiness = ensureExists(business, 'Negocio', id);
 
       return createSuccessResponse(validatedBusiness);
     } catch (error) {
+      if (error instanceof ForbiddenError) {
+        this.setStatus(403);
+        throw error;
+      }
       if (error instanceof NotFoundError) {
         this.setStatus(404);
         throw error;
@@ -136,14 +150,20 @@ export class BusinessController extends BasePaginationController {
   @Response<ErrorResponse>(404, 'Negocio no encontrado')
   public async updateBusiness(
     @Path() id: number,
-    @Body() businessData: UpdateBusinessRequest
+    @Body() businessData: UpdateBusinessRequest,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessResponse>> {
     try {
+      this.getBusinessId(id, request!);
       const business = await this.businessService.update(id, businessData);
       const validatedBusiness = ensureExists(business, 'Negocio', id);
 
       return createSuccessResponse(validatedBusiness, 'Negocio actualizado exitosamente');
     } catch (error) {
+      if (error instanceof ForbiddenError) {
+        this.setStatus(403);
+        throw error;
+      }
       if (error instanceof NotFoundError) {
         this.setStatus(404);
         throw error;
@@ -165,12 +185,20 @@ export class BusinessController extends BasePaginationController {
   @Response<ApiResponse<null>>(200, 'Negocio eliminado exitosamente')
   @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(404, 'Negocio no encontrado')
-  public async deleteBusiness(@Path() id: number): Promise<ApiResponse<null>> {
+  public async deleteBusiness(
+    @Path() id: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<null>> {
     try {
+      this.getBusinessId(id, request!);
       await this.businessService.delete(id);
 
       return createSuccessResponse(null, 'Negocio eliminado exitosamente');
     } catch (error) {
+      if (error instanceof ForbiddenError) {
+        this.setStatus(403);
+        throw error;
+      }
       if (error instanceof NotFoundError) {
         this.setStatus(404);
         throw error;
@@ -188,8 +216,12 @@ export class BusinessController extends BasePaginationController {
   @Response<ApiResponse<BusinessProductResponse[]>>(200, 'Productos del negocio obtenidos exitosamente')
   @Response<ErrorResponse>(401, 'No autorizado')
   @Response<ErrorResponse>(404, 'Negocio no encontrado')
-  public async getBusinessProducts(@Path() businessId: number): Promise<ApiResponse<BusinessProductResponse[]>> {
+  public async getBusinessProducts(
+    @Path() businessId: number,
+    @Request() request?: ExpressRequest
+  ): Promise<ApiResponse<BusinessProductResponse[]>> {
     try {
+      this.getBusinessId(businessId, request!);
       const products = await this.businessService.getBusinessProducts(businessId);
 
       const convertedProducts = products.map(product => ({
@@ -232,6 +264,10 @@ export class BusinessController extends BasePaginationController {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
+      if (error instanceof ForbiddenError) {
+        this.setStatus(403);
+        throw error;
+      }
       if (error instanceof NotFoundError) {
         this.setStatus(404);
         throw error;
@@ -253,9 +289,11 @@ export class BusinessController extends BasePaginationController {
   @Response<ErrorResponse>(409, 'Producto ya existe en el negocio')
   public async addProductToBusiness(
     @Path() businessId: number,
-    @Body() productData: CreateBusinessProductRequest
+    @Body() productData: CreateBusinessProductRequest,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse>> {
     try {
+      this.getBusinessId(businessId, request!);
       const businessProduct = await this.businessService.addProductToBusiness(
         businessId,
         productData.productId,
@@ -278,6 +316,10 @@ export class BusinessController extends BasePaginationController {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
+      if (error instanceof ForbiddenError) {
+        this.setStatus(403);
+        throw error;
+      }
       if (error instanceof NotFoundError) {
         this.setStatus(404);
         throw error;
@@ -307,9 +349,11 @@ export class BusinessController extends BasePaginationController {
   public async updateBusinessProduct(
     @Path() businessId: number,
     @Path() productId: number,
-    @Body() productData: UpdateBusinessProductRequest
+    @Body() productData: UpdateBusinessProductRequest,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse>> {
     try {
+      this.getBusinessId(businessId, request!);
       const businessProduct = await this.businessService.updateBusinessProduct(
         businessId,
         productId,
@@ -331,6 +375,10 @@ export class BusinessController extends BasePaginationController {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
+      if (error instanceof ForbiddenError) {
+        this.setStatus(403);
+        throw error;
+      }
       if (error instanceof NotFoundError) {
         this.setStatus(404);
         throw error;
@@ -354,9 +402,11 @@ export class BusinessController extends BasePaginationController {
   @Response<ErrorResponse>(404, 'Negocio o producto no encontrado')
   public async removeProductFromBusiness(
     @Path() businessId: number,
-    @Path() productId: number
+    @Path() productId: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<null>> {
     try {
+      this.getBusinessId(businessId, request!);
       await this.businessService.removeProductFromBusiness(businessId, productId);
 
       return {
@@ -366,6 +416,10 @@ export class BusinessController extends BasePaginationController {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
+      if (error instanceof ForbiddenError) {
+        this.setStatus(403);
+        throw error;
+      }
       if (error instanceof NotFoundError) {
         this.setStatus(404);
         throw error;

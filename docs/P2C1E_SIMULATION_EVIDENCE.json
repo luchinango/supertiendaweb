@@ -1,0 +1,383 @@
+{
+  "simId": "P2C1E-2026-11-17T00-13-50",
+  "startedAt": "2026-11-17T00:13:50.266Z",
+  "initial": {
+    "norte": {
+      "businessId": 3,
+      "bpCount": 110,
+      "stockSum": 3098,
+      "availSum": 3098,
+      "salesCount": 0,
+      "salesTotal": 0,
+      "commercialSeq": 0,
+      "openCash": []
+    },
+    "sur": {
+      "businessId": 4,
+      "bpCount": 110,
+      "stockSum": 3346,
+      "availSum": 3346,
+      "salesCount": 0,
+      "salesTotal": 0,
+      "commercialSeq": 0,
+      "openCash": []
+    },
+    "centro": {
+      "businessId": 5,
+      "bpCount": 110,
+      "stockSum": 3091,
+      "availSum": 3091,
+      "salesCount": 0,
+      "salesTotal": 0,
+      "commercialSeq": 0,
+      "openCash": []
+    },
+    "priorSalesDemo": 0
+  },
+  "days": [
+    {
+      "day": 1,
+      "title": "Ventas online Norte",
+      "status": "PASS",
+      "notes": [
+        "Ventas aplicadas=7; stock 3098→3091; salesTotal 0→74.3"
+      ],
+      "ops": [
+        {
+          "type": "CASH_OPEN",
+          "clientOperationId": "8a2a39de-768a-4c96-91bd-a1a52e8cecd0",
+          "localCashId": "eb8eb32e-e3fa-4d0d-8140-51334a810e69",
+          "result": {
+            "clientOperationId": "8a2a39de-768a-4c96-91bd-a1a52e8cecd0",
+            "status": "applied",
+            "operationType": "CASH_OPEN",
+            "serverEntityId": 136,
+            "version": 1,
+            "idMappings": [
+              {
+                "entityType": "cashRegister",
+                "localEntityId": "eb8eb32e-e3fa-4d0d-8140-51334a810e69",
+                "serverId": 136
+              }
+            ],
+            "server": {
+              "registerNumber": "Reb8eb32ee3fa4d0d814",
+              "deviceId": "demo-device-norte-01",
+              "openingAmount": "200.00",
+              "currentAmount": "200.00",
+              "status": "OPEN"
+            }
+          },
+          "cashId": 136,
+          "device": "demo-device-norte-01"
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "06c99f35-d9b8-41a1-a639-56e1a3378ffa",
+          "localSaleId": "316e187d-9df6-49b2-ab8f-8337b50b2711",
+          "commercialNumber": "COM-00000001",
+          "bpId": 308,
+          "qty": 1,
+          "total": "6.78",
+          "stockBefore": 21,
+          "stockAfter": 20
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "aa2c268a-8c77-444d-8eeb-381d689b45d5",
+          "localSaleId": "93e46167-9d14-4e72-bad6-5b05dec629f0",
+          "commercialNumber": "COM-00000002",
+          "bpId": 311,
+          "qty": 1,
+          "total": "8.19",
+          "stockBefore": 22,
+          "stockAfter": 21
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "43fccbdb-4f69-446a-b6f8-dbd7dde9fd4c",
+          "localSaleId": "a72937bb-d95d-4ce7-ae99-b74e1ffdcf24",
+          "commercialNumber": "COM-00000003",
+          "bpId": 314,
+          "qty": 1,
+          "total": "9.61",
+          "stockBefore": 23,
+          "stockAfter": 22
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "b809893b-7a6a-412e-8b1f-131060b70fd1",
+          "localSaleId": "71f27255-1f3c-42f4-b9ff-75b60ead7c26",
+          "commercialNumber": "COM-00000004",
+          "bpId": 317,
+          "qty": 1,
+          "total": "10.17",
+          "stockBefore": 24,
+          "stockAfter": 23
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "658520d6-54ac-4467-9847-b55fc2fc9afb",
+          "localSaleId": "8e4cb679-d4d4-4f12-ba44-15849864be0c",
+          "commercialNumber": "COM-00000005",
+          "bpId": 320,
+          "qty": 1,
+          "total": "11.58",
+          "stockBefore": 25,
+          "stockAfter": 24
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "c7f0dc12-5230-4706-bf41-ed6c448e2361",
+          "localSaleId": "7f8bf408-f20e-42a2-9eac-4d5432399eea",
+          "commercialNumber": "COM-00000006",
+          "bpId": 323,
+          "qty": 1,
+          "total": "13.00",
+          "stockBefore": 26,
+          "stockAfter": 25
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "a43ca68b-612f-4454-9277-319e8a8cee8f",
+          "localSaleId": "57acaa49-0ccf-4d17-9953-fa2b92e64071",
+          "commercialNumber": "COM-00000007",
+          "bpId": 329,
+          "qty": 1,
+          "total": "14.97",
+          "stockBefore": 28,
+          "stockAfter": 27
+        },
+        {
+          "type": "CASH_CLOSE",
+          "clientOperationId": "8b84008b-aabb-4f93-931e-ca0fee5d0593",
+          "result": {
+            "clientOperationId": "8b84008b-aabb-4f93-931e-ca0fee5d0593",
+            "status": "applied",
+            "operationType": "CASH_CLOSE",
+            "serverEntityId": 136,
+            "version": 9,
+            "server": {
+              "expectedAmount": "274.30",
+              "closingAmount": "274.30",
+              "difference": "0.00",
+              "status": "CLOSED"
+            }
+          },
+          "expected": 274.3
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "title": "Inventario + venta",
+      "status": "PASS",
+      "notes": [
+        "BP 308: stock 20→23→22"
+      ],
+      "ops": [
+        {
+          "type": "CASH_OPEN",
+          "cashId": 137
+        },
+        {
+          "type": "STOCK_ADJUST",
+          "up": "d73c4db4-f401-401a-848e-2f7132776b54",
+          "down": "f91adcd0-9e28-49cd-ae7a-5fb52c838171",
+          "bpId": 308,
+          "before": 20,
+          "afterAdj": 23
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "fad31c2f-7efa-4e04-98b4-7530d2be5c2f",
+          "commercialNumber": "COM-00000008"
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "title": "Ventas provisionales → sync (offline-style)",
+      "status": "PASS",
+      "notes": [
+        "Provisional IDs generados antes de push (simula outbox IndexedDB). Navegador offline documentado aparte.",
+        "3 ventas confirmadas una sola vez cada una (retry=duplicate)"
+      ],
+      "ops": [
+        {
+          "type": "PROVISIONAL_IDS",
+          "pendingIds": [
+            "ff246f08-5d63-46bf-be43-ffcdc0fccb0f",
+            "922fefe6-24ab-46fa-9409-be08d8273748",
+            "2f8e6843-0187-4e3d-ad19-acb1ac1400c8"
+          ]
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "ff246f08-5d63-46bf-be43-ffcdc0fccb0f",
+          "commercialNumber": "COM-00000009",
+          "status": "applied",
+          "retry": "duplicate",
+          "stockBefore": 22,
+          "stockAfter": 21
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "922fefe6-24ab-46fa-9409-be08d8273748",
+          "commercialNumber": "COM-00000010",
+          "status": "applied",
+          "retry": "duplicate",
+          "stockBefore": 21,
+          "stockAfter": 20
+        },
+        {
+          "type": "SALE_CREATE",
+          "clientOperationId": "2f8e6843-0187-4e3d-ad19-acb1ac1400c8",
+          "commercialNumber": "COM-00000011",
+          "status": "applied",
+          "retry": "duplicate",
+          "stockBefore": 22,
+          "stockAfter": 21
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "title": "Conflictos stock/precio",
+      "status": "PASS",
+      "notes": [
+        "PRICE_MISMATCH + INSUFFICIENT_STOCK rechazados; stock intacto"
+      ],
+      "ops": [
+        {
+          "type": "PRICE_MISMATCH",
+          "clientOperationId": "f6ac31f7-c19e-4791-8434-894dea062e62",
+          "code": "PRICE_MISMATCH"
+        },
+        {
+          "type": "INSUFFICIENT_STOCK",
+          "clientOperationId": "baf04825-38b1-438c-8269-31d6dff2a0cb",
+          "stockUnchanged": 2
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "title": "ADMIN+EMPLOYEE dispositivos distintos",
+      "status": "PASS",
+      "notes": [
+        "stock 21→17; cajas independientes cerradas"
+      ],
+      "ops": [
+        {
+          "adminCash": 140,
+          "empCash": 141
+        },
+        {
+          "sales": [
+            {
+              "who": "admin",
+              "com": "COM-00000012",
+              "op": "33d2f8b6-ebcb-4658-a177-fd9a7b9a3463"
+            },
+            {
+              "who": "emp",
+              "com": "COM-00000013",
+              "op": "68799389-cb01-4a06-82ba-4ab85f5d954b"
+            }
+          ],
+          "stockBefore": 21,
+          "stockAfter": 17
+        }
+      ]
+    },
+    {
+      "day": 6,
+      "title": "Sur + Centro aislamiento",
+      "status": "PASS",
+      "notes": [
+        "cross-tenant rejected=NOT_FOUND; Sur/Centro OK"
+      ],
+      "ops": [
+        {
+          "surCom": "COM-00000001",
+          "cenCom": "COM-00000001",
+          "crossCode": "NOT_FOUND"
+        }
+      ]
+    },
+    {
+      "day": 7,
+      "title": "Conciliación",
+      "status": "PASS",
+      "notes": [
+        "ventas SIM=15; Δstock Norte=12; unidades vendidas Norte=15; openCash=0; negStock=0"
+      ],
+      "ops": [
+        {
+          "demoSalesCount": 15,
+          "demoSales": [
+            "79|3|COM-00000001|6.78|demo-device-norte-01",
+            "80|3|COM-00000002|8.19|demo-device-norte-01",
+            "81|3|COM-00000003|9.61|demo-device-norte-01",
+            "82|3|COM-00000004|10.17|demo-device-norte-01",
+            "83|3|COM-00000005|11.58|demo-device-norte-01",
+            "84|3|COM-00000006|13.00|demo-device-norte-01",
+            "85|3|COM-00000007|14.97|demo-device-norte-01",
+            "86|3|COM-00000008|6.78|demo-device-norte-01",
+            "87|3|COM-00000009|6.78|demo-device-norte-01",
+            "88|3|COM-00000010|8.19|demo-device-norte-01",
+            "89|3|COM-00000011|9.61|demo-device-norte-01",
+            "90|3|COM-00000012|13.56|demo-device-norte-01",
+            "91|3|COM-00000013|13.56|demo-device-norte-emp-01",
+            "92|4|COM-00000001|7.63|demo-device-sur-01",
+            "93|5|COM-00000001|9.89|demo-device-centro-01"
+          ],
+          "inventoryTxTagged": 0,
+          "cashMovTagged": 16,
+          "norteDeltaStock": 12,
+          "norteUnitsSold": 15
+        }
+      ]
+    }
+  ],
+  "final": {
+    "norte": {
+      "businessId": 3,
+      "bpCount": 110,
+      "stockSum": 3086,
+      "availSum": 3086,
+      "salesCount": 13,
+      "salesTotal": 132.78,
+      "commercialSeq": 13,
+      "openCash": []
+    },
+    "sur": {
+      "businessId": 4,
+      "bpCount": 110,
+      "stockSum": 3345,
+      "availSum": 3345,
+      "salesCount": 1,
+      "salesTotal": 7.63,
+      "commercialSeq": 1,
+      "openCash": []
+    },
+    "centro": {
+      "businessId": 5,
+      "bpCount": 110,
+      "stockSum": 3090,
+      "availSum": 3090,
+      "salesCount": 1,
+      "salesTotal": 9.89,
+      "commercialSeq": 1,
+      "openCash": []
+    }
+  },
+  "automated": {},
+  "finishedAt": "2026-11-17T00:14:11.994Z",
+  "summary": {
+    "passedDays": 7,
+    "failedDays": 0,
+    "simId": "P2C1E-2026-11-17T00-13-50"
+  }
+}

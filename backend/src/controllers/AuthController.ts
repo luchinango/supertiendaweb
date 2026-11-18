@@ -1,6 +1,6 @@
 import { Controller, Route, Post, Body, Response, Tags, Security, Request } from 'tsoa';
 import { authService } from '../services/authService';
-import { UnauthorizedError } from '../errors';
+import { UnauthorizedError, ValidationError } from '../errors';
 import { AuthResponse, VerifyTokenResponse } from '../types/authTypes';
 import { ApiResponse, ErrorResponse } from '../types/api';
 import { createSuccessResponse } from '../helpers/responseHelpers';
@@ -37,20 +37,25 @@ export class AuthController extends Controller {
   @Response<ErrorResponse>(401, 'Credenciales inválidas')
   @Response<ErrorResponse>(400, 'Datos requeridos faltantes')
   public async login(@Body() body: LoginRequestBody): Promise<ApiResponse<AuthResponse>> {
+    // Validar fuera del try genérico: un throw+setStatus(400) caía al catch y
+    // reescribía a HTTP 500 (P2-C1.G2 — login sin username).
+    const username = body?.username;
+    const password = body?.password;
+    if (!username || !password) {
+      this.setStatus(400);
+      throw new ValidationError('Usuario y contraseña son requeridos');
+    }
+
     try {
-      const { username, password } = body;
-
-      if (!username || !password) {
-        this.setStatus(400);
-        throw new Error('Usuario y contraseña son requeridos');
-      }
-
       const authResponse = await authService.login(username, password);
-
       return createSuccessResponse(authResponse, 'Login exitoso');
     } catch (error) {
       if (error instanceof UnauthorizedError) {
         this.setStatus(401);
+        throw error;
+      }
+      if (error instanceof ValidationError) {
+        this.setStatus(400);
         throw error;
       }
       this.setStatus(500);
@@ -60,12 +65,15 @@ export class AuthController extends Controller {
 
   /**
    * Renovar token de acceso
-   * @summary Renovar token JWT usando refresh token
+   * @summary Renovar access token (y rotar refresh) usando un refresh token válido.
+   * No acepta access tokens. No hay revocación server-side en esta versión.
    */
   @Post('refresh')
-  @Response<ApiResponse<any>>(200, 'Token renovado exitosamente')
+  @Response<ApiResponse<{ token: string; refreshToken: string }>>(200, 'Token renovado exitosamente')
   @Response<ErrorResponse>(401, 'Refresh token inválido')
-  public async refreshToken(@Body() body: RefreshTokenRequestBody): Promise<ApiResponse<any>> {
+  public async refreshToken(
+    @Body() body: RefreshTokenRequestBody
+  ): Promise<ApiResponse<{ token: string; refreshToken: string }>> {
     try {
       const { refreshToken } = body;
 

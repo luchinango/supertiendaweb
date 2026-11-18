@@ -1,4 +1,4 @@
-import {UserStatus, Gender, EmployeeStatus} from '../../prisma/generated';
+import {UserStatus, Gender, EmployeeStatus} from '../../generated';
 
 /**
  * Usuario básico sin información sensible

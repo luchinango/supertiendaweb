@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { X, Save, Package, Plus, Trash2, Barcode, Minus } from "lucide-react"
 import apiClient from "@/lib/api-client"
+import { getAuthToken, getBusinessId } from "@/lib/auth-utils"
 import { useSuppliers } from "@/hooks/useSuppliers"
 import { useProducts } from "@/hooks/useProducts"
+import { usePurchaseOrders } from "@/hooks/usePurchaseOrders"
 
 type ProductWithPrice = {
   id: number;
@@ -20,9 +22,13 @@ type ProductWithPrice = {
   price?: number;
 };
 
+const API_BASE = process.env['NEXT_PUBLIC_API_URL'];
+
 export default function NuevaOrdenCompra({ onClose }: { onClose: () => void }) {
   const { suppliers, isLoading: isLoadingSuppliers } = useSuppliers()
   const { products: allProducts, isLoading, searchProducts } = useProducts();
+  const token = getAuthToken() ?? undefined;
+  const { getOrder, createOrder, updateOrder, deleteOrder } = usePurchaseOrders(token);
   const [supplierSearch, setSupplierSearch] = useState("")
   const [supplierId, setSupplierId] = useState<number | null>(null)
   const [supplierName, setSupplierName] = useState<string>("")
@@ -89,18 +95,23 @@ export default function NuevaOrdenCompra({ onClose }: { onClose: () => void }) {
   const totalBs = products.reduce((sum, p) => sum + p.quantity * p.price, 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!supplierId) {
-      alert("Selecciona un proveedor")
-      return
+      alert("Selecciona un proveedor");
+      return;
     }
     if (products.length === 0) {
-      alert("Agrega al menos un producto")
-      return
+      alert("Agrega al menos un producto");
+      return;
     }
-    setLoading(true)
+    const token = getAuthToken();
+    if (!token) {
+      alert("No hay token de autenticación. Inicia sesión.");
+      return;
+    }
+    setLoading(true);
     const body = {
-      businessId: 1,
+      businessId: getBusinessId() ?? undefined,
       supplierId,
       orderDate: new Date().toISOString(),
       expectedDate: new Date().toISOString(),
@@ -108,11 +119,10 @@ export default function NuevaOrdenCompra({ onClose }: { onClose: () => void }) {
       items: products.map(p => ({
         productId: p.id,
         quantity: p.quantity,
-        unitCost: p.price // <--- Cambiado de price a unitCost
+        unitCost: p.price
       }))
-    }
-    const token = localStorage.getItem("token")
-    const res = await fetch("http://206.183.128.36:5500/purchase-orders", { // <--- Cambia la URL
+    };
+    const res = await fetch(`/api/purchase-orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -120,17 +130,90 @@ export default function NuevaOrdenCompra({ onClose }: { onClose: () => void }) {
         Accept: "application/json"
       },
       body: JSON.stringify(body)
-    })
-    setLoading(false)
+    });
+    setLoading(false);
     if (res.ok) {
-      const data = await res.json()
-      alert("Orden creada con ID: " + data.data.id)
-      router.push("/ordenes-compra")
+      const data = await res.json();
+      alert("Orden creada con ID: " + data.data.id);
+      // Si el estado seleccionado es "aprobada", aprueba la orden automáticamente
+      if (status === "aprobada") {
+        const userId = Number(localStorage.getItem("userId") || "0");
+        const approveRes = await fetch(`/purchase-orders/${data.data.id}/approve`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json"
+          },
+          body: JSON.stringify({ approvedBy: userId })
+        });
+        if (approveRes.ok) {
+          alert("Orden aprobada exitosamente");
+        } else {
+          const approveData = await approveRes.json();
+          alert(approveData.message || "No se pudo aprobar la orden");
+        }
+      }
+      router.push("/ordenes-compra");
     } else {
-      const error = await res.json().catch(() => ({}))
-      alert("Error al crear la orden: " + (error.message || res.status))
+      alert("Error al crear la orden");
     }
   }
+
+  // Define orderId if you need to approve an existing order (replace with actual logic)
+  // For new orders, approval should happen after creation and you should have the order ID available.
+  const [orderId, setOrderId] = useState<number | null>(null);
+
+  const handleStatusChange = async (newStatus: "pendiente" | "aprobada" | "recibida") => {
+    if (newStatus === "aprobada") {
+      if (!orderId) {
+        alert("No hay orden para aprobar");
+        return;
+      }
+      const userId = Number(localStorage.getItem("userId") || "0");
+      const token = getAuthToken() || "";
+      const res = await fetch(`/purchase-orders/${orderId}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
+        },
+        body: JSON.stringify({ approvedBy: userId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Orden aprobada exitosamente");
+        setStatus("aprobada");
+      } else {
+        alert(data.message || "No se pudo aprobar la orden");
+      }
+      return;
+    }
+    setStatus(newStatus);
+  };
+
+  const handleReceiveOrder = async (orderId: number) => {
+    const token = getAuthToken() ?? "";
+    try {
+      const res = await fetch(`/api/inventory/receive/${orderId}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json"
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Mercancía recibida exitosamente");
+        setStatus("recibida");
+      } else {
+        alert(data.message || "No se pudo marcar como recibida");
+      }
+    } catch {
+      alert("Error al marcar como recibida");
+    }
+  };
 
   const filteredSuppliers = suppliers.filter(s =>
     s.name.toLowerCase().includes(supplierSearch.toLowerCase())
@@ -159,7 +242,7 @@ export default function NuevaOrdenCompra({ onClose }: { onClose: () => void }) {
   }
 
   const handleCreateProduct = async (nuevoProducto: NuevoProducto): Promise<void> => {
-    const token = localStorage.getItem("token");
+    const token = getAuthToken();
     const res = await fetch("/products", {
       method: "POST",
       headers: {

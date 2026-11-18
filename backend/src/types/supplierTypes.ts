@@ -1,5 +1,5 @@
 import {Decimal} from '@prisma/client/runtime/library';
-import {SupplierStatus, DocumentType, Department} from 'prisma/generated';
+import {SupplierStatus, DocumentType, Department} from '@/prisma/client';
 import { PaginationMeta } from './pagination';
 
 /**

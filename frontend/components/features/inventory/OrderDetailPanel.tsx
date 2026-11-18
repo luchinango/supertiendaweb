@@ -13,6 +13,9 @@ import { useAuth } from "@/contexts/AuthContext" // suponiendo que tienes un con
 import { Switch } from "@/components/ui/switch" // Asegúrate de importar el Switch
 import { Checkbox } from "@/components/ui/checkbox"
 import { mapOrderStatus } from "@/utils/orderStatus"
+import { usePurchaseOrders } from "@/hooks/usePurchaseOrders";
+
+const API_BASE = process.env['NEXT_PUBLIC_API_URL'];
 
 interface Product {
   id: number
@@ -121,7 +124,7 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
   const handleProductSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     setSearchLoading(true)
-    fetch(`/api/products?search=${encodeURIComponent(searchTerm)}&limit=10`, {
+    fetch(`/products?search=${encodeURIComponent(searchTerm)}&limit=10`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json"
@@ -153,7 +156,8 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
   // Extrae el monto de impuestos del objeto de la orden
   const impuestos = Number(order.taxAmount ?? 0);
   const totalGeneral = productos.reduce((sum: number, p: Product) => sum + p.subtotal, 0);
-  const totalCalculado = totalGeneral + impuestos;
+  const impuestoCalculado = calcularImpuestos ? totalGeneral * 0.13 : 0;
+  const totalConImpuesto = totalGeneral + impuestoCalculado;
 
   const handleQuantityChange = (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return
@@ -222,7 +226,7 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
         items: itemsToUpdate,
       };
 
-      await fetch(`/purchase-orders/${orderId}`, {
+      await fetch(`/purchase-orders/${orderId}`, { // <-- usa API_BASE aquí
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -239,16 +243,102 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
   }
 
   const handleStatusChange = async (newStatus: "pendiente" | "aprobada" | "recibida") => {
-    await fetch(`/purchase-orders/${orderId}/status`, {
+    if (newStatus === "aprobada") {
+      const userId = auth.user?.id || 0;
+      const res = await fetch(`/api/purchase-orders/${orderId}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
+        },
+        body: JSON.stringify({ approvedBy: userId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Orden aprobada exitosamente");
+        setOrder((prev: any) => ({ ...prev, status: "APPROVED" }));
+        onStatusChange("aprobada");
+      } else {
+        alert(data.message || "No se pudo aprobar la orden");
+      }
+      return;
+    }
+
+    if (newStatus === "recibida") {
+      // Aquí usa el endpoint correcto para recibir inventario
+      const res = await fetch(`/api/inventory/receive/${orderId}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json"
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Mercancía recibida exitosamente");
+        setOrder((prev: any) => ({ ...prev, status: "RECEIVED" }));
+        onStatusChange("recibida");
+      } else {
+        alert(data.message || "No se pudo marcar como recibida");
+      }
+      return;
+    }
+
+    // Si es "pendiente", puedes dejar el PUT como estaba
+    await fetch(`/api/purchase-orders/${orderId}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoibWdvbnphbGVzIiwicm9sZSI6InN1cGVyX2FkbWluIiwiYnVzaW5lc3NJZCI6MSwiaWF0IjoxNzUwNjIwODE2LCJleHAiOjE3NTMyMTI4MTZ9.V3VNLCuSleU8ef4WY1SaYRNRSMAQBle1RlEx_qx008UaFEaCHfIv25HPEAwiHEek4kNvaIABGBhf2llMTB2Z0fRb2OQh47rBgTYVcnsarDHEunuF7_EnCgpyN6khnnSDtXqC-FIvir9O_2ejBOnOJvZ33B9x6fzQRXnfCbqoNJEwihUwbfyIKvKCkkTPVmEAD5E2jvf-A9Yo6MzOZYgZXvJVm45woHZJSK0WFHZNCYUTLugB-0NEMzDqpvmcmQXuoXr5dJgyeVJ-XnVcEDqMfSapeaGVP0Jae4_oqDOdM9-wRbWF7jZBhFKVO10xHEt96w2TKB-VkKMgb3rTmEpSX5DcMxi6Pl4kCeYhd7nLWVLnGWmLaSZrvqZBQe67l-j9ekg14kB3wN33XSVaAhEismxbK4GXhgO7fNkGy2ke6bW-EmIuvRJ86oS_MUv3d5M-o4ampGrXCS78ezRwdzy2uFhr0j9kFkFTwl7GTESr9noCNnZ_UnFd8JssAduMLte3j5qB8j4jqT4dONU-xLxKeMdN_EAQEEzzjIGU0tpnNBJC3WXp1IP_d5BPmGwci9t-rYzPV80-rO8KxpLWyUpUFFsCaP_ZOm3fUy3JVeEpGt7mmfWuHRZSLxDi_e8ugqxcbwD01KAZxfoiWq-8WZHrtmbgAk1QUorBtTuuBlQrMdM",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
       },
       body: JSON.stringify({ status: newStatus }),
     });
-    // Actualiza el estado local para reflejar el cambio en el UI
     setOrder((prev: any) => ({ ...prev, status: newStatus }));
+    onStatusChange(newStatus);
+  };
+
+  const aprobarOrdenCompra = async (orderId: number, approvedBy: number, token: string) => {
+    const res = await fetch(`/purchase-orders/${orderId}/approve`, { // <-- usa API_BASE aquí
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+      },
+      body: JSON.stringify({ approvedBy })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Orden aprobada exitosamente");
+      // Actualiza el estado en tu UI si es necesario
+    } else {
+      alert(data.message || "No se pudo aprobar la orden");
+    }
+  }
+
+  const handleReceiveOrder = async () => {
+    if (!orderId) return;
+    try {
+      const res = await fetch(`/api/inventory/receive/${orderId}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json"
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Order received successfully");
+        setOrder((prev: any) => ({ ...prev, status: "RECEIVED" }));
+        onStatusChange("recibida");
+      } else {
+        alert(data.message || "Could not receive order");
+      }
+    } catch {
+      alert("Error receiving order");
+    }
   };
 
   const esRecibida = estado === "recibida"
@@ -338,7 +428,7 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
                 <div>
                   <div className="text-sm text-gray-500">Valor total</div>
                   <div className="text-xl font-bold">
-                    Bs {totalCalculado.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    Bs {totalConImpuesto.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>
@@ -465,15 +555,27 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
                   ))}
                 </TableBody>
               </Table>
+
+              <div className="flex items-center gap-2 mt-4">
+                <Checkbox
+                  checked={calcularImpuestos}
+                  onCheckedChange={checked => setCalcularImpuestos(!!checked)}
+                  id="calcular-impuestos"
+                  disabled={!esEditable}
+                />
+                <label htmlFor="calcular-impuestos" className="font-medium select-none">
+                  Calcular impuestos
+                </label>
+              </div>
               <div className="flex flex-col items-end gap-1 mt-2">
                 <div>
                   <span className="font-semibold">Subtotal productos:</span> Bs {totalGeneral.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
                 </div>
                 <div>
-                  <span className="font-semibold">Impuestos:</span> Bs {impuestos.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                  <span className="font-semibold">Impuestos (IVA 13%):</span> Bs {impuestoCalculado.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
                 </div>
                 <div>
-                  <span className="font-semibold">Total Bs:</span> Bs {totalCalculado.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                  <span className="font-semibold">Total Bs:</span> Bs {totalConImpuesto.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
                 </div>
               </div>
             </div>
@@ -498,6 +600,16 @@ export function OrderDetailPanel({ isOpen, onClose, orderId, onStatusChange }: O
                   Guardar Cambios
                 </Button>
               </>
+            )}
+            {estado === "aprobada" && (
+              <Button
+                className="flex items-center gap-1"
+                onClick={handleReceiveOrder}
+                disabled={estado !== "aprobada"}
+              >
+                <Package className="h-4 w-4" />
+                Marcar como recibida
+              </Button>
             )}
           </div>
         </div>

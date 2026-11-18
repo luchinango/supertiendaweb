@@ -154,3 +154,57 @@
   z-index: 50;
   animation: slide-in-from-right 0.3s ease-out forwards;
 }
+
+/* P2-C1.F3 — impresión ticket no fiscal (80 mm / 58 mm) */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  [data-testid='pos-receipt'],
+  [data-testid='pos-receipt'] * {
+    visibility: visible !important;
+  }
+
+  [data-testid='pos-receipt'] {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    background: white !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  [data-testid='pos-receipt'] .pos-ticket {
+    width: 72mm;
+    max-width: 72mm;
+    font-size: 11px;
+    color: #000;
+  }
+
+  [data-testid='pos-receipt'][data-paper-mm='58'] {
+    width: 58mm !important;
+    max-width: 58mm !important;
+  }
+
+  [data-testid='pos-receipt'][data-paper-mm='58'] .pos-ticket {
+    width: 54mm;
+    max-width: 54mm;
+    font-size: 10px;
+  }
+
+  .print\\:hidden,
+  nav,
+  aside,
+  header,
+  [data-testid='pos-page'],
+  .fixed.bottom-3 {
+    display: none !important;
+  }
+}

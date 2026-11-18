@@ -12,6 +12,7 @@ import { PaginationParams } from '../../types/pagination';
 
 export interface IBusinessProductService {
   findById(id: number): Promise<BusinessProductResponse | null>;
+  findByIdForBusiness(id: number, businessId: number): Promise<BusinessProductResponse | null>;
   findByBusinessAndProduct(businessId: number, productId: number): Promise<BusinessProductResponse | null>;
   findMany(
     paginationParams: PaginationParams,
@@ -30,8 +31,10 @@ export interface IBusinessProductService {
   ): Promise<BusinessProductListResponse>;
   create(data: CreateBusinessProductRequest): Promise<BusinessProductResponse>;
   update(id: number, data: UpdateBusinessProductRequest): Promise<BusinessProductResponse>;
+  updateForBusiness(id: number, data: UpdateBusinessProductRequest, businessId: number): Promise<BusinessProductResponse>;
   updateByBusinessAndProduct(businessId: number, productId: number, data: UpdateBusinessProductRequest): Promise<BusinessProductResponse>;
   delete(id: number): Promise<void>;
+  deleteForBusiness(id: number, businessId: number): Promise<void>;
   deleteByBusinessAndProduct(businessId: number, productId: number): Promise<void>;
 
   search(query: string, businessId?: number): Promise<BusinessProductSearchResponse>;
@@ -45,7 +48,9 @@ export interface IBusinessProductService {
   findRecentlyRestocked(businessId: number, days?: number): Promise<BusinessProductResponse[]>;
 
   adjustStock(id: number, adjustment: StockAdjustmentRequest): Promise<BusinessProductResponse>;
+  adjustStockForBusiness(id: number, adjustment: StockAdjustmentRequest, businessId: number): Promise<BusinessProductResponse>;
   restock(id: number, restockData: RestockRequest): Promise<BusinessProductResponse>;
+  restockForBusiness(id: number, restockData: RestockRequest, businessId: number): Promise<BusinessProductResponse>;
 
   getStats(businessId: number): Promise<BusinessProductStats>;
 

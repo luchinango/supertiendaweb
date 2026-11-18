@@ -66,10 +66,20 @@ export const saleItemService = {
     const taxAmount = (subtotal - discountAmount) * (taxRate / 100);
     const totalPrice = subtotal + taxAmount - discountAmount;
 
+    const product = await prisma.product.findUnique({
+      where: { id: data.productId },
+      select: { id: true, name: true, sku: true },
+    });
+    if (!product) {
+      throw new Error('Producto no encontrado para snapshot de SaleItem');
+    }
+
     return await prisma.saleItem.create({
       data: {
         saleId: data.saleId,
         productId: data.productId,
+        productName: product.name.slice(0, 200),
+        sku: product.sku ? product.sku.slice(0, 100) : null,
         quantity: data.quantity,
         unitPrice: data.unitPrice,
         taxRate: taxRate,

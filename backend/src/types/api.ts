@@ -8,7 +8,7 @@ import {
   Customer,
   Sale,
   PurchaseOrder,
-} from '../../prisma/generated';
+} from '../../generated';
 import { PaginationMeta } from './pagination';
 
 export interface ApiResponse<T = any> {

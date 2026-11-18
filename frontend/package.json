@@ -6,7 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:offline": "vitest run tests/offline/outbox-sync.test.ts tests/offline/catalog-sync.test.ts tests/offline/commercial-catalog.test.ts tests/offline/inventory-stock.test.ts tests/offline/sales-cash.test.ts tests/offline/pwa-shell.test.ts tests/offline/commercial-totals.test.ts",
+    "test:p2c1f2:offline": "vitest run tests/offline/pwa-shell.test.ts tests/offline/sales-cash.test.ts",
+    "test:p2c1f3:offline": "vitest run tests/offline/commercial-totals.test.ts tests/offline/sales-cash.test.ts",
+    "test:p2c03:offline": "vitest run tests/offline/catalog-sync.test.ts tests/offline/catalog-sync-http.test.ts",
+    "test:p2d1:offline": "vitest run tests/offline/commercial-catalog.test.ts tests/offline/catalog-sync.test.ts",
+    "test:p2d2:offline": "vitest run tests/offline/inventory-stock.test.ts tests/offline/commercial-catalog.test.ts",
+    "test:p2c1c:offline": "vitest run tests/offline/sales-cash.test.ts",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
@@ -45,6 +53,7 @@
     "cmdk": "^1.1.1",
     "critters": "^0.0.25",
     "date-fns": "^4.1.0",
+    "dexie": "^4.4.7",
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.519.0",
     "next": "^15.3.4",
@@ -69,8 +78,10 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9.29.0",
     "eslint-config-next": "^15.3.4",
+    "fake-indexeddb": "^6.2.8",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.10",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.7"
   }
 }

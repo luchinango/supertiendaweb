@@ -1,12 +1,14 @@
 import {Request, Response, NextFunction} from 'express'
-import {UnauthorizedError, NotFoundError} from '../errors'
+import {UnauthorizedError, NotFoundError, ForbiddenError} from '../errors'
 import authService from '../services/authService'
 import prisma from '../config/prisma'
+import {isPlatformRole, PLATFORM_ADMIN_ROLE} from '../helpers/platformAuth'
 
 export interface AuthenticatedUser {
   id: number
   userId: number
-  businessId: number
+  /** null solo para PLATFORM_ADMIN verificado desde BD */
+  businessId: number | null
   username: string
   role: string
 }
@@ -18,8 +20,8 @@ declare module 'express' {
 }
 
 /**
- * Middleware de autenticación JWT
- * @param roles Roles permitidos (opcional)
+ * Middleware de autenticación JWT (rutas legacy no-TSOA).
+ * Por defecto exige contexto de empresa (rechaza plataforma).
  */
 export const authenticate = (roles?: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -32,8 +34,16 @@ export const authenticate = (roles?: string[]) => {
       const token = authHeader.split(' ')[1]
       const decoded = await authService.verifyToken(token)
 
+      if (isPlatformRole(decoded.role)) {
+        throw new ForbiddenError('Usuario de plataforma no autorizado en rutas de empresa')
+      }
+
+      if (decoded.businessId == null) {
+        throw new UnauthorizedError('Usuario sin empresa asignada')
+      }
+
       if (roles && !roles.includes(decoded.role)) {
-        throw new UnauthorizedError('No tiene permisos para realizar esta acción')
+        throw new ForbiddenError('No tiene permisos para realizar esta acción')
       }
 
       req.user = {
@@ -53,7 +63,7 @@ export const authenticate = (roles?: string[]) => {
 }
 
 /**
- * Middleware para verificar propiedad o admin
+ * Middleware para verificar propiedad o admin de empresa
  */
 export const checkOwnershipOrAdmin = (
   model: 'user' | 'business' | 'product',
@@ -87,36 +97,68 @@ export const checkOwnershipOrAdmin = (
 }
 
 /**
- * Función de autenticación para TSOA
+ * Autenticación TSOA.
+ * - Scopes que incluyen PLATFORM_ADMIN → solo plataforma (businessId null).
+ * - Sin scopes / scopes tenant → solo empresa; rechaza PLATFORM_ADMIN.
  */
 export async function expressAuthentication(
   request: Request,
   securityName: string,
   scopes?: string[]
 ): Promise<any> {
-  if (securityName === 'bearerAuth') {
-    const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedError('Token no proporcionado');
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = await authService.verifyToken(token);
-
-    if (scopes && scopes.length > 0) {
-      if (!scopes.includes(decoded.role)) {
-        throw new UnauthorizedError('No tiene permisos para realizar esta acción');
-      }
-    }
-
-    return {
-      id: decoded.userId,
-      userId: decoded.userId,
-      businessId: decoded.businessId,
-      username: decoded.username,
-      role: decoded.role
-    };
+  if (securityName !== 'bearerAuth') {
+    throw new UnauthorizedError('Método de autenticación no soportado');
   }
 
-  throw new UnauthorizedError('Método de autenticación no soportado');
+  const authHeader = request.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    throw new UnauthorizedError('Token no proporcionado');
+  }
+
+  const token = authHeader.split(' ')[1];
+  const decoded = await authService.verifyToken(token);
+
+  const wantsPlatform =
+    Array.isArray(scopes) &&
+    scopes.length > 0 &&
+    scopes.includes(PLATFORM_ADMIN_ROLE);
+
+  if (wantsPlatform) {
+    if (!isPlatformRole(decoded.role) || decoded.businessId != null) {
+      throw new ForbiddenError('Se requiere administrador de plataforma');
+    }
+    if (!scopes!.includes(decoded.role)) {
+      throw new ForbiddenError('No tiene permisos para realizar esta acción');
+    }
+
+    const platformUser: AuthenticatedUser = {
+      id: decoded.userId,
+      userId: decoded.userId,
+      businessId: null,
+      username: decoded.username,
+      role: PLATFORM_ADMIN_ROLE,
+    };
+    request.user = platformUser;
+    return platformUser;
+  }
+
+  // Ruta tenant (default): rechazar plataforma y exigir empresa
+  if (isPlatformRole(decoded.role) || decoded.businessId == null) {
+    throw new ForbiddenError('Usuario de plataforma no autorizado en rutas de empresa');
+  }
+
+  if (scopes && scopes.length > 0 && !scopes.includes(decoded.role)) {
+    throw new ForbiddenError('No tiene permisos para realizar esta acción');
+  }
+
+  const authUser: AuthenticatedUser = {
+    id: decoded.userId,
+    userId: decoded.userId,
+    businessId: decoded.businessId,
+    username: decoded.username,
+    role: decoded.role,
+  };
+
+  request.user = authUser;
+  return authUser;
 }

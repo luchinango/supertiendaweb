@@ -1,0 +1,40 @@
+# Dependencias y builds (las carpetas más pesadas)
+**/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.cache/
+backend/dist/
+backend/build/
+
+# Código generado (Prisma / tsoa / etc.)
+backend/generated/
+backend/prisma/generated/
+**/generated/
+
+# Backups, logs y temporales
+backups/
+backend/backups/
+**/logs/
+temp/
+*.log
+*.zip
+*.backup
+
+# Lockfiles (ruido en indexación)
+**/package-lock.json
+**/pnpm-lock.yaml
+**/yarn.lock
+
+# Entorno y secretos
+.env
+.env.*
+**/.env
+**/.env.*
+
+# IDE / sistema
+.git/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

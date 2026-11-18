@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import {InventoryTransactionType} from '../../prisma/generated';
+import {InventoryTransactionType} from '../../generated';
 
 interface ReceiveItemData {
   purchase_order_id: number;
@@ -117,32 +117,38 @@ export const inventoryService = {
     notes?: string;
     user_id: number;
   }) {
-    // Actualizar BusinessProduct
-    await prisma.businessProduct.upsert({
+    // Actualizar BusinessProduct activo (sin reactivar soft-deleted)
+    const activeBp = await prisma.businessProduct.findFirst({
       where: {
-        businessId_productId: {
-          businessId: data.business_id,
-          productId: data.product_id
-        }
-      },
-      update: {
-        currentStock: {
-          increment: data.quantity
-        },
-        availableStock: {
-          increment: data.quantity
-        },
-        lastRestock: new Date()
-      },
-      create: {
         businessId: data.business_id,
         productId: data.product_id,
-        currentStock: data.quantity,
-        availableStock: data.quantity,
-        lastRestock: new Date(),
-        customPrice: data.unit_cost
-      }
+        deletedAt: null,
+      },
     });
+    if (activeBp) {
+      await prisma.businessProduct.update({
+        where: { id: activeBp.id },
+        data: {
+          currentStock: { increment: data.quantity },
+          availableStock: { increment: data.quantity },
+          lastRestock: new Date(),
+          updatedAt: new Date(),
+          version: { increment: 1 },
+        },
+      });
+    } else {
+      await prisma.businessProduct.create({
+        data: {
+          businessId: data.business_id,
+          productId: data.product_id,
+          currentStock: data.quantity,
+          availableStock: data.quantity,
+          lastRestock: new Date(),
+          customPrice: data.unit_cost,
+          version: 1,
+        },
+      });
+    }
 
     // Registrar transacción de inventario
     await prisma.inventoryTransaction.create({
@@ -175,13 +181,12 @@ export const inventoryService = {
     notes?: string;
     user_id: number;
   }) {
-    // Verificar stock disponible
-    const businessProduct = await prisma.businessProduct.findUnique({
+    // Verificar stock disponible (solo BP activo)
+    const businessProduct = await prisma.businessProduct.findFirst({
       where: {
-        businessId_productId: {
-          businessId: data.business_id,
-          productId: data.product_id
-        }
+        businessId: data.business_id,
+        productId: data.product_id,
+        deletedAt: null,
       }
     });
 
@@ -189,21 +194,13 @@ export const inventoryService = {
       throw new Error('Stock insuficiente');
     }
 
-    // Actualizar BusinessProduct
     await prisma.businessProduct.update({
-      where: {
-        businessId_productId: {
-          businessId: data.business_id,
-          productId: data.product_id
-        }
-      },
+      where: { id: businessProduct.id },
       data: {
-        currentStock: {
-          decrement: data.quantity
-        },
-        availableStock: {
-          decrement: data.quantity
-        }
+        currentStock: { decrement: data.quantity },
+        availableStock: { decrement: data.quantity },
+        updatedAt: new Date(),
+        version: { increment: 1 },
       }
     });
 
@@ -284,12 +281,11 @@ export const inventoryService = {
    * Obtener stock actual de un producto
    */
   async getCurrentStock(businessId: number, productId: number) {
-    const businessProduct = await prisma.businessProduct.findUnique({
+    const businessProduct = await prisma.businessProduct.findFirst({
       where: {
-        businessId_productId: {
-          businessId: businessId,
-          productId: productId
-        }
+        businessId,
+        productId,
+        deletedAt: null,
       },
       include: {
         product: true
@@ -310,7 +306,7 @@ export const inventoryService = {
   async getLowStockProducts(businessId: number) {
     // Primero obtener todos los productos del negocio con su información
     const businessProducts = await prisma.businessProduct.findMany({
-      where: {businessId: businessId},
+      where: { businessId, deletedAt: null },
       include: {
         product: {
           include: {
@@ -335,7 +331,7 @@ export const inventoryService = {
    */
   async generateInventoryReport(businessId: number) {
     const products = await prisma.businessProduct.findMany({
-      where: {businessId: businessId},
+      where: { businessId, deletedAt: null },
       include: {
         product: {
           include: {

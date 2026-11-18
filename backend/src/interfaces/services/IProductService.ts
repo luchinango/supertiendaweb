@@ -9,9 +9,10 @@ import {
 import { PaginationParams } from '../../types/pagination';
 
 export interface IProductService {
-  findById(id: number): Promise<ProductResponse | null>;
+  findById(id: number, businessId: number): Promise<ProductResponse | null>;
   findMany(
     paginationParams: PaginationParams,
+    businessId: number,
     additionalFilters?: {
       categoryId?: number;
       status?: string;

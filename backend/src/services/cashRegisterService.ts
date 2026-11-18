@@ -1,11 +1,13 @@
 import prisma from '../config/prisma';
-import {CashRegisterStatus, PaymentMethod, SaleStatus} from '../../prisma/generated';
+import {CashRegisterStatus, PaymentMethod, SaleStatus} from '../../generated';
 import {Decimal} from '@prisma/client/runtime/library';
 
 export interface CashRegisterData {
   businessId: number;
   userId: number;
   registerNumber: string;
+  /** Obligatorio (schema P2-C1.B1). Debe venir del cliente/device — no inventar. */
+  deviceId: string;
   openingAmount: number;
   notes?: string;
 }
@@ -53,9 +55,16 @@ export class CashRegisterService {
       throw new Error('Ya existe una caja abierta para este usuario');
     }
 
+    if (!data.deviceId || !String(data.deviceId).trim()) {
+      throw new Error('deviceId es requerido');
+    }
+
     const existingRegisterNumber = await prisma.cashRegister.findUnique({
       where: {
-        registerNumber: data.registerNumber
+        businessId_registerNumber: {
+          businessId: data.businessId,
+          registerNumber: data.registerNumber,
+        },
       }
     });
 
@@ -68,6 +77,7 @@ export class CashRegisterService {
         businessId: data.businessId,
         userId: data.userId,
         registerNumber: data.registerNumber,
+        deviceId: String(data.deviceId).trim(),
         openingAmount: new Decimal(data.openingAmount),
         currentAmount: new Decimal(data.openingAmount),
         status: CashRegisterStatus.OPEN,

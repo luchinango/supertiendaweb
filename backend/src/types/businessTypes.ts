@@ -1,4 +1,4 @@
-import {BusinessStatus, BusinessType, Department, Currency} from '../../prisma/generated';
+import {BusinessStatus, BusinessType, Department, Currency} from '../../generated';
 
 export interface CreateBusinessData {
   name: string;

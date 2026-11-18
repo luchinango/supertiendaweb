@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
+    "module": "Node16",
     "lib": [
       "ES2022"
     ],
-    "moduleResolution": "node",
+    "moduleResolution": "Node16",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -18,20 +18,19 @@
     "declarationMap": true,
     "removeComments": false,
     "preserveConstEnums": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/controllers/*": ["src/controllers/*"],
-      "@/services/*": ["src/services/*"],
-      "@/middlewares/*": ["src/middlewares/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/types/*": ["src/types/*"],
-      "@/schemas/*": ["src/schemas/*"],
-      "@/config/*": ["src/config/*"],
-      "@/errors/*": ["src/errors/*"],
-      "@/routes/*": ["src/routes/*"],
-      "@/prisma/*": ["prisma/generated/*"],
-      "@/prisma/client": ["prisma/generated/index"]
+      "@/*": ["./src/*"],
+      "@/controllers/*": ["./src/controllers/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/middlewares/*": ["./src/middlewares/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/schemas/*": ["./src/schemas/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/errors/*": ["./src/errors/*"],
+      "@/routes/*": ["./src/routes/*"],
+      "@/prisma/*": ["./generated/*"],
+      "@/prisma/client": ["./generated/index"]
     },
     "typeRoots": [
       "./node_modules/@types",
@@ -63,7 +62,7 @@
   "include": [
     "src/**/*",
     "src/types/**/*",
-    "prisma/generated/**/*",
+    "generated/**/*",
     "scripts/**/*"
   ],
   "exclude": [

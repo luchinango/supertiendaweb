@@ -13,6 +13,7 @@ import { useSuppliers, useSuppliersStats, useSuppliersWithDebt } from '@/hooks/u
 import { useDebounce } from "@/hooks/useDebounce"
 import type {Supplier} from "@/types/types"; // Ajusta la ruta según tu proyecto
 import apiClient from "@/lib/api-client"
+import { getAuthToken } from "@/lib/auth-utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 // Define el tipo para el payload de nuevo proveedor localmente
@@ -194,7 +195,7 @@ async function handleAddSupplier(data: NewSupplierPayload) {
     setDeleteError(null)
     try {
       const businessId = typeof window !== "undefined" ? (localStorage.getItem("businessId") || "1") : "1"
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+      const token = typeof window !== "undefined" ? getAuthToken() : ""
       await apiClient.delete(
         `/suppliers/${selectedSupplier.id}?businessId=${businessId}`,
         {
@@ -234,7 +235,7 @@ async function handleAddSupplier(data: NewSupplierPayload) {
       return
     }
     setIsSearching(true)
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+    const token = typeof window !== "undefined" ? getAuthToken() : ""
     const businessId = typeof window !== "undefined" ? localStorage.getItem("businessId") : "1"
     fetch(`/suppliers/search?query=${encodeURIComponent(debouncedSearchTerm)}&businessId=${businessId}`, {
       headers: {
@@ -276,7 +277,7 @@ async function handleAddSupplier(data: NewSupplierPayload) {
       .finally(() => setIsSearching(false))
   }, [debouncedSearchTerm])*/
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+  const token = typeof window !== "undefined" ? getAuthToken() : ""
   const businessId = typeof window !== "undefined" ? localStorage.getItem("businessId") : "1"
 
   // Nueva línea para determinar qué proveedores mostrar
@@ -306,7 +307,7 @@ async function handleAddSupplier(data: NewSupplierPayload) {
 
   // Nueva búsqueda de proveedores (con API externa)
   useEffect(() => {
-    const token = localStorage.getItem("token")
+    const token = getAuthToken()
     const businessId = "1.0"
 
     if (!token) return
@@ -689,7 +690,7 @@ async function handleAddSupplier(data: NewSupplierPayload) {
                           onClick={async () => {
                             setPendingSwitch(true)
                             const businessId = typeof window !== "undefined" ? (localStorage.getItem("businessId") || "1") : "1";
-                            const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+                            const token = typeof window !== "undefined" ? getAuthToken() : "";
                             let endpoint = "";
                             if (confirmSwitch === "ACTIVE") endpoint = "activate";
                             else if (confirmSwitch === "SUSPENDED") endpoint = "suspend";

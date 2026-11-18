@@ -1,5 +1,4 @@
 import {
-  Controller,
   Get,
   Post,
   Put,
@@ -9,6 +8,7 @@ import {
   Path,
   Body,
   Query,
+  Header,
   Security,
   SuccessResponse,
   Response,
@@ -24,7 +24,6 @@ import {
   BusinessProductResponse,
   CreateBusinessProductRequest,
   UpdateBusinessProductRequest,
-  BusinessProductListResponse,
   BusinessProductStats,
   BusinessProductSearchResult,
   StockAdjustmentRequest,
@@ -37,19 +36,45 @@ import {
   PaginatedApiResponse
 } from '../types/api';
 import { PaginationParams } from '../types/pagination';
-import { createSuccessResponse } from '../helpers/responseHelpers';
+import { UnauthorizedError } from '../errors';
 import prisma from '../config/prisma';
+import { CatalogCommercialService } from '../services/CatalogCommercialService';
+import { requireAuthUser } from '../helpers/tenantContext';
+import { readCommercialDeviceId, requireIdempotencyKey } from './privateCatalogHttp';
+import {
+  PriceUpdateResultDto,
+  UpdateBusinessProductPriceBody,
+} from '../types/catalogCommercialTypes';
+
+type CatalogStats = {
+  totalProducts: number;
+  configuredProducts: number;
+  notConfiguredProducts: number;
+  inStockProducts: number;
+  lowStockProducts: number;
+  outOfStockProducts: number;
+  totalStockValue: number;
+  averageStockLevel: number;
+};
 
 @Route('business-products')
 @Tags('Productos de Negocio')
 export class BusinessProductController extends BasePaginationController {
   private businessProductService: IBusinessProductService;
   private catalogService: BusinessProductCatalogService;
+  private commercial = new CatalogCommercialService(prisma);
 
   constructor() {
     super();
     this.businessProductService = DIContainer.getBusinessProductService();
     this.catalogService = new BusinessProductCatalogService(prisma);
+  }
+
+  private requireRequest(request?: ExpressRequest): ExpressRequest {
+    if (!request) {
+      throw new UnauthorizedError('Contexto de autenticación requerido');
+    }
+    return request;
   }
 
   /**
@@ -86,7 +111,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() maxPrice?: number,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
-    const businessId = this.getBusinessId(undefined, request!);
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
 
     const paginationParams: PaginationParams = {
       page: Math.max(1, page),
@@ -129,7 +154,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() limit: number = 50,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
-    const businessId = this.getBusinessId(undefined, request!);
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
 
     const paginationParams: PaginationParams = {
       page: Math.max(1, page),
@@ -157,10 +182,10 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getCatalogStatsForCurrentUser(
     @Request() request?: ExpressRequest
-  ): Promise<ApiResponse<any>> {
-    const businessId = this.getBusinessId(undefined, request!);
+  ): Promise<ApiResponse<CatalogStats>> {
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
 
-    const stats = await this.catalogService.getCatalogStats(businessId);
+    const stats = await this.catalogService.getCatalogStats(businessId) as CatalogStats;
     return this.createSuccessResponse(stats, 'Estadísticas del catálogo obtenidas exitosamente');
   }
 
@@ -178,9 +203,8 @@ export class BusinessProductController extends BasePaginationController {
     @Body() request: BulkConfigureProductsRequest,
     @Request() expressRequest?: ExpressRequest
   ): Promise<ApiResponse<BulkConfigureProductsResponse>> {
-    if (!request.businessId) {
-      request.businessId = this.getBusinessId(undefined, expressRequest!);
-    }
+    // Forzar businessId del JWT (rechaza body de otra empresa)
+    request.businessId = this.getBusinessId(request.businessId, this.requireRequest(expressRequest));
 
     const result = await this.catalogService.bulkConfigureProducts(request);
     this.setStatus(201);
@@ -212,7 +236,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() maxPrice?: number,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
-    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
 
     const paginationParams: PaginationParams = {
       page: Math.max(1, page),
@@ -257,7 +281,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() limit: number = 50,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductCatalogResponse>> {
-    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
 
     const paginationParams: PaginationParams = {
       page: Math.max(1, page),
@@ -286,10 +310,10 @@ export class BusinessProductController extends BasePaginationController {
   public async getCatalogStats(
     @Path() businessId: number,
     @Request() request?: ExpressRequest
-  ): Promise<ApiResponse<any>> {
-    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+  ): Promise<ApiResponse<CatalogStats>> {
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
 
-    const stats = await this.catalogService.getCatalogStats(effectiveBusinessId);
+    const stats = await this.catalogService.getCatalogStats(effectiveBusinessId) as CatalogStats;
     return this.createSuccessResponse(stats, 'Estadísticas del catálogo obtenidas exitosamente');
   }
 
@@ -369,7 +393,8 @@ export class BusinessProductController extends BasePaginationController {
     try {
       const paginationParams = this.validatePagination(page, limit);
 
-      const effectiveBusinessId = businessId || this.getBusinessId(businessId, request!);
+      // businessId efectivo solo desde JWT (query opcional solo si coincide)
+      const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
 
       const additionalFilters = {
         businessId: effectiveBusinessId,
@@ -406,7 +431,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() businessId?: number,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductSearchResult[]>> {
-    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
     const result = await this.businessProductService.search(query, effectiveBusinessId);
     return this.createSuccessResponse(result.data, 'Búsqueda realizada exitosamente');
   }
@@ -425,7 +450,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() businessId?: number,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<{ exists: boolean }>> {
-    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
     const exists = await this.businessProductService.exists(effectiveBusinessId, productId);
     return this.createSuccessResponse({ exists }, 'Verificación realizada exitosamente');
   }
@@ -440,9 +465,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('401', 'No autorizado')
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getProductsByBusiness(
-    @Path() businessId: number
+    @Path() businessId: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse[]>> {
-    const result = await this.businessProductService.findByBusiness(businessId);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    const result = await this.businessProductService.findByBusiness(effectiveBusinessId);
     return this.createSuccessResponse(result, 'Productos del negocio obtenidos exitosamente');
   }
 
@@ -457,9 +484,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getLowStockProducts(
     @Path() businessId: number,
-    @Query() threshold?: number
+    @Query() threshold?: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse[]>> {
-    const result = await this.businessProductService.findLowStock(businessId, threshold);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    const result = await this.businessProductService.findLowStock(effectiveBusinessId, threshold);
     return this.createSuccessResponse(result, 'Productos con stock bajo obtenidos exitosamente');
   }
 
@@ -473,9 +502,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('401', 'No autorizado')
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getOutOfStockProducts(
-    @Path() businessId: number
+    @Path() businessId: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse[]>> {
-    const result = await this.businessProductService.findOutOfStock(businessId);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    const result = await this.businessProductService.findOutOfStock(effectiveBusinessId);
     return this.createSuccessResponse(result, 'Productos fuera de stock obtenidos exitosamente');
   }
 
@@ -490,9 +521,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getRecentlyRestockedProducts(
     @Path() businessId: number,
-    @Query() days?: number
+    @Query() days?: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse[]>> {
-    const result = await this.businessProductService.findRecentlyRestocked(businessId, days);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    const result = await this.businessProductService.findRecentlyRestocked(effectiveBusinessId, days);
     return this.createSuccessResponse(result, 'Productos recientemente reabastecidos obtenidos exitosamente');
   }
 
@@ -506,9 +539,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('401', 'No autorizado')
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getBusinessProductStats(
-    @Path() businessId: number
+    @Path() businessId: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductStats>> {
-    const result = await this.businessProductService.getStats(businessId);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    const result = await this.businessProductService.getStats(effectiveBusinessId);
     return this.createSuccessResponse(result, 'Estadísticas obtenidas exitosamente');
   }
 
@@ -523,9 +558,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getBusinessProductByBusinessAndProduct(
     @Path() businessId: number,
-    @Path() productId: number
+    @Path() productId: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse | null>> {
-    const result = await this.businessProductService.findByBusinessAndProduct(businessId, productId);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    const result = await this.businessProductService.findByBusinessAndProduct(effectiveBusinessId, productId);
     return this.createSuccessResponse(result, 'Producto de negocio obtenido exitosamente');
   }
 
@@ -539,10 +576,12 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('401', 'No autorizado')
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getBusinessesByProduct(
-    @Path() productId: number
+    @Path() productId: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse[]>> {
-    const result = await this.businessProductService.findByProduct(productId);
-    return this.createSuccessResponse(result, 'Negocios con el producto obtenidos exitosamente');
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
+    const own = await this.businessProductService.findByBusinessAndProduct(businessId, productId);
+    return this.createSuccessResponse(own ? [own] : [], 'Negocios con el producto obtenidos exitosamente');
   }
 
   /**
@@ -559,7 +598,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() businessId?: number,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse[]>> {
-    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
     const result = await this.businessProductService.findByCategory(categoryId, effectiveBusinessId);
     return this.createSuccessResponse(result, 'Productos por categoría obtenidos exitosamente');
   }
@@ -578,7 +617,7 @@ export class BusinessProductController extends BasePaginationController {
     @Query() businessId?: number,
     @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse[]>> {
-    const effectiveBusinessId = this.getBusinessId(businessId, request!);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
     const result = await this.businessProductService.findByBrand(brand, effectiveBusinessId);
     return this.createSuccessResponse(result, 'Productos por marca obtenidos exitosamente');
   }
@@ -593,9 +632,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('401', 'No autorizado')
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async getBusinessProductById(
-    @Path() id: number
+    @Path() id: number,
+    @Request() request?: ExpressRequest
   ): Promise<ApiResponse<BusinessProductResponse | null>> {
-    const result = await this.businessProductService.findById(id);
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
+    const result = await this.businessProductService.findByIdForBusiness(id, businessId);
     return this.createSuccessResponse(result, 'Producto de negocio obtenido exitosamente');
   }
 
@@ -610,9 +651,39 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('409', 'Producto ya asignado al negocio')
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async createBusinessProduct(
-    @Body() data: CreateBusinessProductRequest
+    @Body() data: CreateBusinessProductRequest,
+    @Request() request?: ExpressRequest
   ): Promise<BusinessProductResponse> {
-    return await this.businessProductService.create(data);
+    const businessId = this.getBusinessId(data.businessId, this.requireRequest(request));
+    return await this.businessProductService.create({ ...data, businessId });
+  }
+
+  /**
+   * Actualiza únicamente el precio comercial del BP propio (P2-C.B).
+   * Declarado antes de `{id}` genérico por claridad de rutas.
+   */
+  @Put('{id}/price')
+  @Security('bearerAuth')
+  @Tags('Catálogo privado')
+  @SuccessResponse(200, 'OK')
+  @Response(403, 'Prohibido')
+  @Response(404, 'No encontrado')
+  @Response(409, 'Conflicto de versión')
+  public async updateBusinessProductPrice(
+    @Path() id: number,
+    @Body() body: UpdateBusinessProductPriceBody,
+    @Request() request: ExpressRequest,
+    @Header('Idempotency-Key') idempotencyKey?: string,
+    @Header('X-Device-Id') xDeviceId?: string
+  ): Promise<PriceUpdateResultDto> {
+    const actor = requireAuthUser(request);
+    return this.commercial.updateBusinessProductPrice(
+      actor,
+      id,
+      requireIdempotencyKey(idempotencyKey),
+      body,
+      readCommercialDeviceId(xDeviceId)
+    );
   }
 
   /**
@@ -627,9 +698,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async updateBusinessProduct(
     @Path() id: number,
-    @Body() data: UpdateBusinessProductRequest
+    @Body() data: UpdateBusinessProductRequest,
+    @Request() request?: ExpressRequest
   ): Promise<BusinessProductResponse> {
-    return await this.businessProductService.update(id, data);
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
+    return await this.businessProductService.updateForBusiness(id, data, businessId);
   }
 
   /**
@@ -645,9 +718,11 @@ export class BusinessProductController extends BasePaginationController {
   public async updateBusinessProductByBusinessAndProduct(
     @Path() businessId: number,
     @Path() productId: number,
-    @Body() data: UpdateBusinessProductRequest
+    @Body() data: UpdateBusinessProductRequest,
+    @Request() request?: ExpressRequest
   ): Promise<BusinessProductResponse> {
-    return await this.businessProductService.updateByBusinessAndProduct(businessId, productId, data);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    return await this.businessProductService.updateByBusinessAndProduct(effectiveBusinessId, productId, data);
   }
 
   /**
@@ -662,9 +737,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async adjustStock(
     @Path() id: number,
-    @Body() adjustment: StockAdjustmentRequest
+    @Body() adjustment: StockAdjustmentRequest,
+    @Request() request?: ExpressRequest
   ): Promise<BusinessProductResponse> {
-    return await this.businessProductService.adjustStock(id, adjustment);
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
+    return await this.businessProductService.adjustStockForBusiness(id, adjustment, businessId);
   }
 
   /**
@@ -679,9 +756,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async restockProduct(
     @Path() id: number,
-    @Body() restockData: RestockRequest
+    @Body() restockData: RestockRequest,
+    @Request() request?: ExpressRequest
   ): Promise<BusinessProductResponse> {
-    return await this.businessProductService.restock(id, restockData);
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
+    return await this.businessProductService.restockForBusiness(id, restockData, businessId);
   }
 
   /**
@@ -694,9 +773,11 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('401', 'No autorizado')
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async deleteBusinessProduct(
-    @Path() id: number
+    @Path() id: number,
+    @Request() request?: ExpressRequest
   ): Promise<void> {
-    await this.businessProductService.delete(id);
+    const businessId = this.getBusinessId(undefined, this.requireRequest(request));
+    await this.businessProductService.deleteForBusiness(id, businessId);
   }
 
   /**
@@ -710,8 +791,10 @@ export class BusinessProductController extends BasePaginationController {
   @Response<ApiResponse<string>>('500', 'Error interno del servidor')
   public async deleteBusinessProductByBusinessAndProduct(
     @Path() businessId: number,
-    @Path() productId: number
+    @Path() productId: number,
+    @Request() request?: ExpressRequest
   ): Promise<void> {
-    await this.businessProductService.deleteByBusinessAndProduct(businessId, productId);
+    const effectiveBusinessId = this.getBusinessId(businessId, this.requireRequest(request));
+    await this.businessProductService.deleteByBusinessAndProduct(effectiveBusinessId, productId);
   }
 }

@@ -1,5 +1,5 @@
 import prisma from "../config/prisma";
-import {SupplierStatus, DocumentType, Department} from '../../prisma/generated';
+import {SupplierStatus, DocumentType, Department} from '../../generated';
 import {Decimal} from '@prisma/client/runtime/library';
 
 import {
@@ -129,8 +129,12 @@ export class SupplierService implements ISupplierService {
       maxCreditLimit,
       minBalance,
       maxBalance,
-      businessId = 1
+      businessId
     } = additionalFilters || {};
+
+    if (businessId == null) {
+      throw new Error('businessId es obligatorio para listar proveedores');
+    }
 
     const skip = (page - 1) * limit;
     const where: any = {

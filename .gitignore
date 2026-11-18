@@ -28,6 +28,7 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+.env.docker
 frontend/.env
 backend/.env
 backend/.env.local
@@ -64,6 +65,8 @@ frontend/pnpm-lock.yaml
 /backend/backups
 /backend/examples
 *.md
+!docs/
+!docs/**/*.md
 *.backup
 
 backend/backend.code-workspace

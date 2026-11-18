@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import {SaleStatus, PaymentStatus, PaymentMethod, InvoiceType} from '../../prisma/generated';
+import {SaleStatus, PaymentStatus, PaymentMethod, InvoiceType} from '../../generated';
 
 interface SaleCreateData {
   businessId: number;
@@ -143,10 +143,16 @@ export const saleService = {
 
     const saleItems = await Promise.all(
       cart.items.map(async (cartItem) => {
+        const productName = cartItem.product?.name;
+        if (!productName) {
+          throw new Error(`Producto ${cartItem.productId} sin nombre para snapshot`);
+        }
         return await prisma.saleItem.create({
           data: {
             saleId: sale.id,
             productId: cartItem.productId,
+            productName: productName.slice(0, 200),
+            sku: cartItem.product?.sku ? cartItem.product.sku.slice(0, 100) : null,
             quantity: cartItem.quantity,
             unitPrice: cartItem.unitPrice,
             taxRate: cartItem.taxRate,
@@ -427,7 +433,8 @@ export const saleService = {
       await prisma.businessProduct.updateMany({
         where: {
           businessId: sale.businessId,
-          productId: item.productId
+          productId: item.productId,
+          deletedAt: null,
         },
         data: {
           currentStock: {
@@ -435,7 +442,9 @@ export const saleService = {
           },
           availableStock: {
             decrement: item.quantity
-          }
+          },
+          version: { increment: 1 },
+          updatedAt: new Date(),
         }
       });
 
@@ -476,7 +485,8 @@ export const saleService = {
       await prisma.businessProduct.updateMany({
         where: {
           businessId: sale.businessId,
-          productId: item.productId
+          productId: item.productId,
+          deletedAt: null,
         },
         data: {
           currentStock: {
@@ -484,7 +494,9 @@ export const saleService = {
           },
           availableStock: {
             increment: item.quantity
-          }
+          },
+          version: { increment: 1 },
+          updatedAt: new Date(),
         }
       });
 

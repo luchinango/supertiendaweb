@@ -11,13 +11,24 @@ import {
   BusinessProductSearchResponse
 } from '../types/api';
 import { PaginationParams } from '../types/pagination';
-import { ValidationError, NotFoundError, ConflictError } from '../errors';
+import { ValidationError, NotFoundError, ConflictError, ForbiddenError } from '../errors';
 
 export class BusinessProductService implements IBusinessProductService {
   constructor(private businessProductRepository: IBusinessProductRepository) {}
 
   async findById(id: number): Promise<BusinessProductResponse | null> {
     return await this.businessProductRepository.findById(id);
+  }
+
+  async findByIdForBusiness(id: number, businessId: number): Promise<BusinessProductResponse | null> {
+    const row = await this.businessProductRepository.findById(id);
+    if (!row) {
+      return null;
+    }
+    if (row.businessId !== businessId) {
+      throw new ForbiddenError('No autorizado para acceder a datos de otra empresa');
+    }
+    return row;
   }
 
   async findByBusinessAndProduct(businessId: number, productId: number): Promise<BusinessProductResponse | null> {
@@ -39,6 +50,10 @@ export class BusinessProductService implements IBusinessProductService {
       outOfStock?: boolean;
     }
   ): Promise<BusinessProductListResponse> {
+    // businessId es obligatorio para aislamiento multiempresa
+    if (!additionalFilters?.businessId) {
+      throw new ValidationError('businessId es obligatorio');
+    }
     return await this.businessProductRepository.findMany(paginationParams, additionalFilters);
   }
 
@@ -145,6 +160,60 @@ export class BusinessProductService implements IBusinessProductService {
     }
 
     await this.businessProductRepository.deleteByBusinessAndProduct(businessId, productId);
+  }
+
+  private assertBusinessOwnership(row: BusinessProductResponse, businessId: number): void {
+    if (row.businessId !== businessId) {
+      throw new ForbiddenError('No autorizado para acceder a datos de otra empresa');
+    }
+  }
+
+  async updateForBusiness(
+    id: number,
+    data: UpdateBusinessProductRequest,
+    businessId: number
+  ): Promise<BusinessProductResponse> {
+    const existing = await this.businessProductRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Producto de negocio no encontrado');
+    }
+    this.assertBusinessOwnership(existing, businessId);
+    return this.update(id, data);
+  }
+
+  async deleteForBusiness(id: number, businessId: number): Promise<void> {
+    const existing = await this.businessProductRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Producto de negocio no encontrado');
+    }
+    this.assertBusinessOwnership(existing, businessId);
+    await this.delete(id);
+  }
+
+  async adjustStockForBusiness(
+    id: number,
+    adjustment: StockAdjustmentRequest,
+    businessId: number
+  ): Promise<BusinessProductResponse> {
+    const existing = await this.businessProductRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Producto de negocio no encontrado');
+    }
+    this.assertBusinessOwnership(existing, businessId);
+    return this.adjustStock(id, adjustment);
+  }
+
+  async restockForBusiness(
+    id: number,
+    restockData: RestockRequest,
+    businessId: number
+  ): Promise<BusinessProductResponse> {
+    const existing = await this.businessProductRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundError('Producto de negocio no encontrado');
+    }
+    this.assertBusinessOwnership(existing, businessId);
+    return this.restock(id, restockData);
   }
 
   async search(query: string, businessId?: number): Promise<BusinessProductSearchResponse> {

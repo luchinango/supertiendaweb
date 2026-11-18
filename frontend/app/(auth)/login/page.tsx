@@ -8,6 +8,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Alert, AlertDescription} from "@/components/ui/alert"
 import {Eye, EyeOff, Loader2} from "lucide-react"
 import {useAuth} from "@/hooks/useAuth"
+import {setBusinessId} from "@/lib/auth-utils"
 import Link from "next/link"
 
 export default function LoginPage() {
@@ -20,47 +21,69 @@ export default function LoginPage() {
   const {loginWithRedirect} = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    e.preventDefault()
+    setError("")
+    setIsLoading(true)
 
-    // Liberar el hilo principal antes de ejecutar la lógica pesada
-    setTimeout(async () => {
+    try {
       if (!username || !password) {
-        setError("Por favor completa todos los campos");
-        setIsLoading(false);
-        return;
+        setError("Por favor completa todos los campos")
+        setIsLoading(false)
+        return
       }
 
-      const result = await loginWithRedirect(username, password);
-      console.log("Login result:", result);
+      const result = await loginWithRedirect(username, password) as {
+        success: boolean
+        error?: string
+        data?: {
+          token: string
+          user?: {
+            employee?: {
+              businessId: number | string
+            }
+          }
+        }
+      }
 
       if (!result.success) {
-        setError(result.error || "Error de autenticación");
-      } else {
-        // Guardar token y businessId en el localStorage
-        const data = (result as typeof result & { data: { token: string; user: { employee: { businessId: number } } } }).data;
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("businessId", data.user.employee.businessId.toString());
+        setError(result.error || "Error de autenticación")
+        return
       }
 
-      setIsLoading(false);
-    }, 0);
+      // AuthContext ya guarda auth_token vía setTokens; solo sincronizar businessId si viene en data
+      const businessId = result.data?.user?.employee?.businessId
+      if (businessId != null) {
+        setBusinessId(businessId)
+      }
+      // La navegación la hace loginWithRedirect (replace + fallback hard).
+    } catch {
+      setError("Error de autenticación")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md">
-        {/* Logo y título */}
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
             <span className="text-white text-2xl font-bold">S</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Supertienda</h1>
-          <p className="text-gray-600 mt-2">Gestiona tu negocio de manera inteligente</p>
+          <h1 className="text-3xl font-bold text-gray-900">SuperTienda</h1>
+          <p className="text-gray-600 mt-2">
+            SuperTienda by{" "}
+            <a
+              href="https://www.codemediia.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
+              CODEMEDIIA
+            </a>
+          </p>
         </div>
 
-        {/* Formulario de login */}
         <Card className="shadow-xl">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Iniciar sesión</CardTitle>
@@ -145,10 +168,17 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-sm text-gray-500">
-            © 2025 Supertienda. Todos los derechos reservados.
+            © {new Date().getFullYear()} SuperTienda by{" "}
+            <a
+              href="https://www.codemediia.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
+              CODEMEDIIA
+            </a>
           </p>
         </div>
       </div>

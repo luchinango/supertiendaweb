@@ -286,7 +286,15 @@ export default function RegisterPage() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-sm text-gray-500">
-            © 2024 Supertienda. Todos los derechos reservados.
+            © {new Date().getFullYear()} SuperTienda by{" "}
+            <a
+              href="https://www.codemediia.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
+              CODEMEDIIA
+            </a>
           </p>
         </div>
       </div>

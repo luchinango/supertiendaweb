@@ -20,10 +20,23 @@ const protectedRoutes = [
 
 const publicRoutes = ["/login", "/register"]
 
+/** Rutas de depuración solo permitidas en desarrollo local */
+const debugRoutes = ["/debug-auth"]
+
+function isDevelopment() {
+  return process.env.NODE_ENV === "development"
+}
+
 export function middleware(request: NextRequest) {
   const {pathname} = request.nextUrl
   const token = request.cookies.get("auth_token")?.value
 
+  // Bloquear herramientas de debug fuera de desarrollo
+  if (debugRoutes.some(route => pathname.startsWith(route)) && !isDevelopment()) {
+    return NextResponse.redirect(new URL("/login", request.url))
+  }
+
+  // Bypass eliminado: query/cookie/env públicos ya no otorgan acceso
   if (protectedRoutes.some(route => pathname.startsWith(route)) && !token) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
@@ -47,14 +60,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    // Excluir assets PWA / SW / offline estático (arranque sin cookie)
+    "/((?!api|_next/static|_next/image|favicon.ico|public|sw\\.js|manifest\\.webmanifest|offline\\.html|icons/).*)",
   ],
 }

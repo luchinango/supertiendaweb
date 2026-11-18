@@ -31,8 +31,13 @@ export async function fetcher<T = any>(url: string, options?: RequestInit): Prom
 
     return response.data;
   } catch (error: any) {
+    const status = error.response?.status as number | undefined;
     const message = error.response?.data?.message || error.message || 'Something went wrong';
-    throw new Error(message);
+    const err = new Error(message) as Error & { status?: number; isForbidden?: boolean };
+    err.status = status;
+    err.isForbidden = status === 403;
+    // Contención P1-F: 403 de catálogo maestro no debe tratarse como éxito
+    throw err;
   }
 }
 

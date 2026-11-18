@@ -26,7 +26,7 @@ export function mapEmployeeToEmployeeResponse(employee: any): EmployeeResponse |
     emergencyContact: employee.emergencyContact ?? null,
     emergencyPhone: employee.emergencyPhone ?? null,
     ciNumber: employee.ciNumber ?? null,
-    businessId: employee.businessId ?? 1,
+    businessId: employee.businessId,
     createdAt: employee.createdAt ?? undefined,
     updatedAt: employee.updatedAt ?? undefined,
     userId: employee.userId ?? undefined,

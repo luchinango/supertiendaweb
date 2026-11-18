@@ -10,6 +10,7 @@ import Link from "next/link"
 import { OrderDetailPanel } from "@/components/features/inventory/OrderDetailPanel"
 import { Badge } from "@/components/ui/badge"
 import apiClient from "@/lib/api-client"
+import { getAuthToken } from "@/lib/auth-utils"
 import { mapOrderStatus } from "@/utils/orderStatus"
 import NuevaOrdenCompra from "@/components/ordenes-compra/NuevaOrdenCompra"
 
@@ -44,7 +45,7 @@ export default function OrdenesCompra() {
 
   useEffect(() => {
     async function fetchOrders() {
-      const token = localStorage.getItem("token") || ""
+      const token = getAuthToken() || ""
       const businessId = localStorage.getItem("businessId") || "1"
       const res = await apiClient.get(
         `/purchase-orders?businessId=${businessId}&page=${page}&limit=10`,
@@ -97,14 +98,65 @@ export default function OrdenesCompra() {
       (typeFilter === "todas" || order.tipo === typeFilter),
   )
 
-  const handleStatusChange = (orderId: number, newStatus: "pendiente" | "aprobada" | "recibida") => {
-    setPurchaseOrders((orders) =>
-      orders.map((order) => (order.id === orderId ? { ...order, estado: newStatus } : order)),
-    )
-  }
+  const handleStatusChange = async (orderId: number, newStatus: "pendiente" | "aprobada" | "recibida") => {
+    const token = getAuthToken() || "";
+    const userId = Number(localStorage.getItem("userId") || "0");
+
+    if (newStatus === "aprobada") {
+      try {
+        const res = await apiClient.patch(
+          `/purchase-orders/${orderId}/approve`,
+          { approvedBy: userId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.data.success) {
+          setPurchaseOrders(orders =>
+            orders.map(order =>
+              order.id === orderId ? { ...order, estado: "aprobada" } : order
+            )
+          );
+        } else {
+          alert(res.data.message || "No se pudo aprobar la orden");
+        }
+      } catch {
+        alert("Error al aprobar la orden");
+      }
+      return;
+    }
+
+    if (newStatus === "recibida") {
+      try {
+        const res = await apiClient.post(
+          `/inventory/receive/${orderId}`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.data.status === "RECEIVED") {
+          setPurchaseOrders(orders =>
+            orders.map(order =>
+              order.id === orderId ? { ...order, estado: "recibida" } : order
+            )
+          );
+          alert(res.data.message || "Mercancía recibida exitosamente");
+        } else {
+          alert(res.data.message || "No se pudo marcar como recibida");
+        }
+      } catch {
+        alert("Error al marcar como recibida");
+      }
+      return;
+    }
+
+    // Para "pendiente" solo actualiza localmente
+    setPurchaseOrders(orders =>
+      orders.map(order =>
+        order.id === orderId ? { ...order, estado: newStatus } : order
+      )
+    );
+  };
 
   const handleViewDetails = async (order: PurchaseOrder) => {
-    const token = localStorage.getItem("token") || ""
+    const token = getAuthToken() || ""
     try {
       const res = await apiClient.get(
         `/purchase-orders/${order.id}`,
@@ -226,28 +278,28 @@ export default function OrdenesCompra() {
             onValueChange={(value: "pendiente" | "aprobada" | "recibida") => handleStatusChange(order.id, value)}
           >
             <SelectTrigger className="w-[130px]">
-            <SelectValue>
-              <Badge
-              variant={
-                order.estado === "pendiente"
-                ? "outline"
-                : order.estado === "aprobada"
-                  ? "secondary"
-                  : "default"
-              }
-              >
-              {order.estado === "pendiente"
-                ? "Pendiente"
-                : order.estado === "aprobada"
-                ? "Aprobada"
-                : "Recibida"}
-              </Badge>
-            </SelectValue>
+              <SelectValue>
+                <Badge
+                  variant={
+                    order.estado === "pendiente"
+                      ? "outline"
+                      : order.estado === "aprobada"
+                      ? "secondary"
+                      : "default"
+                  }
+                >
+                  {order.estado === "pendiente"
+                    ? "Pendiente"
+                    : order.estado === "aprobada"
+                    ? "Aprobada"
+                    : "Recibida"}
+                </Badge>
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-white">
-            <SelectItem value="pendiente">Pendiente</SelectItem>
-            <SelectItem value="aprobada">Aprobada</SelectItem>
-            <SelectItem value="recibida">Recibida</SelectItem>
+              <SelectItem value="pendiente">Pendiente</SelectItem>
+              <SelectItem value="aprobada">Aprobada</SelectItem>
+              <SelectItem value="recibida">Recibida</SelectItem>
             </SelectContent>
           </Select>
           </TableCell>

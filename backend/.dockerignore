@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+coverage
+.git
+.gitignore
+*.log
+.env
+.env.*
+!.env.example
+prisma/generated
+keys/*.pem
+backups
+docs
+*.md
+.vscode
+.idea

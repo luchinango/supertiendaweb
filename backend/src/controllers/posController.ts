@@ -6,11 +6,11 @@ import {posService} from '../services/posService';
  */
 export const startSale = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
-    const businessId = 1;
+    const userId = req.user?.userId ?? req.user?.id;
+    const businessId = req.user?.businessId;
 
-    if (!userId) {
-      res.status(401).json({error: 'Usuario no autenticado'});
+    if (!userId || businessId == null) {
+      res.status(401).json({error: 'Usuario no autenticado o sin empresa asignada'});
       return;
     }
 
@@ -149,7 +149,12 @@ export const cancelSale = async (req: Request, res: Response): Promise<void> => 
 export const searchProducts = async (req: Request, res: Response): Promise<void> => {
   try {
     const {query} = req.query;
-    const businessId = 1; // Por defecto
+    const businessId = req.user?.businessId;
+
+    if (businessId == null) {
+      res.status(401).json({error: 'Usuario no autenticado o sin empresa asignada'});
+      return;
+    }
 
     const result = await posService.searchProducts({
       query: query as string,
@@ -168,8 +173,13 @@ export const searchProducts = async (req: Request, res: Response): Promise<void>
  */
 export const getQuickProducts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const businessId = 1; // Por defecto
+    const businessId = req.user?.businessId;
     const limit = parseInt(req.query.limit as string) || 20;
+
+    if (businessId == null) {
+      res.status(401).json({error: 'Usuario no autenticado o sin empresa asignada'});
+      return;
+    }
 
     const result = await posService.getQuickProducts({
       businessId,

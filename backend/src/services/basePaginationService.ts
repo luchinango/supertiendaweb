@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../prisma/generated';
+import { PrismaClient } from '../../generated';
 import {
   PaginationParams,
   PaginationOptions,

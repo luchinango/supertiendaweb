@@ -42,14 +42,21 @@ export class PaginatedService<T> {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    // Si el backend responde 403, fetcher lanza; no devolver data falsa
+    if (!response || (response as CrudResponse<T>).success === false) {
+      throw new Error((response as CrudResponse<T>)?.message || 'Operación rechazada');
+    }
     return response.data;
   }
 
   async update(id: number, data: Partial<T>): Promise<T> {
     const response = await fetcher<CrudResponse<T>>(`${this.baseUrl}/${id}`, {
-      method: 'PATCH',
+      method: 'PUT',
       body: JSON.stringify(data),
     });
+    if (!response || (response as CrudResponse<T>).success === false) {
+      throw new Error((response as CrudResponse<T>)?.message || 'Operación rechazada');
+    }
     return response.data;
   }
 

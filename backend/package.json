@@ -12,10 +12,11 @@
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "test": "jest",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate",
+    "db:push": "echo \"db push desaconsejado: usar migrate deploy en Docker local\" && exit 1",
+    "db:generate": "prisma generate && node -e \"const fs=require('fs');const p='generated/schema.prisma';if(fs.existsSync(p))fs.unlinkSync(p);\"",
+    "db:migrate:status": "prisma migrate status",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts",
     "swagger": "tsoa spec",
     "swagger:optimize": "node scripts/optimize-swagger.js",
     "swagger:full": "npm run swagger && npm run swagger:optimize",
@@ -33,7 +34,24 @@
     "deps:update": "npm update",
     "deps:clean": "rm -rf node_modules package-lock.json && npm install",
     "dev:clean": "npm run clean && npm run build:full",
-    "dev:reset": "npm run deps:clean && npm run dev:clean"
+    "dev:reset": "npm run deps:clean && npm run dev:clean",
+    "test:p0": "ts-node --transpile-only tests/run-p0-tenant-tests.ts",
+    "test:p1d": "ts-node --transpile-only tests/run-p1d-auth-session-tests.ts",
+    "test:p1d:http": "ts-node --transpile-only tests/run-p1d-auth-http.ts",
+    "test:p1f:http": "ts-node --transpile-only tests/run-p1f-catalog-http.ts",
+    "test:p1g:http": "ts-node --transpile-only tests/run-p1g-platform-http.ts",
+    "test:p1h:http": "ts-node --transpile-only tests/run-p1h-catalog-http.ts",
+    "test:p2b:integrity": "ts-node --transpile-only tests/run-p2b-integrity.ts",
+    "test:p2c01:http": "ts-node --transpile-only tests/run-p2c01-sync-http.ts",
+    "test:p2ca:pull": "ts-node --transpile-only tests/run-p2ca-pull-concurrency.ts",
+    "test:p2cb:http": "ts-node --transpile-only tests/run-p2cb-private-catalog-http.ts",
+    "test:p2c1b2a:http": "ts-node --transpile-only tests/run-p2c1b2a-pos-cash-http.ts",
+    "test:p2c1b2b:http": "ts-node --transpile-only tests/run-p2c1b2b-cash-read-http.ts",
+    "test:p2c1e:sim": "ts-node --transpile-only tests/run-p2c1e-seven-day-simulation.ts",
+    "test:p2c1f1:http": "ts-node --transpile-only tests/run-p2c1f1-cash-lease-http.ts",
+    "test:p2c02:audit": "ts-node --transpile-only tests/run-p2c02-bp-integrity-audit.ts",
+    "db:seed": "ts-node --transpile-only prisma/seed.ts",
+    "db:seed:demo": "ts-node --transpile-only prisma/seed.demo.ts"
   },
   "keywords": [],
   "author": "",
@@ -58,7 +76,6 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "@types/swagger-ui-express": "^4.1.8",
     "@faker-js/faker": "^9.8.0",
     "@prisma/client": "^6.10.1",
     "@tsoa/cli": "^6.6.0",
@@ -71,6 +88,7 @@
     "@types/node-cron": "^3.0.11",
     "@types/pdfkit": "^0.14.0",
     "@types/pg": "^8.15.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
     "eslint": "^9.29.0",
@@ -85,5 +103,8 @@
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   }
 }

@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import { PrismaClient } from '../../prisma/generated';
+import { PrismaClient } from '../../generated';
 import { DatabaseError, NotFoundError } from '../errors';
 
 /**

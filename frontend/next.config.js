@@ -47,11 +47,50 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
+          },
+        ],
+      },
+      {
+        source: '/manifest.webmanifest',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache',
+          },
+          {
+            key: 'Content-Type',
+            value: 'application/manifest+json',
+          },
+        ],
+      },
     ]
   },
 
   async rewrites() {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://206.183.128.36:5500';
+    // Preferir URL interna del contenedor (Docker); el navegador usa NEXT_PUBLIC_API_URL.
+    const configured =
+      process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (!configured) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          'NEXT_PUBLIC_API_URL es obligatorio en producción. No se permite fallback a servidores remotos.'
+        );
+      }
+      console.warn(
+        '[next.config] NEXT_PUBLIC_API_URL no definido; usando http://127.0.0.1:5000 solo para desarrollo local.'
+      );
+    }
+    const API_URL = configured || 'http://127.0.0.1:5000';
     return [
       {
         source: '/api/:path*',

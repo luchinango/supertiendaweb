@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../prisma/generated';
+import { PrismaClient } from '../../generated';
 import { Decimal } from '@prisma/client/runtime/library';
 import { IBusinessProductRepository } from '../interfaces/repositories/IBusinessProductRepository';
 import {
@@ -73,8 +73,8 @@ export class BusinessProductRepository implements IBusinessProductRepository {
   }
 
   async findById(id: number): Promise<BusinessProductResponse | null> {
-    const businessProduct = await this.prisma.businessProduct.findUnique({
-      where: { id },
+    const businessProduct = await this.prisma.businessProduct.findFirst({
+      where: { id, deletedAt: null },
       include: {
         product: {
           include: { category: true },
@@ -87,12 +87,12 @@ export class BusinessProductRepository implements IBusinessProductRepository {
   }
 
   async findByBusinessAndProduct(businessId: number, productId: number): Promise<BusinessProductResponse | null> {
-    const businessProduct = await this.prisma.businessProduct.findUnique({
+    // Unique parcial activo: Prisma ya no expone businessId_productId
+    const businessProduct = await this.prisma.businessProduct.findFirst({
       where: {
-        businessId_productId: {
-          businessId,
-          productId,
-        },
+        businessId,
+        productId,
+        deletedAt: null,
       },
       include: {
         product: {
@@ -123,7 +123,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
     const { page, limit } = paginationParams;
     const skip = ((page || 1) - 1) * (limit || 10);
 
-    const where: any = {};
+    const where: any = { deletedAt: null };
 
     if (additionalFilters?.businessId) {
       where.businessId = additionalFilters.businessId;
@@ -195,6 +195,19 @@ export class BusinessProductRepository implements IBusinessProductRepository {
   }
 
   async create(data: CreateBusinessProductRequest): Promise<BusinessProductResponse> {
+    const active = await this.prisma.businessProduct.findFirst({
+      where: {
+        businessId: data.businessId,
+        productId: data.productId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (active) {
+      throw new Error('Ya existe un BusinessProduct activo para este negocio y producto');
+    }
+    // Soft-deleted previo: no se reactiva; se crea fila nueva (unique parcial lo permite)
+
     const businessProduct = await this.prisma.businessProduct.create({
       data: {
         businessId: data.businessId,
@@ -203,6 +216,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
         currentStock: data.currentStock || 0,
         reservedStock: data.reservedStock || 0,
         availableStock: data.availableStock || data.currentStock || 0,
+        version: 1,
       },
       include: {
         product: {
@@ -239,6 +253,15 @@ export class BusinessProductRepository implements IBusinessProductRepository {
     }
 
     updateData.updatedAt = new Date();
+    updateData.version = { increment: 1 };
+
+    const existing = await this.prisma.businessProduct.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new Error('BusinessProduct not found');
+    }
 
     const businessProduct = await this.prisma.businessProduct.update({
       where: { id },
@@ -259,64 +282,43 @@ export class BusinessProductRepository implements IBusinessProductRepository {
     productId: number,
     data: UpdateBusinessProductRequest
   ): Promise<BusinessProductResponse> {
-    const updateData: any = {};
-
-    if (data.customPrice !== undefined) {
-      updateData.customPrice = new Decimal(data.customPrice);
-    }
-
-    if (data.currentStock !== undefined) {
-      updateData.currentStock = data.currentStock;
-    }
-
-    if (data.reservedStock !== undefined) {
-      updateData.reservedStock = data.reservedStock;
-    }
-
-    if (data.availableStock !== undefined) {
-      updateData.availableStock = data.availableStock;
-    }
-
-    if (data.lastRestock !== undefined) {
-      updateData.lastRestock = data.lastRestock;
-    }
-
-    updateData.updatedAt = new Date();
-
-    const businessProduct = await this.prisma.businessProduct.update({
-      where: {
-        businessId_productId: {
-          businessId,
-          productId,
-        },
-      },
-      data: updateData,
-      include: {
-        product: {
-          include: { category: true },
-        },
-        business: true,
-      },
+    const existing = await this.prisma.businessProduct.findFirst({
+      where: { businessId, productId, deletedAt: null },
+      select: { id: true },
     });
-
-    return this.mapToBusinessProductResponse(businessProduct);
+    if (!existing) {
+      throw new Error('BusinessProduct not found');
+    }
+    return this.update(existing.id, data);
   }
 
   async delete(id: number): Promise<void> {
-    await this.prisma.businessProduct.delete({
+    const existing = await this.prisma.businessProduct.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new Error('BusinessProduct not found');
+    }
+    await this.prisma.businessProduct.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+        version: { increment: 1 },
+      },
     });
   }
 
   async deleteByBusinessAndProduct(businessId: number, productId: number): Promise<void> {
-    await this.prisma.businessProduct.delete({
-      where: {
-        businessId_productId: {
-          businessId,
-          productId,
-        },
-      },
+    const existing = await this.prisma.businessProduct.findFirst({
+      where: { businessId, productId, deletedAt: null },
+      select: { id: true },
     });
+    if (!existing) {
+      throw new Error('BusinessProduct not found');
+    }
+    await this.delete(existing.id);
   }
 
   async search(query: string, businessId?: number): Promise<BusinessProductSearchResult[]> {
@@ -325,6 +327,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
     }
 
     const where: any = {
+      deletedAt: null,
       product: {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
@@ -369,7 +372,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
 
   async findByBusiness(businessId: number): Promise<BusinessProductResponse[]> {
     const businessProducts = await this.prisma.businessProduct.findMany({
-      where: { businessId },
+      where: { businessId, deletedAt: null },
       include: {
         product: {
           include: { category: true },
@@ -384,7 +387,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
 
   async findByProduct(productId: number): Promise<BusinessProductResponse[]> {
     const businessProducts = await this.prisma.businessProduct.findMany({
-      where: { productId },
+      where: { productId, deletedAt: null },
       include: {
         product: {
           include: { category: true },
@@ -401,6 +404,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
     const businessProducts = await this.prisma.businessProduct.findMany({
       where: {
         businessId,
+        deletedAt: null,
         currentStock: { lte: threshold },
       },
       include: {
@@ -419,6 +423,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
     const businessProducts = await this.prisma.businessProduct.findMany({
       where: {
         businessId,
+        deletedAt: null,
         currentStock: { lte: 0 },
       },
       include: {
@@ -435,6 +440,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
 
   async findByCategory(categoryId: number, businessId?: number): Promise<BusinessProductResponse[]> {
     const where: any = {
+      deletedAt: null,
       product: { categoryId },
     };
 
@@ -458,6 +464,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
 
   async findByBrand(brand: string, businessId?: number): Promise<BusinessProductResponse[]> {
     const where: any = {
+      deletedAt: null,
       product: {
         brand: { contains: brand, mode: 'insensitive' },
       },
@@ -488,6 +495,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
     const businessProducts = await this.prisma.businessProduct.findMany({
       where: {
         businessId,
+        deletedAt: null,
         lastRestock: { gte: dateThreshold },
       },
       include: {
@@ -503,8 +511,8 @@ export class BusinessProductRepository implements IBusinessProductRepository {
   }
 
   async adjustStock(id: number, adjustment: StockAdjustmentRequest): Promise<BusinessProductResponse> {
-    const businessProduct = await this.prisma.businessProduct.findUnique({
-      where: { id },
+    const businessProduct = await this.prisma.businessProduct.findFirst({
+      where: { id, deletedAt: null },
     });
 
     if (!businessProduct) {
@@ -520,6 +528,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
         currentStock: newStock,
         availableStock: newAvailableStock,
         updatedAt: new Date(),
+        version: { increment: 1 },
       },
       include: {
         product: {
@@ -533,8 +542,8 @@ export class BusinessProductRepository implements IBusinessProductRepository {
   }
 
   async restock(id: number, restockData: RestockRequest): Promise<BusinessProductResponse> {
-    const businessProduct = await this.prisma.businessProduct.findUnique({
-      where: { id },
+    const businessProduct = await this.prisma.businessProduct.findFirst({
+      where: { id, deletedAt: null },
     });
 
     if (!businessProduct) {
@@ -551,6 +560,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
         availableStock: newAvailableStock,
         lastRestock: new Date(),
         updatedAt: new Date(),
+        version: { increment: 1 },
       },
       include: {
         product: {
@@ -572,10 +582,10 @@ export class BusinessProductRepository implements IBusinessProductRepository {
       recentlyRestockedCount,
     ] = await Promise.all([
       this.prisma.businessProduct.count({
-        where: { businessId },
+        where: { businessId, deletedAt: null },
       }),
       this.prisma.businessProduct.aggregate({
-        where: { businessId },
+        where: { businessId, deletedAt: null },
         _sum: {
           currentStock: true,
         },
@@ -586,18 +596,21 @@ export class BusinessProductRepository implements IBusinessProductRepository {
       this.prisma.businessProduct.count({
         where: {
           businessId,
+          deletedAt: null,
           currentStock: { lte: 10 },
         },
       }),
       this.prisma.businessProduct.count({
         where: {
           businessId,
+          deletedAt: null,
           currentStock: { lte: 0 },
         },
       }),
       this.prisma.businessProduct.count({
         where: {
           businessId,
+          deletedAt: null,
           lastRestock: {
             gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // últimos 7 días
           },
@@ -607,7 +620,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
 
     // Calcular valor total del stock
     const businessProducts = await this.prisma.businessProduct.findMany({
-      where: { businessId },
+      where: { businessId, deletedAt: null },
       select: {
         currentStock: true,
         customPrice: true,
@@ -633,6 +646,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
       where: {
         businessId,
         productId,
+        deletedAt: null,
       },
     });
 
@@ -641,7 +655,7 @@ export class BusinessProductRepository implements IBusinessProductRepository {
 
   async existsById(id: number): Promise<boolean> {
     const count = await this.prisma.businessProduct.count({
-      where: { id },
+      where: { id, deletedAt: null },
     });
 
     return count > 0;

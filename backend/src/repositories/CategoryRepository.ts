@@ -1,7 +1,8 @@
-import { PrismaClient } from '../../prisma/generated';
+import { PrismaClient } from '../../generated';
 import { ICategoryRepository } from '../interfaces/repositories/ICategoryRepository';
 import { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest, CategoryListResponse, CategoryStats, CategoryTreeNode } from '../types/categoryTypes';
 import { PaginationParams } from '../types/pagination';
+import { categoryVisibleToBusinessWhere } from '../helpers/catalogContainment';
 
 export class CategoryRepository implements ICategoryRepository {
   constructor(private prisma: PrismaClient) {}
@@ -9,6 +10,9 @@ export class CategoryRepository implements ICategoryRepository {
   private mapToCategoryResponse(category: any): CategoryResponse {
     return {
       id: category.id,
+      businessId: category.businessId ?? null,
+      visibility: category.visibility,
+      version: category.version ?? 1,
       name: category.name,
       description: category.description,
       parentId: category.parentId,
@@ -26,13 +30,19 @@ export class CategoryRepository implements ICategoryRepository {
     };
   }
 
-  async findById(id: number): Promise<CategoryResponse | null> {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
+  async findById(id: number, businessId: number): Promise<CategoryResponse | null> {
+    const category = await this.prisma.category.findFirst({
+      where: {
+        id,
+        ...categoryVisibleToBusinessWhere(businessId),
+      },
       include: {
         parent: true,
         childrens: {
-          where: { isActive: true },
+          where: {
+            isActive: true,
+            ...categoryVisibleToBusinessWhere(businessId),
+          },
           orderBy: { sortOrder: 'asc' }
         },
         _count: {
@@ -46,6 +56,7 @@ export class CategoryRepository implements ICategoryRepository {
 
   async findMany(
     paginationParams: PaginationParams,
+    businessId: number,
     additionalFilters?: {
       isActive?: boolean;
       parentId?: number;
@@ -56,7 +67,9 @@ export class CategoryRepository implements ICategoryRepository {
     const { page, limit } = paginationParams;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      ...categoryVisibleToBusinessWhere(businessId),
+    };
 
     if (additionalFilters?.isActive !== undefined) {
       where.isActive = additionalFilters.isActive;
@@ -67,16 +80,20 @@ export class CategoryRepository implements ICategoryRepository {
     }
 
     if (additionalFilters?.search) {
-      where.OR = [
-        { name: { contains: additionalFilters.search, mode: 'insensitive' } },
-        { description: { contains: additionalFilters.search, mode: 'insensitive' } }
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { name: { contains: additionalFilters.search, mode: 'insensitive' } },
+            { description: { contains: additionalFilters.search, mode: 'insensitive' } }
+          ]
+        }
       ];
     }
 
-    if (additionalFilters?.hasProducts) {
-      where.products = {
-        some: {}
-      };
+    // hasProducts ya implícito en categoryVisibleToBusinessWhere; flag se ignora si false
+    if (additionalFilters?.hasProducts === false) {
+      // no ampliar visibilidad: política conservadora
     }
 
     const [categories, total] = await Promise.all([
@@ -143,7 +160,8 @@ export class CategoryRepository implements ICategoryRepository {
       data: {
         ...data,
         updatedBy: 1,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        version: { increment: 1 },
       },
       include: {
         parent: true,
@@ -161,13 +179,18 @@ export class CategoryRepository implements ICategoryRepository {
       where: { id },
       data: {
         deletedAt: new Date(),
-        deletedBy: 1
+        deletedBy: 1,
+        updatedAt: new Date(),
+        version: { increment: 1 },
       }
     });
   }
 
-  async findByName(name: string, excludeId?: number): Promise<CategoryResponse | null> {
-    const where: any = { name };
+  async findByName(name: string, businessId: number, excludeId?: number): Promise<CategoryResponse | null> {
+    const where: any = {
+      name,
+      ...categoryVisibleToBusinessWhere(businessId),
+    };
     if (excludeId) {
       where.id = { not: excludeId };
     }
@@ -184,9 +207,12 @@ export class CategoryRepository implements ICategoryRepository {
     return category ? this.mapToCategoryResponse(category) : null;
   }
 
-  async findChildren(parentId: number): Promise<CategoryResponse[]> {
+  async findChildren(parentId: number, businessId: number): Promise<CategoryResponse[]> {
     const categories = await this.prisma.category.findMany({
-      where: { parentId },
+      where: {
+        parentId,
+        ...categoryVisibleToBusinessWhere(businessId),
+      },
       include: {
         _count: {
           select: { products: true, childrens: true }
@@ -225,15 +251,18 @@ export class CategoryRepository implements ICategoryRepository {
     return parents;
   }
 
-  async findTree(): Promise<CategoryTreeNode[]> {
+  async findTree(businessId: number): Promise<CategoryTreeNode[]> {
+    const visible = categoryVisibleToBusinessWhere(businessId);
     const categories = await this.prisma.category.findMany({
-      where: { parentId: null },
+      where: { parentId: null, ...visible },
       include: {
         childrens: {
+          where: visible,
           include: {
             childrens: {
+              where: visible,
               include: {
-                childrens: true,
+                childrens: { where: visible },
                 _count: { select: { products: true } }
               }
             },
@@ -263,8 +292,9 @@ export class CategoryRepository implements ICategoryRepository {
     };
   }
 
-  async findWithProductCount(): Promise<CategoryResponse[]> {
+  async findWithProductCount(businessId: number): Promise<CategoryResponse[]> {
     const categories = await this.prisma.category.findMany({
+      where: categoryVisibleToBusinessWhere(businessId),
       include: {
         _count: {
           select: { products: true }
@@ -287,23 +317,19 @@ export class CategoryRepository implements ICategoryRepository {
     return this.update(id, { isActive: false });
   }
 
-  async getStats(): Promise<CategoryStats> {
+  async getStats(businessId: number): Promise<CategoryStats> {
+    const visible = categoryVisibleToBusinessWhere(businessId);
     const [
       totalCategories,
       activeCategories,
       categoriesWithProducts,
       topCategories
     ] = await Promise.all([
-      this.prisma.category.count(),
-      this.prisma.category.count({ where: { isActive: true } }),
-      this.prisma.category.count({
-        where: {
-          products: {
-            some: {}
-          }
-        }
-      }),
+      this.prisma.category.count({ where: visible }),
+      this.prisma.category.count({ where: { ...visible, isActive: true } }),
+      this.prisma.category.count({ where: visible }),
       this.prisma.category.findMany({
+        where: visible,
         include: {
           _count: {
             select: { products: true }
@@ -318,7 +344,12 @@ export class CategoryRepository implements ICategoryRepository {
       })
     ]);
 
-    const totalProducts = await this.prisma.product.count();
+    const totalProducts = await this.prisma.product.count({
+      where: {
+        deletedAt: null,
+        businessProducts: { some: { businessId, deletedAt: null } },
+      },
+    });
     const averageProductsPerCategory = totalCategories > 0 ? totalProducts / totalCategories : 0;
 
     return {

@@ -1,13 +1,19 @@
-import {EmployeeStatus, Gender, UserStatus, BusinessStatus, Department, BusinessType} from '../../prisma/generated';
+import {EmployeeStatus, Gender, UserStatus, BusinessStatus, Department, BusinessType} from '../../generated';
+
+/** Tipo de JWT emitido por AuthService */
+export type JwtTokenType = 'access' | 'refresh';
 
 /**
  * Payload del token JWT
+ * businessId: número para ADMIN/EMPLOYEE; null solo para PLATFORM_ADMIN (rehidratado desde BD).
  */
 export interface TokenPayload {
   userId: number;
   username: string;
-  businessId: number;
+  businessId: number | null;
   role: string;
+  /** Distingue access vs refresh; obligatorio en tokens nuevos */
+  tokenType: JwtTokenType;
   iat?: number;
   exp?: number;
 }

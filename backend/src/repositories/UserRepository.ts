@@ -1,4 +1,4 @@
-import { PrismaClient, User, Role } from '../../prisma/generated';
+import { PrismaClient, User, Role } from '../../generated';
 import { CreateUserRequest, UpdateUserRequest, UserResponse, UserListResponse } from '../types/api';
 import { User as UserType } from '../types/userTypes';
 import { mapUserToUserResponse, mapUsersToUserListResponse } from '../mappers/userMappers';

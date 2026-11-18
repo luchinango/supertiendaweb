@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import {CartStatus, PaymentMethod, DocumentType, Department} from '../../prisma/generated';
+import {CartStatus, PaymentMethod, DocumentType, Department} from '../../generated';
 import {cartService} from './cartService';
 import {saleService} from './saleService';
 import {customerService} from './customerService';
@@ -160,7 +160,7 @@ export class POSService {
       throw new Error('Carrito no encontrado o no está activo');
     }
 
-    const product = await productService.findById(productId);
+    const product = await productService.findById(productId, cart.businessId);
     if (!product) {
       throw new Error('Producto no encontrado');
     }
@@ -168,7 +168,8 @@ export class POSService {
     const businessProduct = await prisma.businessProduct.findFirst({
       where: {
         businessId: cart.businessId,
-        productId: productId
+        productId: productId,
+        deletedAt: null,
       }
     });
 
@@ -235,7 +236,8 @@ export class POSService {
     const businessProduct = await prisma.businessProduct.findFirst({
       where: {
         businessId: cart.businessId,
-        productId: productId
+        productId: productId,
+        deletedAt: null,
       }
     });
 
@@ -316,7 +318,10 @@ export class POSService {
    */
   async searchProducts(input: SearchProductsInput): Promise<ProductSearchResult[]> {
     const {query, businessId} = input;
-    const products = await productService.search(query.trim(), businessId || 1);
+    if (businessId == null) {
+      throw new Error('businessId es obligatorio');
+    }
+    const products = await productService.search(query.trim(), businessId);
     return products;
   }
 
@@ -327,8 +332,12 @@ export class POSService {
     const {businessId, limit = 10} = input;
 
     // Por ahora devolver productos aleatorios del negocio
+    if (businessId == null) {
+      throw new Error('businessId es obligatorio');
+    }
+
     const businessProducts = await prisma.businessProduct.findMany({
-      where: {businessId: businessId || 1},
+      where: { businessId, deletedAt: null },
       include: {
         product: true
       },
@@ -350,8 +359,12 @@ export class POSService {
   /**
    * Procesar venta completa en una sola operación
    */
-  async processSale(saleInput: SaleInput, userId: number) {
+  async processSale(saleInput: SaleInput, userId: number, businessId: number) {
     const {customerId, customerData, items, payment, discountAmount = 0, notes} = saleInput;
+
+    if (businessId == null) {
+      throw new Error('businessId es obligatorio');
+    }
 
     if (!items || items.length === 0) {
       throw new Error('La venta debe tener al menos un producto');
@@ -367,7 +380,7 @@ export class POSService {
     }
 
     const cartResult = await this.startSale({
-      businessId: 1,
+      businessId,
       userId,
       customerId: finalCustomerId
     });

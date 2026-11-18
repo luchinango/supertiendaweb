@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const API_BASE = process.env['NEXT_PUBLIC_API_URL']!   // p.ej. "http://206.183.128.36:5500/api"
+const API_BASE = process.env['NEXT_PUBLIC_API_URL'] || 'http://127.0.0.1:5000'
 
 async function proxy(req: NextRequest, method: string) {
   const url = `${API_BASE}/suppliers${req.nextUrl.search}`

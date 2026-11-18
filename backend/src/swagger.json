@@ -896,6 +896,251 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SyncItemStatus": {
+				"type": "string",
+				"enum": [
+					"applied",
+					"duplicate",
+					"conflict",
+					"rejected"
+				]
+			},
+			"SyncIdMapping": {
+				"properties": {
+					"entityType": {
+						"type": "string"
+					},
+					"localEntityId": {
+						"type": "string"
+					},
+					"serverId": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"entityType",
+					"localEntityId",
+					"serverId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"SyncPushResultItem": {
+				"properties": {
+					"clientOperationId": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/SyncItemStatus"
+					},
+					"operationType": {
+						"type": "string"
+					},
+					"serverEntityId": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"idMappings": {
+						"items": {
+							"$ref": "#/components/schemas/SyncIdMapping"
+						},
+						"type": "array"
+					},
+					"code": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"retryable": {
+						"type": "boolean"
+					},
+					"server": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					}
+				},
+				"required": [
+					"clientOperationId",
+					"status",
+					"operationType"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SyncPushResponse": {
+				"properties": {
+					"serverTime": {
+						"type": "string"
+					},
+					"results": {
+						"items": {
+							"$ref": "#/components/schemas/SyncPushResultItem"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"serverTime",
+					"results"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SyncPushOperation": {
+				"properties": {
+					"clientOperationId": {
+						"type": "string"
+					},
+					"operationType": {
+						"type": "string"
+					},
+					"baseVersion": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"dependsOn": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"payload": {
+						"properties": {},
+						"additionalProperties": {},
+						"type": "object"
+					},
+					"clientCreatedAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"clientOperationId",
+					"operationType",
+					"payload"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SyncPushRequest": {
+				"properties": {
+					"operations": {
+						"items": {
+							"$ref": "#/components/schemas/SyncPushOperation"
+						},
+						"type": "array"
+					},
+					"businessId": {
+						"type": "number",
+						"format": "double",
+						"description": "Si se envía, debe coincidir con JWT (P0.3)."
+					}
+				},
+				"required": [
+					"operations"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SyncPullChange": {
+				"properties": {
+					"stream": {
+						"type": "string",
+						"enum": [
+							"catalog",
+							"stock"
+						]
+					},
+					"entityType": {
+						"type": "string",
+						"enum": [
+							"product",
+							"category",
+							"businessProduct"
+						]
+					},
+					"serverId": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"updatedAt": {
+						"type": "string"
+					},
+					"deleted": {
+						"type": "boolean"
+					},
+					"deletedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"payload": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"stream",
+					"entityType",
+					"serverId",
+					"version",
+					"updatedAt",
+					"deleted",
+					"payload"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SyncPullResponse": {
+				"properties": {
+					"serverTime": {
+						"type": "string"
+					},
+					"cursor": {
+						"type": "string"
+					},
+					"hasMore": {
+						"type": "boolean"
+					},
+					"changes": {
+						"items": {
+							"$ref": "#/components/schemas/SyncPullChange"
+						},
+						"type": "array"
+					},
+					"snapshotAt": {
+						"type": "string",
+						"description": "Watermark del snapshot de esta sesión de pull (ISO)."
+					}
+				},
+				"required": [
+					"serverTime",
+					"cursor",
+					"hasMore",
+					"changes",
+					"snapshotAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SupplierResponse": {
 				"properties": {
 					"id": {
@@ -1817,6 +2062,382 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"PrivateProductListItem": {
+				"properties": {
+					"productId": {
+						"type": "number",
+						"format": "double"
+					},
+					"businessProductId": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"sku": {
+						"type": "string",
+						"nullable": true
+					},
+					"barcode": {
+						"type": "string",
+						"nullable": true
+					},
+					"categoryId": {
+						"type": "number",
+						"format": "double"
+					},
+					"customPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"currentStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"availableStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"businessProductVersion": {
+						"type": "number",
+						"format": "double"
+					},
+					"updatedAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"productId",
+					"businessProductId",
+					"name",
+					"sku",
+					"barcode",
+					"categoryId",
+					"customPrice",
+					"currentStock",
+					"availableStock",
+					"version",
+					"businessProductVersion",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PrivateProductListResponse": {
+				"properties": {
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/PrivateProductListItem"
+						},
+						"type": "array"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"limit": {
+						"type": "number",
+						"format": "double"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"items",
+					"page",
+					"limit",
+					"total",
+					"totalPages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PrivateProductCommercialDto": {
+				"properties": {
+					"productId": {
+						"type": "number",
+						"format": "double"
+					},
+					"businessProductId": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"businessProductVersion": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"sku": {
+						"type": "string",
+						"nullable": true
+					},
+					"barcode": {
+						"type": "string",
+						"nullable": true
+					},
+					"categoryId": {
+						"type": "number",
+						"format": "double"
+					},
+					"customPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"currentStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"availableStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"visibility": {
+						"type": "string"
+					},
+					"clientOperationId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"idMappings": {
+						"items": {
+							"properties": {
+								"serverId": {
+									"type": "number",
+									"format": "double"
+								},
+								"localEntityId": {
+									"type": "string"
+								},
+								"entityType": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"serverId",
+								"localEntityId",
+								"entityType"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"productId",
+					"businessProductId",
+					"version",
+					"businessProductVersion",
+					"name",
+					"sku",
+					"barcode",
+					"categoryId",
+					"customPrice",
+					"currentStock",
+					"availableStock",
+					"visibility",
+					"clientOperationId",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreatePrivateProductBody": {
+				"description": "DTOs HTTP — catálogo privado comercial (P2-C.B). TSOA-friendly.",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"categoryServerId": {
+						"type": "number",
+						"format": "double"
+					},
+					"customPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"sku": {
+						"type": "string",
+						"nullable": true
+					},
+					"barcode": {
+						"type": "string",
+						"nullable": true
+					},
+					"costPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellingPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"unit": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"brand": {
+						"type": "string"
+					},
+					"initialStock": {
+						"type": "number",
+						"format": "double"
+					},
+					"localEntityId": {
+						"type": "string"
+					},
+					"localBusinessProductId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name",
+					"categoryServerId",
+					"customPrice"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdatePrivateProductBody": {
+				"properties": {
+					"baseVersion": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"sku": {
+						"type": "string",
+						"nullable": true
+					},
+					"barcode": {
+						"type": "string",
+						"nullable": true
+					},
+					"description": {
+						"type": "string"
+					},
+					"brand": {
+						"type": "string"
+					},
+					"unit": {
+						"type": "string"
+					},
+					"costPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"sellingPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"categoryServerId": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"baseVersion"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdoptResultDto": {
+				"properties": {
+					"businessProductId": {
+						"type": "number",
+						"format": "double"
+					},
+					"productId": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"customPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"clientOperationId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"idMappings": {
+						"items": {
+							"properties": {
+								"serverId": {
+									"type": "number",
+									"format": "double"
+								},
+								"localEntityId": {
+									"type": "string"
+								},
+								"entityType": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"serverId",
+								"localEntityId",
+								"entityType"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"businessProductId",
+					"productId",
+					"version",
+					"customPrice",
+					"clientOperationId",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AdoptSharedProductBody": {
+				"properties": {
+					"customPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"localEntityId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"customPrice"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ApiResponse_ProductResponse-or-string_": {
 				"properties": {
 					"success": {
@@ -2252,8 +2873,423 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CashSessionSummaryDto": {
+				"properties": {
+					"confirmedSales": {
+						"items": {
+							"properties": {
+								"clientOperationId": {
+									"type": "string",
+									"nullable": true
+								},
+								"createdAt": {
+									"type": "string"
+								},
+								"paymentMethod": {
+									"type": "string"
+								},
+								"totalAmount": {
+									"type": "string"
+								},
+								"commercialNumber": {
+									"type": "string",
+									"nullable": true
+								},
+								"id": {
+									"type": "number",
+									"format": "double"
+								}
+							},
+							"required": [
+								"clientOperationId",
+								"createdAt",
+								"paymentMethod",
+								"totalAmount",
+								"commercialNumber",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"movements": {
+						"items": {
+							"properties": {
+								"createdAt": {
+									"type": "string"
+								},
+								"notes": {
+									"type": "string",
+									"nullable": true
+								},
+								"commercialNumber": {
+									"type": "string",
+									"nullable": true
+								},
+								"saleId": {
+									"type": "number",
+									"format": "double",
+									"nullable": true
+								},
+								"balanceAfter": {
+									"type": "string",
+									"nullable": true
+								},
+								"amount": {
+									"type": "string"
+								},
+								"movementType": {
+									"type": "string"
+								},
+								"id": {
+									"type": "number",
+									"format": "double"
+								}
+							},
+							"required": [
+								"createdAt",
+								"notes",
+								"commercialNumber",
+								"saleId",
+								"balanceAfter",
+								"amount",
+								"movementType",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"totals": {
+						"properties": {
+							"movementCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"confirmedSalesCount": {
+								"type": "number",
+								"format": "double"
+							},
+							"difference": {
+								"type": "string",
+								"nullable": true,
+								"description": "counted − expected; solo si CLOSED y ambos conocidos."
+							},
+							"countedAmount": {
+								"type": "string",
+								"nullable": true,
+								"description": "Solo si CLOSED."
+							},
+							"expectedAmount": {
+								"type": "string",
+								"description": "currentAmount del registro (autoritativo en OPEN; en CLOSED sigue siendo el saldo de sistema)."
+							},
+							"expectedFromMovements": {
+								"type": "string",
+								"description": "opening + SALE_CASH + CASH_IN − CASH_OUT (sin CLOSING_COUNT)."
+							},
+							"cashOutTotal": {
+								"type": "string"
+							},
+							"cashInTotal": {
+								"type": "string"
+							},
+							"saleCashTotal": {
+								"type": "string",
+								"description": "Suma SALE_CASH de la caja (confirmados servidor)."
+							}
+						},
+						"required": [
+							"movementCount",
+							"confirmedSalesCount",
+							"difference",
+							"countedAmount",
+							"expectedAmount",
+							"expectedFromMovements",
+							"cashOutTotal",
+							"cashInTotal",
+							"saleCashTotal"
+						],
+						"type": "object"
+					},
+					"cash": {
+						"properties": {
+							"notes": {
+								"type": "string",
+								"nullable": true
+							},
+							"closingDate": {
+								"type": "string",
+								"nullable": true
+							},
+							"openingDate": {
+								"type": "string"
+							},
+							"closingAmount": {
+								"type": "string",
+								"nullable": true
+							},
+							"currentAmount": {
+								"type": "string"
+							},
+							"openingAmount": {
+								"type": "string"
+							},
+							"version": {
+								"type": "number",
+								"format": "double"
+							},
+							"status": {
+								"type": "string"
+							},
+							"registerNumber": {
+								"type": "string"
+							},
+							"deviceId": {
+								"type": "string"
+							},
+							"username": {
+								"type": "string",
+								"nullable": true
+							},
+							"userId": {
+								"type": "number",
+								"format": "double"
+							},
+							"businessId": {
+								"type": "number",
+								"format": "double"
+							},
+							"id": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"notes",
+							"closingDate",
+							"openingDate",
+							"closingAmount",
+							"currentAmount",
+							"openingAmount",
+							"version",
+							"status",
+							"registerNumber",
+							"deviceId",
+							"username",
+							"userId",
+							"businessId",
+							"id"
+						],
+						"type": "object"
+					},
+					"source": {
+						"type": "string",
+						"enum": [
+							"server"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"confirmedSales",
+					"movements",
+					"totals",
+					"cash",
+					"source"
+				],
+				"type": "object"
+			},
+			"CashSessionResponse": {
+				"properties": {
+					"session": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/CashSessionSummaryDto"
+							}
+						],
+						"nullable": true
+					},
+					"previousClosed": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/CashSessionSummaryDto"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"session"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OpenCashRegisterDto": {
+				"properties": {
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"businessId": {
+						"type": "number",
+						"format": "double"
+					},
+					"userId": {
+						"type": "number",
+						"format": "double"
+					},
+					"deviceId": {
+						"type": "string"
+					},
+					"registerNumber": {
+						"type": "string"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"type": "string"
+					},
+					"openingAmount": {
+						"type": "string"
+					},
+					"currentAmount": {
+						"type": "string"
+					},
+					"openingDate": {
+						"type": "string"
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true
+					},
+					"leaseId": {
+						"type": "string",
+						"description": "P2-C1.F1 — autorización offline firmada (expiresAt fijo desde openingDate; GET no renueva)."
+					},
+					"leaseIssuedAt": {
+						"type": "string"
+					},
+					"leaseExpiresAt": {
+						"type": "string"
+					},
+					"cashLeaseToken": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"businessId",
+					"userId",
+					"deviceId",
+					"registerNumber",
+					"version",
+					"status",
+					"openingAmount",
+					"currentAmount",
+					"openingDate",
+					"notes",
+					"leaseId",
+					"leaseIssuedAt",
+					"leaseExpiresAt",
+					"cashLeaseToken"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OpenCashRegisterResponse": {
+				"properties": {
+					"open": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/OpenCashRegisterDto"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"open"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PlatformHealthData": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"enum": [
+							"ok"
+						],
+						"nullable": false
+					},
+					"scope": {
+						"type": "string",
+						"enum": [
+							"platform"
+						],
+						"nullable": false
+					},
+					"role": {
+						"type": "string",
+						"enum": [
+							"PLATFORM_ADMIN"
+						],
+						"nullable": false
+					},
+					"userId": {
+						"type": "number",
+						"format": "double"
+					},
+					"username": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"status",
+					"scope",
+					"role",
+					"userId",
+					"username",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse_PlatformHealthData_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"$ref": "#/components/schemas/PlatformHealthData"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"CategoryResponse": {
 				"properties": {
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
 					"sortOrder": {
 						"type": "number",
 						"format": "double"
@@ -2264,6 +3300,9 @@
 					"parentId": {
 						"type": "number",
 						"format": "double"
+					},
+					"visibility": {
+						"$ref": "#/components/schemas/_36_Enums.CategoryVisibility"
 					},
 					"description": {
 						"type": "string"
@@ -2283,6 +3322,10 @@
 					"deletedAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"businessId": {
+						"type": "number",
+						"format": "double"
 					},
 					"updatedAt": {
 						"type": "string",
@@ -2314,14 +3357,17 @@
 					}
 				},
 				"required": [
+					"version",
 					"sortOrder",
 					"isActive",
 					"parentId",
+					"visibility",
 					"description",
 					"deletedBy",
 					"updatedBy",
 					"createdBy",
 					"deletedAt",
+					"businessId",
 					"updatedAt",
 					"createdAt",
 					"id",
@@ -2330,8 +3376,19 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"_36_Enums.CategoryVisibility": {
+				"type": "string",
+				"enum": [
+					"PLATFORM_SHARED",
+					"BUSINESS_PRIVATE"
+				]
+			},
 			"DefaultSelection_Prisma._36_CategoryPayload_": {
 				"properties": {
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
 					"sortOrder": {
 						"type": "number",
 						"format": "double"
@@ -2342,6 +3399,9 @@
 					"parentId": {
 						"type": "number",
 						"format": "double"
+					},
+					"visibility": {
+						"$ref": "#/components/schemas/_36_Enums.CategoryVisibility"
 					},
 					"description": {
 						"type": "string"
@@ -2362,6 +3422,10 @@
 						"type": "string",
 						"format": "date-time"
 					},
+					"businessId": {
+						"type": "number",
+						"format": "double"
+					},
 					"updatedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -2379,14 +3443,17 @@
 					}
 				},
 				"required": [
+					"version",
 					"sortOrder",
 					"isActive",
 					"parentId",
+					"visibility",
 					"description",
 					"deletedBy",
 					"updatedBy",
 					"createdBy",
 					"deletedAt",
+					"businessId",
 					"updatedAt",
 					"createdAt",
 					"id",
@@ -2494,6 +3561,108 @@
 						"format": "double"
 					}
 				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PrivateCategoryDto": {
+				"properties": {
+					"categoryId": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"visibility": {
+						"type": "string"
+					},
+					"clientOperationId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"idMappings": {
+						"items": {
+							"properties": {
+								"serverId": {
+									"type": "number",
+									"format": "double"
+								},
+								"localEntityId": {
+									"type": "string"
+								},
+								"entityType": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"serverId",
+								"localEntityId",
+								"entityType"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"categoryId",
+					"version",
+					"name",
+					"visibility",
+					"clientOperationId",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreatePrivateCategoryBody": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"parentServerId": {
+						"type": "number",
+						"format": "double"
+					},
+					"sortOrder": {
+						"type": "number",
+						"format": "double"
+					},
+					"localEntityId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdatePrivateCategoryBody": {
+				"properties": {
+					"baseVersion": {
+						"type": "number",
+						"format": "double"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"baseVersion"
+				],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -2955,6 +4124,76 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"CatalogStats": {
+				"properties": {
+					"averageStockLevel": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalStockValue": {
+						"type": "number",
+						"format": "double"
+					},
+					"outOfStockProducts": {
+						"type": "number",
+						"format": "double"
+					},
+					"lowStockProducts": {
+						"type": "number",
+						"format": "double"
+					},
+					"inStockProducts": {
+						"type": "number",
+						"format": "double"
+					},
+					"notConfiguredProducts": {
+						"type": "number",
+						"format": "double"
+					},
+					"configuredProducts": {
+						"type": "number",
+						"format": "double"
+					},
+					"totalProducts": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"averageStockLevel",
+					"totalStockValue",
+					"outOfStockProducts",
+					"lowStockProducts",
+					"inStockProducts",
+					"notConfiguredProducts",
+					"configuredProducts",
+					"totalProducts"
+				],
+				"type": "object"
+			},
+			"ApiResponse_CatalogStats_": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"$ref": "#/components/schemas/CatalogStats"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"BulkConfigureProductsResponse": {
 				"properties": {
 					"configured": {
@@ -3376,6 +4615,60 @@
 					"businessId",
 					"productId",
 					"customPrice"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PriceUpdateResultDto": {
+				"properties": {
+					"businessProductId": {
+						"type": "number",
+						"format": "double"
+					},
+					"productId": {
+						"type": "number",
+						"format": "double"
+					},
+					"version": {
+						"type": "number",
+						"format": "double"
+					},
+					"customPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"clientOperationId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"businessProductId",
+					"productId",
+					"version",
+					"customPrice",
+					"clientOperationId",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateBusinessProductPriceBody": {
+				"properties": {
+					"customPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"baseVersion": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"customPrice",
+					"baseVersion"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3851,6 +5144,41 @@
 				"required": [
 					"username",
 					"password"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ApiResponse__token-string--refreshToken-string__": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"data": {
+						"properties": {
+							"refreshToken": {
+								"type": "string"
+							},
+							"token": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"refreshToken",
+							"token"
+						],
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"success",
+					"data",
+					"timestamp"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4551,6 +5879,133 @@
 						"schema": {
 							"format": "double",
 							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/sync/push": {
+			"post": {
+				"operationId": "Push",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SyncPushResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validación"
+					},
+					"401": {
+						"description": "No autenticado"
+					},
+					"403": {
+						"description": "Prohibido"
+					}
+				},
+				"description": "Empuja operaciones offline idempotentes (lote).",
+				"tags": [
+					"Sincronización"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Identificador de dispositivo (auditoría; no autoriza)",
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SyncPushRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/sync/pull": {
+			"get": {
+				"operationId": "Pull",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SyncPullResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validación"
+					},
+					"401": {
+						"description": "No autenticado"
+					},
+					"403": {
+						"description": "Prohibido"
+					}
+				},
+				"description": "Pull incremental con watermark de snapshot (sin pérdida de estado final).",
+				"tags": [
+					"Sincronización"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"description": "Identificador de dispositivo (auditoría; no autoriza)",
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "cursor",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "streams",
+						"required": false,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]
@@ -5599,6 +7054,16 @@
 							}
 						}
 					},
+					"403": {
+						"description": "Prohibido",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
 					"500": {
 						"description": "Error interno del servidor",
 						"content": {
@@ -5646,15 +7111,6 @@
 						"required": false,
 						"schema": {
 							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "businessId",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
 						}
 					},
 					{
@@ -5711,6 +7167,16 @@
 					},
 					"401": {
 						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -5778,6 +7244,16 @@
 					},
 					"401": {
 						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -5861,6 +7337,16 @@
 							}
 						}
 					},
+					"403": {
+						"description": "Prohibido",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
 					"404": {
 						"description": "Orden de compra no encontrada",
 						"content": {
@@ -5928,6 +7414,16 @@
 					},
 					"401": {
 						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -6005,6 +7501,16 @@
 					},
 					"401": {
 						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -6100,6 +7606,16 @@
 							}
 						}
 					},
+					"403": {
+						"description": "Prohibido",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
 					"500": {
 						"description": "Error interno del servidor",
 						"content": {
@@ -6148,15 +7664,6 @@
 							"format": "double",
 							"type": "number"
 						}
-					},
-					{
-						"in": "query",
-						"name": "businessId",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
 					}
 				]
 			}
@@ -6187,6 +7694,16 @@
 					},
 					"401": {
 						"description": "No autorizado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -6247,15 +7764,6 @@
 					},
 					{
 						"in": "query",
-						"name": "businessId",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					},
-					{
-						"in": "query",
 						"name": "status",
 						"required": false,
 						"schema": {
@@ -6299,6 +7807,16 @@
 							}
 						}
 					},
+					"403": {
+						"description": "Prohibido",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
 					"500": {
 						"description": "Error interno del servidor",
 						"content": {
@@ -6310,7 +7828,7 @@
 						}
 					}
 				},
-				"description": "Obtiene órdenes de compra por negocio",
+				"description": "Obtiene órdenes de compra del negocio del token.\nEl path businessId solo se acepta si coincide con el JWT.",
 				"tags": [
 					"Órdenes de Compra"
 				],
@@ -6384,7 +7902,7 @@
 						}
 					}
 				},
-				"description": "Obtener lista paginada de productos con filtros avanzados",
+				"description": "Lista productos visibles para la empresa (vinculados vía BusinessProduct).",
 				"tags": [
 					"Productos"
 				],
@@ -6534,28 +8052,18 @@
 							}
 						}
 					},
-					"400": {
-						"description": "Datos inválidos",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "Conflicto - SKU o código de barras ya existe",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Crear nuevo producto",
+				"description": "Contención P1-F: mutación de catálogo maestro bloqueada.",
 				"tags": [
 					"Productos"
 				],
@@ -6571,6 +8079,269 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/CreateProductRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/products/private": {
+			"get": {
+				"operationId": "ListPrivateProducts",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PrivateProductListResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "Lista productos BUSINESS_PRIVATE de la empresa del JWT.\nDeclarado antes de `{id}` para no capturar el path \"private\".",
+				"tags": [
+					"Catálogo privado",
+					"Productos"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreatePrivateProduct",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PrivateProductCommercialDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validación"
+					},
+					"403": {
+						"description": "Prohibido"
+					},
+					"409": {
+						"description": "Conflicto"
+					}
+				},
+				"description": "Crea Product privado + BusinessProduct atómicamente.",
+				"tags": [
+					"Catálogo privado",
+					"Productos"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Idempotency-Key",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreatePrivateProductBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/products/private/{id}": {
+			"put": {
+				"operationId": "UpdatePrivateProduct",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PrivateProductCommercialDto"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido"
+					},
+					"404": {
+						"description": "No encontrado"
+					},
+					"409": {
+						"description": "Conflicto"
+					}
+				},
+				"description": "Actualiza producto privado propio (no PLATFORM_SHARED).",
+				"tags": [
+					"Catálogo privado",
+					"Productos"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Idempotency-Key",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdatePrivateProductBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/products/shared/{productId}/adopt": {
+			"post": {
+				"operationId": "AdoptSharedProduct",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AdoptResultDto"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido"
+					},
+					"404": {
+						"description": "No encontrado"
+					},
+					"409": {
+						"description": "Conflicto"
+					}
+				},
+				"description": "Adopta un producto PLATFORM_SHARED creando BP activo con customPrice.",
+				"tags": [
+					"Catálogo privado",
+					"Productos"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "productId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Idempotency-Key",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AdoptSharedProductBody"
 							}
 						}
 					}
@@ -6602,7 +8373,6 @@
 						}
 					}
 				},
-				"description": "Obtener producto por ID",
 				"tags": [
 					"Productos"
 				],
@@ -6636,38 +8406,17 @@
 							}
 						}
 					},
-					"400": {
-						"description": "Datos inválidos",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Producto no encontrado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "Conflicto - SKU o código de barras ya existe",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Actualizar producto existente",
 				"tags": [
 					"Productos"
 				],
@@ -6711,18 +8460,17 @@
 							}
 						}
 					},
-					"404": {
-						"description": "Producto no encontrado",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Eliminar producto (soft delete)",
 				"tags": [
 					"Productos"
 				],
@@ -6757,19 +8505,8 @@
 								}
 							}
 						}
-					},
-					"400": {
-						"description": "Término de búsqueda inválido",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
-								}
-							}
-						}
 					}
 				},
-				"description": "Búsqueda rápida de productos",
 				"tags": [
 					"Productos"
 				],
@@ -6804,18 +8541,17 @@
 							}
 						}
 					},
-					"404": {
-						"description": "Producto no encontrado",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Activar producto",
 				"tags": [
 					"Productos"
 				],
@@ -6851,18 +8587,17 @@
 							}
 						}
 					},
-					"404": {
-						"description": "Producto no encontrado",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Desactivar producto",
 				"tags": [
 					"Productos"
 				],
@@ -6898,18 +8633,17 @@
 							}
 						}
 					},
-					"404": {
-						"description": "Producto no encontrado",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Marcar producto como descontinuado",
 				"tags": [
 					"Productos"
 				],
@@ -6945,18 +8679,17 @@
 							}
 						}
 					},
-					"404": {
-						"description": "Producto no encontrado",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_null_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Marcar producto como fuera de stock",
 				"tags": [
 					"Productos"
 				],
@@ -6993,7 +8726,6 @@
 						}
 					}
 				},
-				"description": "Obtener productos por categoría",
 				"tags": [
 					"Productos"
 				],
@@ -7030,7 +8762,6 @@
 						}
 					}
 				},
-				"description": "Obtener productos por estado",
 				"tags": [
 					"Productos"
 				],
@@ -7066,7 +8797,6 @@
 						}
 					}
 				},
-				"description": "Obtener productos por marca",
 				"tags": [
 					"Productos"
 				],
@@ -7102,7 +8832,6 @@
 						}
 					}
 				},
-				"description": "Obtener productos con stock bajo",
 				"tags": [
 					"Productos"
 				],
@@ -7129,7 +8858,6 @@
 						}
 					}
 				},
-				"description": "Obtener productos fuera de stock",
 				"tags": [
 					"Productos"
 				],
@@ -7156,7 +8884,6 @@
 						}
 					}
 				},
-				"description": "Obtener estadísticas de productos",
 				"tags": [
 					"Productos"
 				],
@@ -7183,7 +8910,6 @@
 						}
 					}
 				},
-				"description": "Validar si un SKU ya existe",
 				"tags": [
 					"Productos"
 				],
@@ -7228,7 +8954,6 @@
 						}
 					}
 				},
-				"description": "Validar si un código de barras ya existe",
 				"tags": [
 					"Productos"
 				],
@@ -7258,6 +8983,483 @@
 				]
 			}
 		},
+		"/cash-registers/session": {
+			"get": {
+				"operationId": "GetCashSession",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CashSessionResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validación"
+					},
+					"401": {
+						"description": "No autenticado"
+					},
+					"403": {
+						"description": "Prohibido"
+					},
+					"404": {
+						"description": "No encontrado"
+					}
+				},
+				"description": "Resumen de jornada/caja del dispositivo (OPEN actual o última cerrada).\nOpcional: ?cashRegisterId= para una caja concreta del mismo usuario/dispositivo.",
+				"tags": [
+					"Caja"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "cashRegisterId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/cash-registers/open": {
+			"get": {
+				"operationId": "GetOpenCashRegister",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OpenCashRegisterResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validación"
+					},
+					"401": {
+						"description": "No autenticado"
+					},
+					"403": {
+						"description": "Prohibido"
+					}
+				},
+				"tags": [
+					"Caja"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/platform/health": {
+			"get": {
+				"operationId": "Health",
+				"responses": {
+					"200": {
+						"description": "Plataforma autenticada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_PlatformHealthData_"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "No autenticado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "No es administrador de plataforma",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/platform/products": {
+			"get": {
+				"operationId": "ListProducts",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PaginatedApiResponse_ProductResponse_"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 20,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateProduct",
+				"responses": {
+					"201": {
+						"description": "Producto maestro creado",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_ProductResponse_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateProductRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/platform/products/{id}": {
+			"get": {
+				"operationId": "GetProduct",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_ProductResponse_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateProduct",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_ProductResponse_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateProductRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/platform/categories": {
+			"get": {
+				"operationId": "ListCategories",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PaginatedApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"default": 20,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateCategory",
+				"responses": {
+					"201": {
+						"description": "Categoría maestra creada",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateCategoryRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/platform/categories/{id}": {
+			"put": {
+				"operationId": "UpdateCategory",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiResponse_CategoryResponse_"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Plataforma"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"PLATFORM_ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateCategoryRequest"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/categories": {
 			"get": {
 				"operationId": "GetCategories",
@@ -7271,29 +9473,8 @@
 								}
 							}
 						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
 					}
 				},
-				"description": "Obtener todas las categorías con paginación",
 				"tags": [
 					"Categorías"
 				],
@@ -7381,8 +9562,8 @@
 			"post": {
 				"operationId": "CreateCategory",
 				"responses": {
-					"201": {
-						"description": "Categoría creada exitosamente",
+					"200": {
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7391,38 +9572,17 @@
 							}
 						}
 					},
-					"400": {
-						"description": "Datos inválidos",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Crear una nueva categoría",
 				"tags": [
 					"Categorías"
 				],
@@ -7444,12 +9604,147 @@
 				}
 			}
 		},
+		"/categories/private": {
+			"post": {
+				"operationId": "CreatePrivateCategory",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PrivateCategoryDto"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validación"
+					},
+					"403": {
+						"description": "Prohibido"
+					},
+					"409": {
+						"description": "Conflicto"
+					}
+				},
+				"tags": [
+					"Catálogo privado",
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Idempotency-Key",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreatePrivateCategoryBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/categories/private/{id}": {
+			"put": {
+				"operationId": "UpdatePrivateCategory",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PrivateCategoryDto"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido"
+					},
+					"404": {
+						"description": "No encontrado"
+					},
+					"409": {
+						"description": "Conflicto"
+					}
+				},
+				"tags": [
+					"Catálogo privado",
+					"Categorías"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Idempotency-Key",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdatePrivateCategoryBody"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/categories/{id}": {
 			"get": {
 				"operationId": "GetCategoryById",
 				"responses": {
 					"200": {
-						"description": "Categoría obtenida exitosamente",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7457,39 +9752,8 @@
 								}
 							}
 						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Categoría no encontrada",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
 					}
 				},
-				"description": "Obtener una categoría por ID",
 				"tags": [
 					"Categorías"
 				],
@@ -7514,7 +9778,7 @@
 				"operationId": "UpdateCategory",
 				"responses": {
 					"200": {
-						"description": "Categoría actualizada exitosamente",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7523,48 +9787,17 @@
 							}
 						}
 					},
-					"400": {
-						"description": "Datos inválidos",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Categoría no encontrada",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Actualizar una categoría existente",
 				"tags": [
 					"Categorías"
 				],
@@ -7599,50 +9832,19 @@
 				"operationId": "DeleteCategory",
 				"responses": {
 					"204": {
-						"description": "Categoría eliminada exitosamente"
+						"description": "No content"
 					},
-					"400": {
-						"description": "No se puede eliminar la categoría",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Categoría no encontrada",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Eliminar una categoría (soft delete)",
 				"tags": [
 					"Categorías"
 				],
@@ -7669,7 +9871,7 @@
 				"operationId": "GetCategoryTree",
 				"responses": {
 					"200": {
-						"description": "Árbol de categorías obtenido exitosamente",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7677,29 +9879,8 @@
 								}
 							}
 						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
 					}
 				},
-				"description": "Obtener árbol jerárquico de categorías",
 				"tags": [
 					"Categorías"
 				],
@@ -7716,7 +9897,7 @@
 				"operationId": "GetCategoryChildren",
 				"responses": {
 					"200": {
-						"description": "Subcategorías obtenidas exitosamente",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7724,39 +9905,8 @@
 								}
 							}
 						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Categoría padre no encontrada",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
 					}
 				},
-				"description": "Obtener subcategorías de una categoría padre",
 				"tags": [
 					"Categorías"
 				],
@@ -7783,7 +9933,7 @@
 				"operationId": "ActivateCategory",
 				"responses": {
 					"200": {
-						"description": "Categoría activada exitosamente",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7792,48 +9942,17 @@
 							}
 						}
 					},
-					"400": {
-						"description": "La categoría ya está activa",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Categoría no encontrada",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Activar una categoría",
 				"tags": [
 					"Categorías"
 				],
@@ -7860,7 +9979,7 @@
 				"operationId": "DeactivateCategory",
 				"responses": {
 					"200": {
-						"description": "Categoría desactivada exitosamente",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7869,48 +9988,17 @@
 							}
 						}
 					},
-					"400": {
-						"description": "No se puede desactivar la categoría",
+					"403": {
+						"description": "Mutación de catálogo maestro bloqueada",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Categoría no encontrada",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
 					}
 				},
-				"description": "Desactivar una categoría",
 				"tags": [
 					"Categorías"
 				],
@@ -7937,7 +10025,7 @@
 				"operationId": "GetCategoryStats",
 				"responses": {
 					"200": {
-						"description": "Estadísticas obtenidas exitosamente",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7945,29 +10033,8 @@
 								}
 							}
 						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
 					}
 				},
-				"description": "Obtener estadísticas de categorías",
 				"tags": [
 					"Categorías"
 				],
@@ -7984,7 +10051,7 @@
 				"operationId": "SearchCategoryByName",
 				"responses": {
 					"200": {
-						"description": "Búsqueda completada",
+						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -7992,29 +10059,8 @@
 								}
 							}
 						}
-					},
-					"401": {
-						"description": "No autorizado",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Error interno del servidor",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_string_"
-								}
-							}
-						}
 					}
 				},
-				"description": "Buscar categoría por nombre",
 				"tags": [
 					"Categorías"
 				],
@@ -8302,7 +10348,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_any_"
+									"$ref": "#/components/schemas/ApiResponse_CatalogStats_"
 								}
 							}
 						}
@@ -8722,7 +10768,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_any_"
+									"$ref": "#/components/schemas/ApiResponse_CatalogStats_"
 								}
 							}
 						}
@@ -10252,6 +12298,79 @@
 				]
 			}
 		},
+		"/business-products/{id}/price": {
+			"put": {
+				"operationId": "UpdateBusinessProductPrice",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PriceUpdateResultDto"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Prohibido"
+					},
+					"404": {
+						"description": "No encontrado"
+					},
+					"409": {
+						"description": "Conflicto de versión"
+					}
+				},
+				"description": "Actualiza únicamente el precio comercial del BP propio (P2-C.B).\nDeclarado antes de `{id}` genérico por claridad de rutas.",
+				"tags": [
+					"Catálogo privado",
+					"Productos de Negocio"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Idempotency-Key",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "X-Device-Id",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateBusinessProductPriceBody"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/business-products/{id}/adjust-stock": {
 			"put": {
 				"operationId": "AdjustStock",
@@ -11193,7 +13312,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiResponse_any_"
+									"$ref": "#/components/schemas/ApiResponse__token-string--refreshToken-string__"
 								}
 							}
 						}
@@ -11210,7 +13329,7 @@
 					}
 				},
 				"description": "Renovar token de acceso",
-				"summary": "Renovar token JWT usando refresh token",
+				"summary": "Renovar access token (y rotar refresh) usando un refresh token válido.\nNo acepta access tokens. No hay revocación server-side en esta versión.",
 				"tags": [
 					"Autenticación"
 				],

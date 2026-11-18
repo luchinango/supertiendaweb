@@ -1,7 +1,7 @@
 import {Request, Response} from 'express';
 import prisma from '../config/prisma';
 import {CashRegisterService, CashRegisterData, CashRegisterCloseData} from '../services/cashRegisterService';
-import {CashRegisterStatus} from '../../prisma/generated';
+import {CashRegisterStatus} from '../../generated';
 
 const cashRegisterService = new CashRegisterService();
 
@@ -33,13 +33,19 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const {businessId, userId, registerNumber, openingAmount, notes} = req.body;
+  // Legacy unmounted — exige deviceId explícito (no inventar). Preferir sync CASH_OPEN.
+  const {businessId, userId, registerNumber, openingAmount, notes, deviceId} = req.body;
+  if (!deviceId || !String(deviceId).trim()) {
+    res.status(400).json({message: 'deviceId es requerido'});
+    return;
+  }
 
   const register = await prisma.cashRegister.create({
     data: {
       businessId,
       userId,
       registerNumber,
+      deviceId: String(deviceId).trim(),
       openingAmount,
       currentAmount: openingAmount,
       notes,
@@ -79,12 +85,19 @@ export const remove = async (req: Request, res: Response) => {
 export const openCashRegister = async (req: Request, res: Response) => {
   try {
     const {businessId, userId} = req.user!;
-    const {registerNumber, openingAmount, notes} = req.body;
+    const {registerNumber, openingAmount, notes, deviceId} = req.body;
 
     if(!registerNumber || !openingAmount)
     {
       res.status(400).json({
         error: 'registerNumber y openingAmount son requeridos'
+      });
+      return;
+    }
+
+    if (!deviceId || !String(deviceId).trim()) {
+      res.status(400).json({
+        error: 'deviceId es requerido'
       });
       return;
     }
@@ -100,6 +113,7 @@ export const openCashRegister = async (req: Request, res: Response) => {
       businessId,
       userId,
       registerNumber,
+      deviceId: String(deviceId).trim(),
       openingAmount,
       notes
     };

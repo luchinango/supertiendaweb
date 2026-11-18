@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type {Supplier} from "@/types/types"
 import apiClient from "@/lib/api-client"
+import { getAuthToken } from "@/lib/auth-utils"
 
 export interface EditSupplierDialogProps {
   supplierId: number
@@ -68,7 +69,7 @@ export function EditSupplierDialog({
     setError(null)
     try {
       // Obtén token y businessId del localStorage
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+      const token = typeof window !== "undefined" ? getAuthToken() : ""
       const businessId = typeof window !== "undefined" ? (localStorage.getItem("businessId") || "1") : "1"
       await apiClient.put(
         `/suppliers/${supplierId}?businessId=${businessId}`,

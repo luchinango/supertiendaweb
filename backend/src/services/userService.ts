@@ -1,4 +1,4 @@
-import {PrismaClient, UserStatus, EmployeeStatus, Gender} from '../../prisma/generated';
+import {PrismaClient, UserStatus, EmployeeStatus, Gender} from '../../generated';
 import bcrypt from 'bcryptjs';
 import {
   User,

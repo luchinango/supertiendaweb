@@ -1,5 +1,5 @@
 import prisma from '../config/prisma';
-import {Department, DocumentType} from '../../prisma/generated';
+import {Department, DocumentType} from '../../generated';
 
 export interface CreateCustomerInput {
   businessId: number;

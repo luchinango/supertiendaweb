@@ -1,5 +1,5 @@
 import {Decimal} from '@prisma/client/runtime/library';
-import {ProductStatus} from 'prisma/generated';
+import {ProductStatus} from '@/prisma/client';
 
 /**
  * Tipos para operaciones de productos

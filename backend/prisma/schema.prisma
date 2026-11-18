@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  output          = "./generated"
+  output          = "../generated"
   binaryTargets   = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
   previewFeatures = ["postgresqlExtensions"]
 }
@@ -123,10 +123,54 @@ enum ProductStatus {
   OUT_OF_STOCK
 }
 
+/// Catálogo híbrido P2-A/B: maestro CODEMEDIIA vs privado de empresa
+enum ProductVisibility {
+  PLATFORM_SHARED
+  BUSINESS_PRIVATE
+}
+
+enum CategoryVisibility {
+  PLATFORM_SHARED
+  BUSINESS_PRIVATE
+}
+
+/// Idempotencia offline / sync (P2-C0.1)
+enum SyncOperationStatus {
+  APPLIED
+  DUPLICATE
+  CONFLICT
+  REJECTED
+}
+
+enum SyncOperationType {
+  PRODUCT_PRIVATE_CREATE_WITH_BP
+  PRODUCT_UPDATE
+  CATEGORY_PRIVATE_CREATE
+  CATEGORY_UPDATE
+  BP_UPSERT
+  STOCK_ADJUST
+  SALE_CREATE // canónico POS (P2-C1.B); SALE_COMPLETE se conserva por compatibilidad
+  SALE_COMPLETE
+  SALE_CANCEL
+  CUSTOMER_CREATE
+  CASH_OPEN
+  CASH_CLOSE
+}
+
 enum CashRegisterStatus {
   OPEN
   CLOSED
   SUSPENDED
+}
+
+/// Movimientos de caja (OPENING + SALE_CASH en C1.B; CASH_IN/OUT diferidos en UI)
+enum CashMovementType {
+  OPENING
+  CASH_IN
+  CASH_OUT
+  SALE_CASH
+  CLOSING_COUNT
+  ADJUSTMENT
 }
 
 // Enums específicos de Bolivia
@@ -207,11 +251,12 @@ model User {
   auditLogs          AuditLog[]
   cashRegisters      CashRegister[]
   sales              Sale[]
-  carts              Cart[]
-  // inventoryTransactions InventoryTransaction[]
-  // businesses            Business[]
-  purchaseOrders     PurchaseOrder[]
-  auditCashRegisters AuditCashRegister[]
+  carts                  Cart[]
+  inventoryTransactions  InventoryTransaction[]
+  purchaseOrders         PurchaseOrder[]
+  auditCashRegisters     AuditCashRegister[]
+  syncOperations         SyncOperation[]
+  cashMovements          CashMovement[]
 
   @@index([status])
   @@index([roleId])
@@ -291,15 +336,20 @@ model Business {
 
   cashRegisters    CashRegister[]
   sales            Sale[]
-  carts            Cart[]
-  purchaseOrders   PurchaseOrder[]
-  // inventoryTransactions InventoryTransaction[]
-  fiscalSettings   FiscalSettings?
+  carts                   Cart[]
+  purchaseOrders          PurchaseOrder[]
+  inventoryTransactions   InventoryTransaction[]
+  fiscalSettings          FiscalSettings?
   auditLogs        AuditLog[]
   employees        Employee[]
   businessProducts BusinessProduct[]
   suppliers        Supplier[]
   customers        Customer[]
+  products         Product[]
+  categories       Category[]
+  syncOperations   SyncOperation[]
+  documentSequences BusinessDocumentSequence[]
+  cashMovements     CashMovement[]
   // User                  User?                  @relation(fields: [userId], references: [id])
   // userId                Int?
 
@@ -335,7 +385,7 @@ model FiscalSettings {
 model Employee {
   id               Int            @id @default(autoincrement())
   userId           Int            @unique @map("user_id")
-  businessId       Int            @default(1) @map("business_id")
+  businessId       Int            @map("business_id")
   firstName        String         @map("first_name") @db.VarChar(50)
   lastName         String?        @map("last_name") @db.VarChar(50)
   position         String         @db.VarChar(100)
@@ -372,62 +422,81 @@ model Employee {
 
 // Product Categories
 model Category {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique @db.VarChar(100)
-  description String?   @db.Text()
-  parentId    Int?      @map("parent_id")
-  isActive    Boolean   @default(true) @map("is_active")
-  sortOrder   Int       @default(0) @map("sort_order")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
-  deletedAt   DateTime? @map("deleted_at")
-  createdBy   Int       @default(0) @map("created_by")
-  updatedBy   Int       @default(0) @map("updated_by")
-  deletedBy   Int?      @map("deleted_by")
+  id          Int                @id @default(autoincrement())
+  /// null = categoría de plataforma (PLATFORM_SHARED)
+  businessId  Int?               @map("business_id")
+  visibility  CategoryVisibility @default(PLATFORM_SHARED)
+  name        String             @db.VarChar(100)
+  description String?            @db.Text()
+  parentId    Int?               @map("parent_id")
+  isActive    Boolean            @default(true) @map("is_active")
+  sortOrder   Int                @default(0) @map("sort_order")
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime?          @map("deleted_at")
+  /// Optimistic concurrency (sync / offline)
+  version     Int                @default(1)
+  createdBy   Int                @default(0) @map("created_by")
+  updatedBy   Int                @default(0) @map("updated_by")
+  deletedBy   Int?               @map("deleted_by")
 
+  business  Business?  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   childrens Category[] @relation("CategoryHierarchy")
   products  Product[]
 
+  @@index([businessId, visibility])
+  @@index([visibility])
+  @@index([businessId, updatedAt])
   @@map("categories")
 }
 
 model Product {
-  id           Int           @id @default(autoincrement())
-  categoryId   Int           @map("category_id")
-  sku          String?       @unique @db.VarChar(50)
-  barcode      String?       @unique @db.VarChar(50)
-  name         String        @db.VarChar(200)
-  description  String?       @db.Text()
-  brand        String?       @db.VarChar(100)
-  model        String?       @db.VarChar(100)
-  unit         String?       @default("pcs") @db.VarChar(20) // kg, l, pcs, etc. - Temporalmente opcional
-  weight       Decimal?      @db.Decimal(8, 3)
-  dimensions   String?       @db.VarChar(50) // "LxWxH"
-  costPrice    Decimal       @default(0) @map("cost_price") @db.Decimal(10, 2)
-  sellingPrice Decimal       @default(0) @map("selling_price") @db.Decimal(10, 2)
-  taxType      TaxType       @default(IVA_13) @map("tax_type")
-  taxRate      Decimal       @default(13) @map("tax_rate") @db.Decimal(5, 2) // IVA 13%
-  minStock     Int           @default(0) @map("min_stock")
-  maxStock     Int?          @map("max_stock")
-  reorderPoint Int           @default(0) @map("reorder_point")
-  isActive     Boolean       @default(true) @map("is_active")
-  status       ProductStatus @default(ACTIVE)
-  expiryDate   DateTime?     @map("expiry_date")
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
-  deletedAt    DateTime?     @map("deleted_at")
-  createdBy    Int           @default(0) @map("created_by")
-  updatedBy    Int           @default(0) @map("updated_by")
-  deletedBy    Int?          @map("deleted_by")
+  id           Int               @id @default(autoincrement())
+  categoryId   Int               @map("category_id")
+  /// null solo si visibility = PLATFORM_SHARED
+  businessId   Int?              @map("business_id")
+  visibility   ProductVisibility @default(PLATFORM_SHARED)
+  sku          String?           @db.VarChar(50)
+  barcode      String?           @db.VarChar(50)
+  name         String            @db.VarChar(200)
+  description  String?           @db.Text()
+  brand        String?           @db.VarChar(100)
+  model        String?           @db.VarChar(100)
+  unit         String?           @default("pcs") @db.VarChar(20) // kg, l, pcs, etc. - Temporalmente opcional
+  weight       Decimal?          @db.Decimal(8, 3)
+  dimensions   String?           @db.VarChar(50) // "LxWxH"
+  costPrice    Decimal           @default(0) @map("cost_price") @db.Decimal(10, 2)
+  /// Precio de referencia de catálogo — NO es el precio POS (usar BusinessProduct.customPrice)
+  sellingPrice Decimal           @default(0) @map("selling_price") @db.Decimal(10, 2)
+  taxType      TaxType           @default(IVA_13) @map("tax_type")
+  taxRate      Decimal           @default(13) @map("tax_rate") @db.Decimal(5, 2) // IVA 13%
+  minStock     Int               @default(0) @map("min_stock")
+  maxStock     Int?              @map("max_stock")
+  reorderPoint Int               @default(0) @map("reorder_point")
+  isActive     Boolean           @default(true) @map("is_active")
+  status       ProductStatus     @default(ACTIVE)
+  expiryDate   DateTime?         @map("expiry_date")
+  /// Optimistic concurrency (sync / offline)
+  version      Int               @default(1)
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime?         @map("deleted_at")
+  createdBy    Int               @default(0) @map("created_by")
+  updatedBy    Int               @default(0) @map("updated_by")
+  deletedBy    Int?              @map("deleted_by")
 
-  category           Category            @relation(fields: [categoryId], references: [id])
-  businessProducts   BusinessProduct[]
-  cartItems          CartItem[]
-  saleItems          SaleItem[]
-  purchaseOrderItems PurchaseOrderItem[]
-  // inventoryTransactions InventoryTransaction[]
+  business                Business?              @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  category                Category               @relation(fields: [categoryId], references: [id])
+  businessProducts        BusinessProduct[]
+  cartItems               CartItem[]
+  saleItems               SaleItem[]
+  purchaseOrderItems      PurchaseOrderItem[]
+  inventoryTransactions   InventoryTransaction[]
 
+  @@index([businessId, visibility])
+  @@index([visibility])
+  @@index([businessId, updatedAt])
   @@map("products")
 }
 
@@ -440,19 +509,52 @@ model BusinessProduct {
   reservedStock  Int       @default(0) @map("reserved_stock")
   availableStock Int       @default(0) @map("available_stock")
   lastRestock    DateTime? @map("last_restock")
+  /// Optimistic concurrency (sync / offline)
+  version        Int       @default(1)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  /// Soft-delete: unique activo parcial en SQL (business_id, product_id) WHERE deleted_at IS NULL
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  business  Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product   Product    @relation(fields: [productId], references: [id])
+  saleItems SaleItem[]
+
+  @@index([businessId, updatedAt])
+  @@index([businessId, deletedAt])
+  @@map("business_products")
+}
+
+/// Cola de idempotencia server-side (handlers /sync en P2-C0.1B)
+model SyncOperation {
+  id                BigInt              @id @default(autoincrement())
+  businessId        Int                 @map("business_id")
+  clientOperationId String              @map("client_operation_id") @db.Uuid
+  deviceId          String              @map("device_id") @db.VarChar(64)
+  userId            Int                 @map("user_id")
+  operationType     SyncOperationType   @map("operation_type")
+  requestHash       String              @map("request_hash") @db.VarChar(64)
+  status            SyncOperationStatus
+  responseJson      Json                @map("response_json")
+  entityType        String?             @map("entity_type") @db.VarChar(40)
+  entityServerId    Int?                @map("entity_server_id")
+  errorCode         String?             @map("error_code") @db.VarChar(64)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [productId], references: [id])
+  user     User     @relation(fields: [userId], references: [id], onDelete: Restrict)
 
-  @@unique([businessId, productId])
-  @@map("business_products")
+  @@unique([businessId, clientOperationId], map: "sync_operations_business_client_op_uq")
+  @@index([businessId, createdAt])
+  @@index([businessId, deviceId, createdAt])
+  @@index([businessId, operationType, createdAt])
+  @@map("sync_operations")
 }
 
 model Supplier {
   id             Int            @id @default(autoincrement())
-  businessId     Int            @default(1) @map("business_id")
+  businessId     Int            @map("business_id")
   code           String?        @unique @db.VarChar(50)
   name           String         @db.VarChar(200)
   documentType   DocumentType   @default(NIT) @map("document_type")
@@ -486,7 +588,7 @@ model Supplier {
 
 model Customer {
   id             Int          @id @default(autoincrement())
-  businessId     Int          @default(1) @map("business_id")
+  businessId     Int          @map("business_id")
   // code            String       @unique @db.VarChar(20)
   firstName      String       @map("first_name") @db.VarChar(50)
   lastName       String?      @map("last_name") @db.VarChar(50)
@@ -520,7 +622,7 @@ model Customer {
 
 model PurchaseOrder {
   id           Int                 @id @default(autoincrement())
-  businessId   Int                 @default(1) @map("business_id")
+  businessId   Int                 @map("business_id")
   supplierId   Int                 @map("supplier_id")
   poNumber     String?             @unique @map("po_number") @db.VarChar(20)
   status       PurchaseOrderStatus @default(DRAFT)
@@ -625,10 +727,19 @@ model CartItem {
 model Sale {
   id                Int           @id @default(autoincrement())
   businessId        Int           @map("business_id")
-  cartId            Int           @unique @map("cart_id")
+  /// Nullable para ventas sync POS sin cart server-side
+  cartId            Int?          @unique @map("cart_id")
   userId            Int           @map("user_id")
   customerId        Int?          @map("customer_id")
-  invoiceNumber     String        @unique @map("invoice_number") @db.VarChar(20) // Número de factura
+  /// Fiscal futuro / histórico. Unique parcial (business_id, invoice_number) WHERE NOT NULL → solo SQL
+  invoiceNumber     String?       @map("invoice_number") @db.VarChar(20)
+  /// Ticket comercial server-side COM-########. Unique parcial → solo SQL
+  commercialNumber  String?       @map("commercial_number") @db.VarChar(32)
+  /// LEGACY_UNSPECIFIED | COMMERCIAL_TICKET | FISCAL_INVOICE (+ CHECKs SQL)
+  documentKind      String        @default("LEGACY_UNSPECIFIED") @map("document_kind") @db.VarChar(24)
+  isFiscal          Boolean       @default(false) @map("is_fiscal")
+  clientOperationId String?       @map("client_operation_id") @db.Uuid
+  deviceId          String?       @map("device_id") @db.VarChar(64)
   invoiceType       InvoiceType   @default(FACTURA) @map("invoice_type")
   authorizationCode String?       @map("authorization_code") @db.VarChar(50) // Código de autorización Siat
   controlCode       String?       @map("control_code") @db.VarChar(50) // Código de control
@@ -648,32 +759,42 @@ model Sale {
   deletedBy         Int?          @map("deleted_by")
 
   business       Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  cart           Cart           @relation(fields: [cartId], references: [id])
+  cart           Cart?          @relation(fields: [cartId], references: [id])
   user           User           @relation(fields: [userId], references: [id])
   customer       Customer?      @relation(fields: [customerId], references: [id])
   items          SaleItem[]
   customerDebts  CustomerDebt[]
   CashRegister   CashRegister?  @relation(fields: [cashRegisterId], references: [id])
   cashRegisterId Int?
+  cashMovements  CashMovement[]
 
+  @@index([businessId, createdAt], map: "sales_business_created_idx")
+  @@index([cashRegisterId], map: "sales_cash_register_idx")
+  @@index([businessId, commercialNumber], map: "sales_business_commercial_number_idx")
   @@map("sales")
 }
 
 model SaleItem {
-  id             Int      @id @default(autoincrement())
-  saleId         Int      @map("sale_id")
-  productId      Int      @map("product_id")
-  quantity       Int
-  unitPrice      Decimal  @map("unit_price") @db.Decimal(10, 2)
-  taxRate        Decimal  @default(13) @map("tax_rate") @db.Decimal(5, 2) // IVA 13%
-  taxAmount      Decimal  @map("tax_amount") @db.Decimal(10, 2)
-  discountAmount Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
-  totalPrice     Decimal  @map("total_price") @db.Decimal(10, 2)
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                Int      @id @default(autoincrement())
+  saleId            Int      @map("sale_id")
+  productId         Int      @map("product_id")
+  /// Snapshot al momento de la venta (NOT NULL en SQL tras migrate)
+  productName       String   @map("product_name") @db.VarChar(200)
+  sku               String?  @db.VarChar(100)
+  businessProductId Int?     @map("business_product_id")
+  quantity          Int
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(10, 2)
+  taxRate           Decimal  @default(13) @map("tax_rate") @db.Decimal(5, 2) // IVA 13%
+  taxAmount         Decimal  @map("tax_amount") @db.Decimal(10, 2)
+  discountAmount    Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  totalPrice        Decimal  @map("total_price") @db.Decimal(10, 2)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  sale            Sale             @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product         Product          @relation(fields: [productId], references: [id])
+  businessProduct BusinessProduct? @relation(fields: [businessProductId], references: [id], onDelete: SetNull)
 
+  @@index([businessProductId], map: "sale_items_business_product_idx")
   @@map("sale_items")
 }
 
@@ -695,30 +816,75 @@ model CustomerDebt {
 }
 
 model CashRegister {
-  id             Int                @id @default(autoincrement())
-  businessId     Int                @map("business_id")
-  userId         Int                @map("user_id")
-  registerNumber String             @unique @map("register_number") @db.VarChar(20)
-  openingAmount  Decimal            @map("opening_amount") @db.Decimal(12, 2)
-  closingAmount  Decimal?           @map("closing_amount") @db.Decimal(12, 2)
-  currentAmount  Decimal            @map("current_amount") @db.Decimal(12, 2)
-  openingDate    DateTime           @default(now()) @map("opening_date") @db.Timestamptz(6)
-  closingDate    DateTime?          @map("closing_date") @db.Timestamptz(6)
-  status         CashRegisterStatus @default(OPEN)
-  notes          String?            @db.Text()
-  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
-  deletedAt      DateTime?          @map("deleted_at")
-  createdBy      Int                @default(0) @map("created_by")
-  updatedBy      Int                @default(0) @map("updated_by")
-  deletedBy      Int?               @map("deleted_by")
+  id                Int                @id @default(autoincrement())
+  businessId        Int                @map("business_id")
+  userId            Int                @map("user_id")
+  /// Unique por empresa (ya no global). Índice parcial OPEN por device → solo SQL
+  registerNumber    String             @map("register_number") @db.VarChar(20)
+  deviceId          String             @map("device_id") @db.VarChar(64)
+  version           Int                @default(1)
+  clientOperationId String?            @map("client_operation_id") @db.Uuid
+  openingAmount     Decimal            @map("opening_amount") @db.Decimal(12, 2)
+  closingAmount     Decimal?           @map("closing_amount") @db.Decimal(12, 2)
+  currentAmount     Decimal            @map("current_amount") @db.Decimal(12, 2)
+  openingDate       DateTime           @default(now()) @map("opening_date") @db.Timestamptz(6)
+  closingDate       DateTime?          @map("closing_date") @db.Timestamptz(6)
+  status            CashRegisterStatus @default(OPEN)
+  notes             String?            @db.Text()
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?          @map("deleted_at")
+  createdBy         Int                @default(0) @map("created_by")
+  updatedBy         Int                @default(0) @map("updated_by")
+  deletedBy         Int?               @map("deleted_by")
 
   business  Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
   user      User                @relation(fields: [userId], references: [id])
   sales     Sale[]
+  movements CashMovement[]
   auditLogs AuditCashRegister[]
 
+  @@unique([businessId, registerNumber], map: "cash_registers_business_register_number_uq")
+  @@index([businessId, status], map: "cash_registers_business_status_idx")
   @@map("cash_registers")
+}
+
+/// Contadores de tickets comerciales (COM-*). Independiente de fiscal_settings / SIAT.
+model BusinessDocumentSequence {
+  id            Int      @id @default(autoincrement())
+  businessId    Int      @map("business_id")
+  docType       String   @map("doc_type") @db.VarChar(40)
+  prefix        String   @default("COM") @db.VarChar(16)
+  currentNumber Int      @default(0) @map("current_number")
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, docType], map: "business_document_sequences_business_type_uq")
+  @@map("business_document_sequences")
+}
+
+model CashMovement {
+  id                Int              @id @default(autoincrement())
+  businessId        Int              @map("business_id")
+  cashRegisterId    Int              @map("cash_register_id")
+  userId            Int              @map("user_id")
+  movementType      CashMovementType @map("movement_type")
+  amount            Decimal          @db.Decimal(12, 2)
+  balanceAfter      Decimal?         @map("balance_after") @db.Decimal(12, 2)
+  saleId            Int?             @map("sale_id")
+  clientOperationId String?          @map("client_operation_id") @db.Uuid
+  notes             String?          @db.Text()
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  business     Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  sale         Sale?        @relation(fields: [saleId], references: [id], onDelete: SetNull)
+
+  @@index([cashRegisterId, createdAt], map: "cash_movements_register_created_idx")
+  @@index([businessId, createdAt], map: "cash_movements_business_created_idx")
+  @@map("cash_movements")
 }
 
 model InventoryTransaction {
@@ -735,10 +901,14 @@ model InventoryTransaction {
   notes           String?                  @db.Text()
   createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  // business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  // product  Product  @relation(fields: [productId], references: [id])
-  // user     User     @relation(fields: [userId], references: [id])
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
+  @@index([businessId])
+  @@index([productId])
+  @@index([userId])
+  @@index([createdAt])
   @@map("inventory_transactions")
 }
 

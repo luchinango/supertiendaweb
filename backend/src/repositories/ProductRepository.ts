@@ -1,4 +1,4 @@
-import { PrismaClient, ProductStatus, TaxType } from '../../prisma/generated';
+import { PrismaClient, ProductStatus, TaxType } from '../../generated';
 import { Decimal } from '@prisma/client/runtime/library';
 import { IProductRepository } from '../interfaces/repositories/IProductRepository';
 import {
@@ -51,9 +51,13 @@ export class ProductRepository implements IProductRepository {
     };
   }
 
-  async findById(id: number): Promise<ProductResponse | null> {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
+  async findById(id: number, businessId: number): Promise<ProductResponse | null> {
+    const product = await this.prisma.product.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+        businessProducts: { some: { businessId, deletedAt: null } },
+      },
       include: { category: true },
     });
 
@@ -62,6 +66,7 @@ export class ProductRepository implements IProductRepository {
 
   async findMany(
     paginationParams: PaginationParams,
+    businessId: number,
     additionalFilters?: {
       categoryId?: number;
       status?: string;
@@ -77,7 +82,11 @@ export class ProductRepository implements IProductRepository {
     const { page = 1, limit = 10, search, sortBy, sortOrder } = paginationParams;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    // Conservador P1-F: solo productos con BusinessProduct de la empresa autenticada
+    const where: any = {
+      deletedAt: null,
+      businessProducts: { some: { businessId, deletedAt: null } },
+    };
 
     // Search filter
     if (search) {
@@ -218,6 +227,7 @@ export class ProductRepository implements IProductRepository {
     if (data.expiryDate !== undefined) updateData.expiryDate = new Date(data.expiryDate);
 
     updateData.updatedAt = new Date();
+    updateData.version = { increment: 1 };
 
     const product = await this.prisma.product.update({
       where: { id },
@@ -234,6 +244,8 @@ export class ProductRepository implements IProductRepository {
       data: {
         deletedAt: new Date(),
         isActive: false,
+        updatedAt: new Date(),
+        version: { increment: 1 },
       },
     });
   }
@@ -255,6 +267,7 @@ export class ProductRepository implements IProductRepository {
         businessProducts: {
           some: {
             businessId,
+            deletedAt: null,
           },
         },
       },
@@ -346,7 +359,7 @@ export class ProductRepository implements IProductRepository {
       include: {
         category: true,
         businessProducts: {
-          where: { businessId },
+          where: { businessId, deletedAt: null },
         },
       },
       orderBy: { name: 'asc' },
@@ -373,7 +386,7 @@ export class ProductRepository implements IProductRepository {
       include: {
         category: true,
         businessProducts: {
-          where: { businessId },
+          where: { businessId, deletedAt: null },
         },
       },
       orderBy: { name: 'asc' },
@@ -383,12 +396,17 @@ export class ProductRepository implements IProductRepository {
   }
 
   async findBySku(sku: string, businessId: number): Promise<ProductResponse | null> {
-    const product = await this.prisma.product.findUnique({
-      where: { sku },
+    // SKU ya no es @unique global (índices parciales por ámbito). Contención vía BP.
+    const product = await this.prisma.product.findFirst({
+      where: {
+        sku,
+        deletedAt: null,
+        businessProducts: { some: { businessId, deletedAt: null } },
+      },
       include: {
         category: true,
         businessProducts: {
-          where: { businessId },
+          where: { businessId, deletedAt: null },
         },
       },
     });
@@ -397,12 +415,17 @@ export class ProductRepository implements IProductRepository {
   }
 
   async findByBarcode(barcode: string, businessId: number): Promise<ProductResponse | null> {
-    const product = await this.prisma.product.findUnique({
-      where: { barcode },
+    // Barcode puede repetirse entre shared/private (D2); filtrar por vínculo BP del tenant.
+    const product = await this.prisma.product.findFirst({
+      where: {
+        barcode,
+        deletedAt: null,
+        businessProducts: { some: { businessId, deletedAt: null } },
+      },
       include: {
         category: true,
         businessProducts: {
-          where: { businessId },
+          where: { businessId, deletedAt: null },
         },
       },
     });
@@ -499,7 +522,11 @@ export class ProductRepository implements IProductRepository {
   }
 
   async existsBySku(sku: string, businessId: number, excludeId?: number): Promise<boolean> {
-    const where: any = { sku };
+    const where: any = {
+      sku,
+      deletedAt: null,
+      businessProducts: { some: { businessId, deletedAt: null } },
+    };
     if (excludeId) {
       where.id = { not: excludeId };
     }
@@ -509,7 +536,11 @@ export class ProductRepository implements IProductRepository {
   }
 
   async existsByBarcode(barcode: string, businessId: number, excludeId?: number): Promise<boolean> {
-    const where: any = { barcode };
+    const where: any = {
+      barcode,
+      deletedAt: null,
+      businessProducts: { some: { businessId, deletedAt: null } },
+    };
     if (excludeId) {
       where.id = { not: excludeId };
     }

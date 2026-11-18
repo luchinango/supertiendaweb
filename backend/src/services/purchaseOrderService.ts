@@ -1,7 +1,7 @@
 import prisma from '../config/prisma';
 import { DIContainer } from '../container/DIContainer';
 import { ValidationError, NotFoundError } from '../errors';
-import { PurchaseOrderStatus } from '../../prisma/generated';
+import { PurchaseOrderStatus } from '../../generated';
 import { IPurchaseOrderService } from '../interfaces/services/IPurchaseOrderService';
 
 export interface CreatePurchaseOrderRequest {
@@ -151,9 +151,13 @@ export class PurchaseOrderService implements IPurchaseOrderService {
     return this.mapToResponse(purchaseOrder);
   }
 
-  async update(id: number, data: UpdatePurchaseOrderRequest): Promise<PurchaseOrderResponse> {
-    const existingOrder = await prisma.purchaseOrder.findUnique({
-      where: { id },
+  async update(
+    id: number,
+    data: UpdatePurchaseOrderRequest,
+    businessId: number
+  ): Promise<PurchaseOrderResponse> {
+    const existingOrder = await prisma.purchaseOrder.findFirst({
+      where: { id, businessId },
       include: { items: true }
     });
 
@@ -190,9 +194,9 @@ export class PurchaseOrderService implements IPurchaseOrderService {
     return this.mapToResponse(updatedOrder);
   }
 
-  async findById(id: number): Promise<PurchaseOrderResponse | null> {
-    const purchaseOrder = await prisma.purchaseOrder.findUnique({
-      where: { id },
+  async findById(id: number, businessId: number): Promise<PurchaseOrderResponse | null> {
+    const purchaseOrder = await prisma.purchaseOrder.findFirst({
+      where: { id, businessId },
       include: {
         items: {
           include: {
@@ -226,7 +230,11 @@ export class PurchaseOrderService implements IPurchaseOrderService {
     const skip = (page - 1) * limit;
     const where: any = {};
 
-    if (businessId) where.businessId = businessId;
+    // businessId es obligatorio para aislamiento multiempresa
+    if (!businessId) {
+      throw new ValidationError('El ID del negocio es requerido para listar órdenes de compra');
+    }
+    where.businessId = businessId;
     if (status) where.status = status;
     if (supplierId) where.supplierId = supplierId;
 
@@ -274,9 +282,9 @@ export class PurchaseOrderService implements IPurchaseOrderService {
     };
   }
 
-  async delete(id: number): Promise<void> {
-    const existingOrder = await prisma.purchaseOrder.findUnique({
-      where: { id }
+  async delete(id: number, businessId: number): Promise<void> {
+    const existingOrder = await prisma.purchaseOrder.findFirst({
+      where: { id, businessId }
     });
 
     if (!existingOrder) {
@@ -292,9 +300,13 @@ export class PurchaseOrderService implements IPurchaseOrderService {
     });
   }
 
-  async approvePurchaseOrder(id: number, approvedBy: number): Promise<PurchaseOrderResponse> {
-    const existingOrder = await prisma.purchaseOrder.findUnique({
-      where: { id }
+  async approvePurchaseOrder(
+    id: number,
+    approvedBy: number,
+    businessId: number
+  ): Promise<PurchaseOrderResponse> {
+    const existingOrder = await prisma.purchaseOrder.findFirst({
+      where: { id, businessId }
     });
 
     if (!existingOrder) {
