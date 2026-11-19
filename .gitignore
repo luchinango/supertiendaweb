@@ -67,6 +67,12 @@ frontend/pnpm-lock.yaml
 *.md
 !docs/
 !docs/**/*.md
+# Credenciales y runbooks internos de lab (no compartir / no commit)
+docs/internal/
+docs/**/p2c1g*-evidence/
+docs/**/p2c1g8_*-evidence/
+tmp_*.ps1
+tmp-*.txt
 *.backup
 
 backend/backend.code-workspace

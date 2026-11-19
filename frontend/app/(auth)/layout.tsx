@@ -1,22 +1,9 @@
 import React from "react"
-import {AuthProvider} from "@/contexts/AuthContext"
-import {ThemeProvider} from "@/components/layout/theme-provider"
 
-export default function AuthLayout(
-  {
-    children,
-  }: {
-    children: React.ReactNode
-  }
-) {
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-    >
-      <AuthProvider>
-        {children}
-      </AuthProvider>
-    </ThemeProvider>
-  )
+/**
+ * Rutas de autenticación: sin AppShell (lo filtra AppShellGate en root).
+ * Providers ya están en app/layout.tsx — no re-anidar AuthProvider.
+ */
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
 }

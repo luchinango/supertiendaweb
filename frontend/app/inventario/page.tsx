@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, RefreshCw, Search } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Search, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { SyncStatusChip } from '@/components/features/catalog/SyncStatusChip';
+import { StockStatusBadge } from '@/components/features/catalog/StockStatusBadge';
 import { StockAdjustDialog } from '@/components/features/inventory/StockAdjustDialog';
 import { OutboxReviewPanel } from '@/components/offline/OutboxReviewPanel';
 import { SyncStatusBadge } from '@/components/offline/SyncStatusBadge';
@@ -16,6 +17,8 @@ import {
   type CommercialCatalogRow,
 } from '@/lib/catalog/commercialTypes';
 import { ROUTES } from '@/lib/routes';
+import { TableRowsSkeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 function formatMoney(n: number | null) {
   if (n == null || Number.isNaN(n)) return '—';
@@ -52,15 +55,17 @@ function InventarioInner() {
   }
 
   return (
-    <div className="space-y-5" data-testid="commercial-inventory-page">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#1e1e1e]">Inventario comercial</h1>
+    <div className="space-y-4 sm:space-y-5" data-testid="commercial-inventory-page">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight text-[#1e1e1e] sm:text-2xl">
+            Inventario comercial
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Stock desde BusinessProduct · precio customPrice ·{' '}
             {cat.isAdmin ? 'ADMIN' : 'EMPLOYEE'}
           </p>
-          <div className="mt-2">
+          <div className="mt-2 hidden sm:block">
             <SyncStatusBadge scope={cat.scope} />
           </div>
         </div>
@@ -68,30 +73,48 @@ function InventarioInner() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="h-10 gap-2 lg:h-9"
             disabled={cat.syncing}
             onClick={() => void cat.syncNow()}
           >
-            <RefreshCw className={`h-4 w-4 ${cat.syncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={cn('h-4 w-4', cat.syncing && 'motion-safe:animate-spin')} />
             Sincronizar
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowOutbox((v) => !v)}>
-            Cola / conflictos
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 lg:h-9"
+            onClick={() => setShowOutbox((v) => !v)}
+            aria-expanded={showOutbox}
+          >
+            Cola
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={ROUTES.PRODUCTS}>Ir a catálogo</Link>
+          <Button variant="outline" size="sm" className="h-10 lg:h-9" asChild>
+            <Link href={ROUTES.PRODUCTS}>Catálogo</Link>
+          </Button>
+          <Button variant="outline" size="sm" className="h-10 gap-2 lg:h-9" asChild>
+            <Link href={ROUTES.SALES}>
+              <ShoppingCart className="h-4 w-4" />
+              POS
+            </Link>
           </Button>
         </div>
       </div>
 
       {flash ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <div
+          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          role="status"
+        >
           {flash}
         </div>
       ) : null}
 
       {cat.error ? (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <div
+          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+          role="alert"
+        >
           {cat.error}
         </div>
       ) : null}
@@ -100,6 +123,7 @@ function InventarioInner() {
         <div
           className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950"
           data-testid="low-stock-alert"
+          role="status"
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
@@ -109,31 +133,38 @@ function InventarioInner() {
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="sticky top-0 z-10 -mx-1 flex flex-col gap-3 rounded-md bg-[#F3F4F6]/95 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-[#F3F4F6]/90 sm:static sm:mx-0 sm:flex-row sm:items-center sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
         <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="h-11 pl-9 sm:h-10"
             placeholder="Buscar nombre, SKU o categoría…"
             value={cat.search}
             onChange={(e) => cat.setSearch(e.target.value)}
             data-testid="inventory-search"
+            aria-label="Buscar en inventario"
           />
         </div>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={cat.visibility}
-          onChange={(e) => cat.setVisibility(e.target.value as typeof cat.visibility)}
-        >
-          <option value="all">Todos</option>
-          <option value="private">Privados</option>
-          <option value="shared">Compartidos adoptados</option>
-        </select>
         <label className="flex items-center gap-2 text-sm">
+          <span className="sr-only">Visibilidad</span>
+          <select
+            className="h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e1e1e] sm:h-10"
+            value={cat.visibility}
+            onChange={(e) => cat.setVisibility(e.target.value as typeof cat.visibility)}
+            aria-label="Filtrar por visibilidad"
+          >
+            <option value="all">Todos</option>
+            <option value="private">Privados</option>
+            <option value="shared">Compartidos adoptados</option>
+          </select>
+        </label>
+        <label className="flex h-11 items-center gap-2 rounded-md border border-transparent px-1 text-sm sm:h-10">
           <input
             type="checkbox"
+            className="h-4 w-4 accent-[#1e1e1e]"
             checked={lowOnly}
             onChange={(e) => setLowOnly(e.target.checked)}
+            data-testid="inventory-low-only"
           />
           Solo stock bajo
         </label>
@@ -143,14 +174,27 @@ function InventarioInner() {
 
       <div className="overflow-hidden rounded-lg border bg-white">
         {cat.loading ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">Cargando inventario local…</div>
+          <TableRowsSkeleton rows={6} />
         ) : rows.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground" data-testid="inventory-empty">
-            Sin filas de inventario comercial. Sincroniza o adopta productos en el catálogo.
+          <div className="space-y-3 p-8 text-center" data-testid="inventory-empty">
+            <p className="text-sm text-muted-foreground">
+              {lowOnly
+                ? 'Ningún producto cumple el filtro de stock bajo.'
+                : 'Sin filas de inventario comercial. Sincroniza o adopta productos en el catálogo.'}
+            </p>
+            {!lowOnly ? (
+              <Button variant="outline" className="h-10" asChild>
+                <Link href={ROUTES.PRODUCTS}>Ir a catálogo</Link>
+              </Button>
+            ) : (
+              <Button variant="outline" className="h-10" onClick={() => setLowOnly(false)}>
+                Ver todos
+              </Button>
+            )}
           </div>
         ) : (
           <>
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left text-sm" data-testid="inventory-table">
                 <thead className="border-b bg-[#f7f7f7] text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
@@ -161,8 +205,11 @@ function InventarioInner() {
                     <th className="px-4 py-3 font-medium">Actual</th>
                     <th className="px-4 py-3 font-medium">Reservado</th>
                     <th className="px-4 py-3 font-medium">Disponible</th>
+                    <th className="px-4 py-3 font-medium">Estado</th>
                     <th className="px-4 py-3 font-medium">Sync</th>
-                    <th className="px-4 py-3 font-medium" />
+                    <th className="px-4 py-3 font-medium">
+                      <span className="sr-only">Acciones</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,7 +223,10 @@ function InventarioInner() {
                     return (
                       <tr
                         key={row.productLocalId}
-                        className={`border-b last:border-0 hover:bg-slate-50/80 ${low ? 'bg-amber-50/40' : ''}`}
+                        className={cn(
+                          'border-b last:border-0 transition-colors motion-reduce:transition-none hover:bg-slate-50/80 focus-within:bg-slate-50/80',
+                          low && 'bg-amber-50/40'
+                        )}
                       >
                         <td className="px-4 py-3 font-medium text-[#1e1e1e]">{row.name}</td>
                         <td className="px-4 py-3 font-mono text-xs">{row.sku || '—'}</td>
@@ -186,16 +236,24 @@ function InventarioInner() {
                         <td className="px-4 py-3 tabular-nums">{row.reservedStock ?? '—'}</td>
                         <td className="px-4 py-3 tabular-nums font-medium">
                           {row.availableStock ?? '—'}
-                          {low ? (
-                            <span className="ml-1 text-[10px] uppercase text-amber-800">bajo</span>
-                          ) : null}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StockStatusBadge
+                            available={row.availableStock ?? row.currentStock}
+                            lowThreshold={threshold}
+                          />
                         </td>
                         <td className="px-4 py-3">
                           <SyncStatusChip status={row.syncStatus} />
                         </td>
                         <td className="px-4 py-3 text-right">
                           {canAdj ? (
-                            <Button size="sm" variant="ghost" onClick={() => setAdjustRow(row)}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-9"
+                              onClick={() => setAdjustRow(row)}
+                            >
                               Ajustar
                             </Button>
                           ) : null}
@@ -207,7 +265,7 @@ function InventarioInner() {
               </table>
             </div>
 
-            <div className="grid gap-3 p-3 md:hidden" data-testid="inventory-mobile-list">
+            <div className="grid gap-3 p-3 lg:hidden" data-testid="inventory-mobile-list">
               {rows.map((row) => {
                 const low = (row.availableStock ?? row.currentStock ?? 0) <= threshold;
                 const canAdj =
@@ -218,35 +276,51 @@ function InventarioInner() {
                 return (
                   <article
                     key={row.productLocalId}
-                    className={`rounded-md border p-3 ${low ? 'border-amber-300 bg-amber-50/50' : ''}`}
+                    className={cn(
+                      'rounded-md border bg-[#fafafa] p-3',
+                      low && 'border-amber-300 bg-amber-50/50'
+                    )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="font-medium text-[#1e1e1e]">{row.name}</h3>
                         <p className="text-xs text-muted-foreground">
                           {row.sku || 'Sin SKU'} · {row.categoryName}
                         </p>
                       </div>
-                      <SyncStatusChip status={row.syncStatus} />
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <StockStatusBadge
+                          available={row.availableStock ?? row.currentStock}
+                          lowThreshold={threshold}
+                        />
+                        <SyncStatusChip status={row.syncStatus} />
+                      </div>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                       <div>
                         <div className="text-muted-foreground">Actual</div>
-                        <div className="tabular-nums font-medium">{row.currentStock ?? '—'}</div>
+                        <div className="font-medium tabular-nums">{row.currentStock ?? '—'}</div>
                       </div>
                       <div>
                         <div className="text-muted-foreground">Reserv.</div>
-                        <div className="tabular-nums font-medium">{row.reservedStock ?? '—'}</div>
+                        <div className="font-medium tabular-nums">{row.reservedStock ?? '—'}</div>
                       </div>
                       <div>
                         <div className="text-muted-foreground">Dispon.</div>
-                        <div className="tabular-nums font-medium">{row.availableStock ?? '—'}</div>
+                        <div className="font-medium tabular-nums">{row.availableStock ?? '—'}</div>
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-sm tabular-nums">{formatMoney(row.customPrice)}</span>
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold tabular-nums text-[#1e1e1e]">
+                        Bs {formatMoney(row.customPrice)}
+                      </span>
                       {canAdj ? (
-                        <Button size="sm" variant="outline" onClick={() => setAdjustRow(row)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-10 min-w-[5.5rem]"
+                          onClick={() => setAdjustRow(row)}
+                        >
                           Ajustar
                         </Button>
                       ) : null}

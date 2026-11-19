@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ClipboardList, RefreshCw, AlertTriangle } from 'lucide-react';
 import { getAuthToken } from '@/lib/auth-utils';
@@ -164,11 +164,14 @@ export function PosDayControlPanel({
   connection,
   onSyncPending,
   syncBusy,
+  /** Incrementar tras venta confirmada / sync / cierre / provisional — un reload controlado. */
+  refreshKey = 0,
 }: {
   scope: TenantScope | null;
   connection: 'online' | 'offline' | string;
   onSyncPending?: (sale: LocalSale) => void;
   syncBusy?: boolean;
+  refreshKey?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -177,16 +180,20 @@ export function PosDayControlPanel({
   const [previousClosed, setPreviousClosed] = useState<CashSessionSummary | null>(null);
   const [pending, setPending] = useState<LocalSale[]>([]);
   const [problems, setProblems] = useState<LocalSale[]>([]);
+  const reloadGen = useRef(0);
 
   const reload = useCallback(async () => {
     if (!scope) return;
+    const gen = ++reloadGen.current;
     setLoading(true);
     setError(null);
     try {
+      // Local primero: pendientes nunca se muestran como confirmados del servidor.
       const [pend, probs] = await Promise.all([
         listPendingLocalSales(scope),
         listProblemLocalSales(scope),
       ]);
+      if (gen !== reloadGen.current) return;
       setPending(pend);
       setProblems(probs);
 
@@ -199,9 +206,11 @@ export function PosDayControlPanel({
         } else {
           try {
             const env = await fetchCashSession(scope, token);
+            if (gen !== reloadGen.current) return;
             setSession(env.session);
             setPreviousClosed(env.previousClosed ?? null);
           } catch (e) {
+            if (gen !== reloadGen.current) return;
             setSession(null);
             setPreviousClosed(null);
             const msg =
@@ -214,28 +223,53 @@ export function PosDayControlPanel({
           }
         }
       } else {
+        // Offline: no inventar totales servidor; conservar solo bandeja local.
         setSession(null);
         setPreviousClosed(null);
       }
     } finally {
-      setLoading(false);
+      if (gen === reloadGen.current) setLoading(false);
     }
   }, [scope, connection]);
 
   useEffect(() => {
     if (!open || !scope) return;
     void reload();
-  }, [open, scope, reload]);
+  }, [open, scope, reload, refreshKey]);
+
+  // Cajero: «Revisar cola offline» / #jornada → abre este panel (no /debug-offline).
+  useEffect(() => {
+    const openFromCashier = () => {
+      setOpen(true);
+      requestAnimationFrame(() => {
+        document.getElementById('pos-day-control')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    };
+    const onHash = () => {
+      if (typeof window === 'undefined') return;
+      if (window.location.hash === '#jornada') openFromCashier();
+    };
+    onHash();
+    window.addEventListener('supertienda:open-day-control', openFromCashier);
+    window.addEventListener('hashchange', onHash);
+    return () => {
+      window.removeEventListener('supertienda:open-day-control', openFromCashier);
+      window.removeEventListener('hashchange', onHash);
+    };
+  }, []);
 
   return (
-    <section className="rounded-lg border bg-white" data-testid="pos-day-control">
+    <section id="pos-day-control" className="rounded-lg border bg-white" data-testid="pos-day-control">
       <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-2">
           <ClipboardList className="mt-0.5 h-4 w-4 text-muted-foreground" />
           <div>
             <p className="text-sm font-semibold text-[#1e1e1e]">Control de jornada</p>
-            <p className="text-xs text-muted-foreground">
-              Conciliación de caja (servidor) y operaciones locales pendientes o rechazadas.
+            <p className="hidden text-xs text-muted-foreground sm:block">
+              Conciliación de caja (servidor), cola offline del cajero y operaciones rechazadas.
+            </p>
+            <p className="text-xs text-muted-foreground sm:hidden">
+              Conciliación, cola offline y rechazos.
             </p>
           </div>
         </div>
@@ -255,7 +289,7 @@ export function PosDayControlPanel({
           <Button
             size="sm"
             variant={open ? 'outline' : 'default'}
-            className={!open ? 'bg-[#1e1e1e] hover:bg-[#2e2e2e]' : ''}
+            className={`h-10 sm:h-9 ${!open ? 'bg-[#1e1e1e] hover:bg-[#2e2e2e]' : ''}`}
             data-testid="pos-day-control-toggle"
             onClick={() => setOpen((v) => !v)}
           >
@@ -307,14 +341,14 @@ export function PosDayControlPanel({
             ) : null}
           </div>
 
-          {/* Locales */}
-          <div className="space-y-2">
+          {/* Locales — bandeja operativa del cajero (alternativa segura a /debug-offline) */}
+          <div className="space-y-2" data-testid="pos-day-offline-queue">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Datos provisionales / locales (este dispositivo)
+              Cola offline / provisionales (este dispositivo)
             </p>
             <p className="text-[11px] text-muted-foreground">
               Las ventas pendientes no suman dos veces a la caja del servidor. Solo cuentan cuando se
-              confirman.
+              confirman. Sincronizá aquí antes de cerrar caja.
             </p>
 
             {pending.length === 0 && problems.length === 0 ? (

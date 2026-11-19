@@ -34,185 +34,207 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: ROUTES.DASHBOARD },
-  { icon: DollarSign, label: "Ventas", href: ROUTES.SALES },
-  { icon: ArrowLeftRight, label: "Movimientos", href: ROUTES.MOVEMENTS },
-  { icon: BarChart2, label: "Estadísticas", href: ROUTES.STATISTICS },
-  { icon: Tags, label: "Catálogo", href: ROUTES.PRODUCTS },
-  { icon: Package, label: "Inventario", href: ROUTES.INVENTORY },
-  { icon: Scale, label: "Mermas", href: ROUTES.LOSSES },
-  { icon: Users2, label: "Empleados", href: ROUTES.EMPLOYEES },
-  { icon: UserCircle, label: "Clientes", href: ROUTES.CUSTOMERS },
-  { icon: Truck, label: "Proveedores", href: ROUTES.SUPPLIERS },
-  { icon: CreditCard, label: "Créditos", href: ROUTES.CREDITS },
-  { icon: Bell, label: "Alertas", href: ROUTES.ALERTS },
-  { icon: ShoppingCart, label: "Órdenes de Compra", href: ROUTES.PURCHASE_ORDERS },
-  { icon: Settings, label: "Configuraciones", href: ROUTES.SETTINGS },
+type NavItem = {
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  label: string;
+  href: string;
+  /** Si true, solo ADMIN (y no EMPLOYEE). No cambia permisos server — solo visibilidad. */
+  adminOnly?: boolean;
+};
+
+type NavGroup = {
+  id: string;
+  label: string;
+  items: NavItem[];
+};
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    id: 'overview',
+    label: 'Inicio',
+    items: [{ icon: LayoutDashboard, label: 'Dashboard', href: ROUTES.DASHBOARD }],
+  },
+  {
+    id: 'caja',
+    label: 'Caja',
+    items: [{ icon: DollarSign, label: 'Ventas', href: ROUTES.SALES }],
+  },
+  {
+    id: 'stock',
+    label: 'Stock',
+    items: [
+      { icon: Tags, label: 'Catálogo', href: ROUTES.PRODUCTS },
+      { icon: Package, label: 'Inventario', href: ROUTES.INVENTORY },
+      { icon: ArrowLeftRight, label: 'Movimientos', href: ROUTES.MOVEMENTS, adminOnly: true },
+      { icon: Scale, label: 'Mermas', href: ROUTES.LOSSES, adminOnly: true },
+    ],
+  },
+  {
+    id: 'personas',
+    label: 'Personas',
+    items: [
+      { icon: UserCircle, label: 'Clientes', href: ROUTES.CUSTOMERS },
+      { icon: Users2, label: 'Empleados', href: ROUTES.EMPLOYEES, adminOnly: true },
+      { icon: Truck, label: 'Proveedores', href: ROUTES.SUPPLIERS, adminOnly: true },
+    ],
+  },
+  {
+    id: 'gestion',
+    label: 'Gestión',
+    items: [
+      { icon: CreditCard, label: 'Créditos', href: ROUTES.CREDITS, adminOnly: true },
+      { icon: ShoppingCart, label: 'Órdenes de Compra', href: ROUTES.PURCHASE_ORDERS, adminOnly: true },
+      { icon: BarChart2, label: 'Estadísticas', href: ROUTES.STATISTICS, adminOnly: true },
+      { icon: Bell, label: 'Alertas', href: ROUTES.ALERTS, adminOnly: true },
+      { icon: Settings, label: 'Configuraciones', href: ROUTES.SETTINGS, adminOnly: true },
+    ],
+  },
 ];
 
-const MenuItem = React.memo(({ item, isActive }: { item: typeof menuItems[0], isActive: boolean }) => {
-  const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.backgroundColor = '#222';
-  }, []);
+function isActivePath(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
-  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.backgroundColor = isActive ? '#222' : 'transparent';
-  }, [isActive]);
-
-  const handleFocus = useCallback((e: React.FocusEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.backgroundColor = '#222';
-  }, []);
-
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.backgroundColor = isActive ? '#222' : 'transparent';
-  }, [isActive]);
-
+const MenuItem = React.memo(function MenuItem({
+  item,
+  isActive,
+}: {
+  item: NavItem;
+  isActive: boolean;
+}) {
   return (
-    <li style={{ margin: 0, padding: 0 }}>
+    <li className="m-0 p-0">
       <OptimizedLink
         href={item.href}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '8px 24px',
-          borderRadius: '8px',
-          color: 'white',
-          textDecoration: 'none',
-          transition: 'background-color 0.2s',
-          backgroundColor: isActive ? '#222' : 'transparent'
-        }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
+        className={`flex items-center gap-3 rounded-lg px-4 py-2 text-sm text-white no-underline transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+          isActive ? 'bg-[#222]' : 'bg-transparent hover:bg-[#222]'
+        }`}
         {...(isActive ? { 'aria-current': 'page' as const } : {})}
         prefetch={true}
       >
-        <item.icon
-          style={{ width: '20px', height: '20px' }}
-          aria-hidden="true"
-        />
-        <span style={{ fontSize: '14px' }}>{item.label}</span>
+        <item.icon className="h-5 w-5 shrink-0" aria-hidden={true} />
+        <span>{item.label}</span>
       </OptimizedLink>
     </li>
   );
 });
 
-MenuItem.displayName = 'MenuItem';
-
 export function Sidebar({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const role = user?.role ?? '';
+  const isAdmin = role === 'ADMIN';
+  const isEmployee = role === 'EMPLOYEE';
+  /** EMPLOYEE: menú reducido. ADMIN/otros: menú completo (PLATFORM_ADMIN ve todo lo listado). */
+  const showAdminItems = !isEmployee || isAdmin;
 
-  const menuItemsList = useMemo(() => {
-    return menuItems.map((item) => ({
-      ...item,
-      isActive: pathname === item.href || pathname.startsWith(`${item.href}/`)
-    }));
-  }, [pathname]);
+  const groups = useMemo(() => {
+    return NAV_GROUPS.map((g) => ({
+      ...g,
+      items: g.items.filter((item) => (item.adminOnly ? showAdminItems : true)),
+    })).filter((g) => g.items.length > 0);
+  }, [showAdminItems]);
 
   const handleLogout = useCallback(() => {
     logout();
   }, [logout]);
 
   const getUserInitials = (name: string | undefined) => {
-    if (!name || typeof name !== 'string') {
-      return 'U'; // Usuario
-    }
-
+    if (!name || typeof name !== 'string') return 'U';
     return name
       .split(' ')
-      .map(word => word.charAt(0))
+      .map((word) => word.charAt(0))
       .join('')
       .toUpperCase()
       .slice(0, 2);
   };
 
+  const displayName =
+    user?.name ||
+    user?.username ||
+    (user?.employee
+      ? `${user.employee.firstName ?? ''} ${user.employee.lastName ?? ''}`.trim()
+      : '') ||
+    'Usuario';
+
   return (
     <aside
-      style={{
-        width: compact ? '100%' : '250px',
-        backgroundColor: '#000',
-        color: 'white',
-        minHeight: compact ? '100%' : '100vh',
-        height: compact ? '100%' : undefined,
-        display: 'flex',
-        flexDirection: 'column'
-      }}
+      className={`flex flex-col bg-black text-white ${compact ? 'h-full w-full' : 'min-h-screen w-[250px]'}`}
       role="complementary"
       aria-label="Navegación principal"
       id={compact ? 'mobile-nav' : undefined}
+      data-testid="app-sidebar"
     >
-      <header style={{ padding: '16px', borderBottom: '1px solid #444' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 500 }}>
-          <OptimizedLink href={ROUTES.DASHBOARD} style={{ color: 'white', textDecoration: 'none' }} prefetch={true}>
+      <header className="border-b border-[#444] px-4 py-4">
+        <h1 className="m-0 text-xl font-medium">
+          <OptimizedLink
+            href={ROUTES.DASHBOARD}
+            className="text-white no-underline"
+            prefetch={true}
+          >
             SuperTienda
           </OptimizedLink>
         </h1>
       </header>
 
-      <nav
-        style={{ marginTop: '16px', flex: 1 }}
-        role="navigation"
-        aria-label="Menú principal"
-      >
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {menuItemsList.map((item) => (
-            <MenuItem key={item.href} item={item} isActive={item.isActive} />
-          ))}
-        </ul>
+      <nav className="mt-3 flex-1 overflow-y-auto pb-3" role="navigation" aria-label="Menú principal">
+        {groups.map((group) => (
+          <div key={group.id} className="mb-3">
+            <p className="px-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#888]">
+              {group.label}
+            </p>
+            <ul className="m-0 list-none p-0">
+              {group.items.map((item) => (
+                <MenuItem
+                  key={item.href}
+                  item={item}
+                  isActive={isActivePath(pathname, item.href)}
+                />
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
-      {/* Sección de usuario */}
-      {user && user.name && user.email && (
-        <div style={{
-          padding: '16px',
-          borderTop: '1px solid #444',
-          backgroundColor: '#111'
-        }}>
+      {user ? (
+        <div className="border-t border-[#444] bg-[#111] p-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                style={{
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                  padding: '8px',
-                  color: 'white',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
+                className="h-auto w-full justify-start gap-2 px-2 py-2 text-white hover:bg-[#222] hover:text-white"
+                aria-label="Menú de cuenta"
               >
-                <Avatar style={{ width: '32px', height: '32px', marginRight: '8px' }}>
-                  <AvatarFallback style={{ backgroundColor: '#333', color: 'white' }}>
-                    {getUserInitials(user.name)}
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-[#333] text-white text-xs">
+                    {getUserInitials(displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <div style={{ textAlign: 'left', flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{user.name}</div>
-                  <div style={{ fontSize: '12px', color: '#999' }}>{user.email}</div>
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="truncate text-sm font-medium">{displayName}</div>
+                  {user.email ? (
+                    <div className="truncate text-xs text-[#999]">{user.email}</div>
+                  ) : null}
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" style={{ minWidth: '200px' }}>
+            <DropdownMenuContent align="end" className="min-w-[200px]">
               <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+              <DropdownMenuItem disabled>
+                <User className="mr-2 h-4 w-4" />
                 Perfil
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
-                <LogOut style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                <LogOut className="mr-2 h-4 w-4" />
                 Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      )}
+      ) : null}
     </aside>
   );
 }

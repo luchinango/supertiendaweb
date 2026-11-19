@@ -69,6 +69,8 @@ export function PosReceipt({
             size="sm"
             variant={paperMm === '80' ? 'default' : 'outline'}
             className={paperMm === '80' ? 'bg-[#1e1e1e] hover:bg-[#2e2e2e]' : ''}
+            data-testid="pos-ticket-width-80"
+            aria-pressed={paperMm === '80'}
             onClick={() => setPaperMm('80')}
           >
             80 mm
@@ -78,6 +80,8 @@ export function PosReceipt({
             size="sm"
             variant={paperMm === '58' ? 'default' : 'outline'}
             className={paperMm === '58' ? 'bg-[#1e1e1e] hover:bg-[#2e2e2e]' : ''}
+            data-testid="pos-ticket-width-58"
+            aria-pressed={paperMm === '58'}
             onClick={() => setPaperMm('58')}
           >
             58 mm
@@ -85,8 +89,12 @@ export function PosReceipt({
         </div>
         <div
           ref={printRef}
-          className={`pos-ticket mx-auto ${paperMm === '58' ? 'max-w-[54mm]' : 'max-w-[72mm]'}`}
+          className={`pos-ticket mx-auto border border-dashed border-slate-200 px-1 print:border-0 print:px-0 ${
+            paperMm === '58' ? 'max-w-[48mm] text-[11px] leading-snug' : 'max-w-[72mm] text-sm'
+          }`}
           data-ticket-width={paperMm}
+          data-testid="pos-ticket-body"
+          style={paperMm === '58' ? { width: '48mm' } : { width: '72mm' }}
         >
           <p className="text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800 print:text-black">
             COMPROBANTE NO FISCAL
@@ -176,7 +184,12 @@ export function PosReceipt({
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2 print:hidden">
-          <Button variant="outline" className="flex-1 gap-1" onClick={handlePrint}>
+          <Button
+            variant="outline"
+            className="flex-1 gap-1"
+            data-testid="pos-ticket-print"
+            onClick={handlePrint}
+          >
             <Printer className="h-4 w-4" />
             Imprimir
           </Button>

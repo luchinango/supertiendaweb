@@ -2,7 +2,7 @@ import React from "react"
 import "../styles/globals.css"
 import type {Metadata, Viewport} from "next"
 import {Inter, Roboto} from "next/font/google"
-import {AppShell} from "@/components/layout/AppShell"
+import {AppShellGate} from "@/components/layout/AppShellGate"
 import {ProductFormProvider} from "@/contexts/ProductFormContext"
 import {CashRegisterProvider} from "@/contexts/CashRegisterContext"
 import {SalesFormProvider} from "@/contexts/SalesFormContext"
@@ -97,9 +97,9 @@ export default function RootLayout({
               <SalesFormProvider>
                 <CartProvider>
                   <ExpenseFormProvider>
-                    <AppShell>
+                    <AppShellGate>
                       {children}
-                    </AppShell>
+                    </AppShellGate>
                     <GlobalProductForm/>
                     <OfflineStatusHost/>
                   </ExpenseFormProvider>
